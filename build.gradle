@@ -3,7 +3,7 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.141'
 }
 
-version = '3.1.2'
+version = '3.2.0'
 base.archivesName = "spearcore-1.21.1-neo"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -78,6 +78,11 @@ repositories {
         name = 'jitpack'
         url = 'https://jitpack.io'
     }
+    // Epic Fight（可选联动：复用它的 SPEAR 武器体系）：走 Modrinth 的 maven 代理
+    maven {
+        name = 'modrinth'
+        url = 'https://api.modrinth.com/maven'
+    }
 }
 dependencies {
     // Punchy 联动（可选依赖）：编译期需要它在 classpath 上（mixin 注解处理器要校验目标类），
@@ -91,6 +96,11 @@ dependencies {
     // 要验证"没装 KubeJS"的启动路径，把 runtimeOnly 这行注释掉即可。
     compileOnly 'dev.latvian.mods:kubejs-neoforge:2101.7.2-build.379'
     runtimeOnly 'dev.latvian.mods:kubejs-neoforge:2101.7.2-build.379'
+
+    // Epic Fight（可选依赖，仅编译期）：复用它的 WeaponTypes.SPEAR 武器体系。
+    // 用 libs/ 里的本地 jar 而不是远程坐标：这台机器连不上 maven.neoforged.net，
+    // 远程解析会因该仓库被拒而整体失败；jar 与 Punchy 一样放 libs/。
+    compileOnly files('libs/epic-fight-21.17.3.1-mc1.21.1-neoforge.jar')
 }
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
