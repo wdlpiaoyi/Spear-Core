@@ -3,24 +3,25 @@ package net.minecraft.spearcore.mixin;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.item.SpearItem;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 /**
  * 举矛时取消原版"正在使用物品 → 移动输入 ×0.2"的减速。
  *
- * <p><b>为什么 priority 是 2000：</b>疾跑类/使用物品类模组常常也改
- * LocalPlayer.aiStep 里的这个 0.2F。Mixin 对同一个常量的多个
- * {@code @ModifyConstant} 是按 priority 排序链式执行的，最后执行的那个决定最终值。
- * 默认 priority 是 1000，这里提到 2000，保证我们的 1.0F 最后落地，不会被别人的
- * 0.2F/固定值覆盖。</p>
+ * <p><b>为什么这里是 @ModifyConstant 而不是 MixinExtras 的 @WrapOperation：</b>
+ * 1.21.1 那边用的是 @WrapOperation（可叠加、不会与别的模组互相覆盖），但 1.20.1 受两个
+ * 现实条件限制：① Forge 1.20.1 不自带 MixinExtras，整合包里可能已有别的模组带了旧版本
+ * （实测目标整合包内是 0.2.0-rc.2），运行时版本不由我们控制；② FG6 的 jarJar 在本工程里
+ * 不产出合并 jar，手写 shading 又要额外接好 MixinExtras 的初始化配置。
+ * 为了不给发布版引入崩溃风险，这里保留"改常量 + 提高 priority"的保守写法。</p>
  *
- * <p><b>注意：</b>如果冲突方用 {@code @Overwrite} 整个重写 aiStep，本 mixin 会失效，
- * 那种情况下由 {@code SpearSprintHandler}（ClientTickEvent）兜底，保证举矛仍能疾跑。</p>
+ * <p><b>priority = 2000：</b>同一个常量的多个 @ModifyConstant 按 priority 排序链式执行，
+ * 最后执行的那个决定最终值。默认是 1000，提到 2000 可以保证我们的 1.0F 最后落地，
+ * 不会被别的模组改回 0.2 或其它值。</p>
  *
- * <p>原先"疾跑断言"的 {@code @Inject(at = @At("TAIL"))} 已迁到
- * {@link net.minecraft.spearcore.client.SpearSprintHandler}，原因同上：不依赖 aiStep 就不会被同目标模组搞掉。</p>
+ * <p><b>require = 0：</b>对方把 0.2F 常量重构掉时本注入静默失效、不会崩；
+ * 那种情况下由 {@code SpearSprintHandler}（客户端 tick 事件）保证举矛仍能疾跑。</p>
  */
 @Mixin(value = LocalPlayer.class, priority = 2000)
 public class LocalPlayerInputMixin {

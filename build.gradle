@@ -4,7 +4,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-version = '3.1.1'
+version = '3.1.2'
 group = 'net.minecraft.spearcore'
 archivesBaseName = 'spearcore-1.20.1-forge'
 
@@ -76,6 +76,17 @@ dependencies {
 
     // Mixin 注解处理器：生成 refmap（1.20.1 的 Mixin 靠它把注入目标映射到混淆名）
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    // ===== MixinExtras =====
+    // @WrapOperation / @ModifyExpressionValue 等"可叠加"注入，避免和别的模组抢同一个注入点。
+    // 1.21.1 由 NeoForge 自带；1.20.1 的 Forge 不带，所以这里内嵌进 jar（jarJar）。
+    // 注解处理器：为 MixinExtras 的注入器（@WrapOperation 等）生成 refmap 映射，
+    // 少了这一步，生产环境里 @At 的目标字段名不会被重映射，注入会静默失效。
+    annotationProcessor 'io.github.llamalad7:mixinextras-common:0.4.1'
+    compileOnly 'io.github.llamalad7:mixinextras-common:0.4.1'
+    // 运行时：Forge 1.20.1 不自带 MixinExtras，用 jarJar 内嵌进发布 jar
+    // （版本区间是 FG6 jarJar 的硬性要求，不接受固定版本）
+    implementation jarJar('io.github.llamalad7:mixinextras-forge:[0.4.1,)')
 
     // ===== KubeJS 联动（mods.toml 里声明为 optional）=====
     // compileOnly：只有 compat.kubejs 包编译它，绝不进发布 jar；
