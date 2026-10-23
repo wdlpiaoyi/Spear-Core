@@ -23,6 +23,10 @@ neoForge {
             // （Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER）。
             additionalRuntimeClasspathConfiguration.dependencies.add(
                     project.dependencies.create(files('libs/punchy-2.6.2-neoforge-1.21.1.jar')))
+            // Epic Fight 是可选的联动目标：开发期想实机看效果就挂到客户端 run。
+            // 不挂到 GameTestServer —— 那边不需要它，也免得拖慢测试。
+            additionalRuntimeClasspathConfiguration.dependencies.add(
+                    project.dependencies.create(files('libs/epic-fight-21.17.3.1-mc1.21.1-neoforge.jar')))
 
             def mcreatorJvmOptions = System.getenv('MCREATOR_JVM_OPTIONS')
             if (mcreatorJvmOptions) {
