@@ -13,8 +13,7 @@ configurations {
 }
 
 neoForge {
-    // 21.1.249：Epic Fight 要求 neoforge >= 21.1.219，217 会因依赖校验不通过而整个不加载。
-    version = "21.1.249"
+    version = "21.1.217"
 
     runs {
         client {
@@ -24,8 +23,6 @@ neoForge {
             // （Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER）。
             additionalRuntimeClasspathConfiguration.dependencies.add(
                     project.dependencies.create(files('libs/punchy-2.6.2-neoforge-1.21.1.jar')))
-            // Epic Fight 见下方 implementation：additionalRuntimeClasspathConfiguration
-            // 挂上去 FML 认不出来（模组列表里没有它），所以改走普通 implementation。
 
             def mcreatorJvmOptions = System.getenv('MCREATOR_JVM_OPTIONS')
             if (mcreatorJvmOptions) {
@@ -42,9 +39,7 @@ neoForge {
         // 判定与 1.20.1 一样看日志里的 "All N required tests passed :)" / "N required tests failed :("。
         gameTestServer {
             type = "gameTestServer"
-            // 独立目录：run/ 里放了 Epic Fight（run/mods），GameTest 不要加载它 ——
-            // EF 会改战斗结算，导致击退/伤害类断言全部偏移。
-            gameDirectory = project.file('run-gametest')
+            gameDirectory = project.file('run')
             systemProperty 'neoforge.enabledGameTestNamespaces', 'spearcore'
         }
 
@@ -67,7 +62,7 @@ neoForge {
 // 注意用 matching 而不是 named：run 任务由 MDG 在评估后创建，named 会在配置期直接失败。
 tasks.register('stageGameTestStructures', Copy) {
     from 'gameteststructures'
-    into 'run-gametest/gameteststructures'
+    into 'run/gameteststructures'
 }
 tasks.matching { it.name == 'runGameTestServer' }.configureEach {
     dependsOn 'stageGameTestStructures'
@@ -102,10 +97,6 @@ dependencies {
     compileOnly 'dev.latvian.mods:kubejs-neoforge:2101.7.2-build.379'
     runtimeOnly 'dev.latvian.mods:kubejs-neoforge:2101.7.2-build.379'
 
-    // Epic Fight（可选依赖，仅编译期）：复用它的 WeaponTypes.SPEAR 武器体系。
-    // 用 libs/ 里的本地 jar 而不是远程坐标：这台机器连不上 maven.neoforged.net，
-    // 远程解析会因该仓库被拒而整体失败；jar 与 Punchy 一样放 libs/。
-    compileOnly files('libs/epic-fight-21.17.3.1-mc1.21.1-neoforge.jar')
 }
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation

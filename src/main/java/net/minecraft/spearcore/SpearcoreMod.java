@@ -57,18 +57,6 @@ public class SpearcoreMod {
            SpearCoreItems.REGISTRY.register(modEventBus);
         SpearAttributes.ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(SpearAttributes::addToPlayer);
-          // ===== Epic Fight 联动（可选）：先判断模组是否在场，再触达联动类 =====
-          // EpicFightCompat 直接引用 yesman.epicfight.* ，只有下面分支执行时 JVM 才解析它；
-          // 没装 EF 时它永远不会被加载，也就不会 NoClassDefFoundError。
-          boolean epicFightLoaded = net.neoforged.fml.ModList.get().isLoaded("epicfight");
-          net.minecraft.spearcore.compat.CompatFlags.setEpicFight(epicFightLoaded);
-          if (epicFightLoaded && net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
-              // 客户端专属：EF 会把玩家渲染器整个替换掉，所以要向它注册自己的物品渲染器
-              net.minecraft.spearcore.compat.epicfight.client.EpicFightSpearRenderer.init();
-          }
-          if (epicFightLoaded) {
-              net.minecraft.spearcore.compat.epicfight.EpicFightCompat.init(modEventBus);
-          }
 	       // End of user code block mod init
 	}
 
