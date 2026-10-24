@@ -15,8 +15,6 @@ public class SpearCooldownAttackMixin {
 
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
     private void spearcore$cancelAttackOnCooldown(CallbackInfoReturnable<Boolean> cir) {
-        // Epic Fight 在场时它自己管理攻击节奏，我们不再按原版冷却拦截
-        if (net.minecraft.spearcore.compat.CompatFlags.epicFight()) return;
         Minecraft self = (Minecraft)(Object)this;
         LocalPlayer player = self.player;
         if (player == null) return;

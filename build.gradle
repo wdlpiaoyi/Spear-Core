@@ -3,7 +3,7 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.141'
 }
 
-version = '3.2.1'
+version = '3.2.0'
 base.archivesName = "spearcore-1.21.1-neo"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -13,7 +13,8 @@ configurations {
 }
 
 neoForge {
-    version = "21.1.217"
+    // 21.1.249：Epic Fight 要求 neoforge >= 21.1.219，217 会因依赖校验不通过而整个不加载。
+    version = "21.1.249"
 
     runs {
         client {
@@ -23,10 +24,8 @@ neoForge {
             // （Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER）。
             additionalRuntimeClasspathConfiguration.dependencies.add(
                     project.dependencies.create(files('libs/punchy-2.6.2-neoforge-1.21.1.jar')))
-            // Epic Fight 是可选的联动目标：开发期想实机看效果就挂到客户端 run。
-            // 不挂到 GameTestServer —— 那边不需要它，也免得拖慢测试。
-            additionalRuntimeClasspathConfiguration.dependencies.add(
-                    project.dependencies.create(files('libs/epic-fight-21.17.3.1-mc1.21.1-neoforge.jar')))
+            // Epic Fight 见下方 implementation：additionalRuntimeClasspathConfiguration
+            // 挂上去 FML 认不出来（模组列表里没有它），所以改走普通 implementation。
 
             def mcreatorJvmOptions = System.getenv('MCREATOR_JVM_OPTIONS')
             if (mcreatorJvmOptions) {
@@ -43,7 +42,9 @@ neoForge {
         // 判定与 1.20.1 一样看日志里的 "All N required tests passed :)" / "N required tests failed :("。
         gameTestServer {
             type = "gameTestServer"
-            gameDirectory = project.file('run')
+            // 独立目录：run/ 里放了 Epic Fight（run/mods），GameTest 不要加载它 ——
+            // EF 会改战斗结算，导致击退/伤害类断言全部偏移。
+            gameDirectory = project.file('run-gametest')
             systemProperty 'neoforge.enabledGameTestNamespaces', 'spearcore'
         }
 
@@ -66,7 +67,7 @@ neoForge {
 // 注意用 matching 而不是 named：run 任务由 MDG 在评估后创建，named 会在配置期直接失败。
 tasks.register('stageGameTestStructures', Copy) {
     from 'gameteststructures'
-    into 'run/gameteststructures'
+    into 'run-gametest/gameteststructures'
 }
 tasks.matching { it.name == 'runGameTestServer' }.configureEach {
     dependsOn 'stageGameTestStructures'

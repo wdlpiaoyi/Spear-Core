@@ -207,8 +207,6 @@ public abstract class SpearItem extends Item {
     @Override
     public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remainingTicks) {
         if (level.isClientSide) return;
-        // Epic Fight 在场时，蓄力推进与伤害结算全部由 EF 负责（见 compat.epicfight）
-        if (net.minecraft.spearcore.compat.CompatFlags.epicFight()) return;
 
         if (user instanceof Player player && player.getCooldowns().isOnCooldown(this)) {
             player.stopUsingItem();
@@ -319,8 +317,6 @@ public abstract class SpearItem extends Item {
     // ========== performStabAttack（兼容 SpearStabAttackPacket） ==========
 
     public boolean performStabAttack(LivingEntity attacker, ItemStack stack, EquipmentSlot slot, boolean playSound) {
-        // Epic Fight 在场时攻击由 EF 的动画/判定管线处理，避免同一击结算两次
-        if (net.minecraft.spearcore.compat.CompatFlags.epicFight()) return false;
         if (attacker.level().isClientSide || stack.isEmpty() || stack.getItem() != this) return false;
         if (attacker instanceof Player player && !canPlayerPerformStab(player, this)) return false;
 

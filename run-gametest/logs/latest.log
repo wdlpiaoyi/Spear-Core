@@ -1,0 +1,123 @@
+[2410月2026 14:05:19.808] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.44, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.249, --fml.neoFormVersion, 20240808.144430]
+[2410月2026 14:05:19.811] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Microsoft OpenJDK 64-Bit Server VM 21.0.10+7-LTS
+[2410月2026 14:05:19.812] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.10 by Microsoft; OS Windows 11 arch amd64 version 10.0
+[2410月2026 14:05:19.918] [main/INFO] [net.neoforged.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[2410月2026 14:05:19.981] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/C:/Users/12501/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[2410月2026 14:05:20.484] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: betteradvancedtooltips. Using Mod File: C:\Users\12501\.gradle\caches\modules-2\files-2.1\dev.latvian.mods\better-advanced-tooltips\2101.1.0-build.1\4f9175f55758c06edba610cc8a32d317b15e8726\better-advanced-tooltips-2101.1.0-build.1.jar
+[2410月2026 14:05:20.484] [main/INFO] [net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator/]: Found 4 dependencies adding them to mods collection
+[2410月2026 14:05:20.485] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		Better Advanced Tooltips 2101.1.0-build.1 (betteradvancedtooltips)
+		KubeJS 2101.7.2-build.379 (kubejs)
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.249 (neoforge)
+		Rhino 2101.2.7-build.81 (rhino)
+		Spear Core 3.2.0 (spearcore)
+[2410月2026 14:05:21.523] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[2410月2026 14:05:21.537] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, .]
+[2410月2026 14:05:22.122] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/Minecraft for invalid dist DEDICATED_SERVER
+[2410月2026 14:05:22.122] [main/WARN] [mixin/]: Error loading class: net/minecraft/client/Minecraft (java.lang.RuntimeException: Attempted to load class net/minecraft/client/Minecraft for invalid dist DEDICATED_SERVER)
+[2410月2026 14:05:22.123] [main/WARN] [mixin/]: @Mixin target net.minecraft.client.Minecraft was not found spearcore.mixins.json:SpearCooldownAttackMixin from mod spearcore
+[2410月2026 14:05:22.466] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
+[2410月2026 14:05:23.281] [main/WARN] [oshi.driver.windows.perfmon.PerfmonDisabled/]: Invalid registry value type detected for PerfOS counters. Should be REG_DWORD. Ignoring: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PerfOS\Performance\Disable Performance Counters.
+[2410月2026 14:05:30.123] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[2410月2026 14:05:30.124] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[2410月2026 14:05:30.127] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[2410月2026 14:05:30.128] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[2410月2026 14:05:30.128] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[2410月2026 14:05:30.220] [modloading-worker-0/INFO] [net.neoforged.neoforge.common.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.249, for MC 1.21.1
+[2410月2026 14:05:30.378] [modloading-worker-0/INFO] [KubeJS Startup/]: Capturing errors for startup scripts enabled
+[2410月2026 14:05:30.379] [modloading-worker-0/INFO] [KubeJS Client/]: Capturing errors for client scripts enabled
+[2410月2026 14:05:30.379] [modloading-worker-0/INFO] [KubeJS/]: Loading vanilla registries...
+[2410月2026 14:05:30.389] [modloading-worker-0/INFO] [KubeJS/]: Looking for KubeJS plugins...
+[2410月2026 14:05:30.392] [modloading-worker-0/INFO] [KubeJS/]: Found plugin source kubejs
+[2410月2026 14:05:30.394] [modloading-worker-0/WARN] [KubeJS/]: Plugin dev.latvian.mods.kubejs.plugin.builtin.BuiltinKubeJSClientPlugin does not load on server side, skipping
+[2410月2026 14:05:30.395] [modloading-worker-0/WARN] [KubeJS/]: Plugin dev.latvian.mods.kubejs.integration.architectury.ArchitecturyIntegration does not have required mod 'architectury' loaded, skipping
+[2410月2026 14:05:30.395] [modloading-worker-0/INFO] [KubeJS/]: Found plugin source spearcore
+[2410月2026 14:05:30.397] [modloading-worker-0/INFO] [KubeJS/]: Done in 6.807 ms
+[2410月2026 14:05:30.565] [modloading-worker-0/INFO] [KubeJS Startup/]: startup_scripts:main.js#2: Hello, World! (Loaded startup example script)
+[2410月2026 14:05:30.566] [modloading-worker-0/INFO] [KubeJS Startup/]: Loaded script startup_scripts:main.js in 0.024 s
+[2410月2026 14:05:30.568] [modloading-worker-0/INFO] [KubeJS Startup/]: Loaded 1/1 KubeJS startup scripts in 0.167 s with 0 errors and 0 warnings
+[2410月2026 14:05:30.572] [modloading-worker-0/INFO] [KubeJS Startup/]: Validated 0 files in kubejs/data/ in 1ms
+[2410月2026 14:05:30.645] [modloading-sync-worker/INFO] [net.minecraft.spearcore.SpearcoreMod/]: [spearcore] KubeJS 联动已启用：物品类型 'spearcore:spear' 可用
+[2410月2026 14:05:30.841] [modloading-sync-worker/INFO] [KubeJS Startup/]: Capturing errors for startup scripts disabled
+[2410月2026 14:05:30.842] [modloading-sync-worker/INFO] [KubeJS Client/]: Capturing errors for client scripts disabled
+[2410月2026 14:05:30.942] [main/ERROR] [net.minecraft.server.dedicated.Settings/]: Failed to load properties from file: server.properties
+java.nio.file.NoSuchFileException: server.properties
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:85) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108) ~[?:?]
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.newByteChannel(WindowsFileSystemProvider.java:234) ~[?:?]
+	at java.base/java.nio.file.Files.newByteChannel(Files.java:380) ~[?:?]
+	at java.base/java.nio.file.Files.newByteChannel(Files.java:432) ~[?:?]
+	at java.base/java.nio.file.spi.FileSystemProvider.newInputStream(FileSystemProvider.java:420) ~[?:?]
+	at java.base/java.nio.file.Files.newInputStream(Files.java:160) ~[?:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.Settings.loadFromFile(Settings.java:38) ~[neoforge-21.1.249.jar%23125!/:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.DedicatedServerProperties.fromFile(DedicatedServerProperties.java:132) ~[neoforge-21.1.249.jar%23125!/:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.DedicatedServerSettings.<init>(DedicatedServerSettings.java:12) ~[neoforge-21.1.249.jar%23125!/:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.Main.main(Main.java:125) ~[neoforge-21.1.249.jar%23125!/:?]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at MC-BOOTSTRAP/fml_loader@4.0.44/net.neoforged.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:136) ~[loader-4.0.44.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/fml_loader@4.0.44/net.neoforged.fml.loading.targets.CommonLaunchHandler.serverService(CommonLaunchHandler.java:128) ~[loader-4.0.44.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/fml_loader@4.0.44/net.neoforged.fml.loading.targets.NeoForgeServerDevLaunchHandler.runService(NeoForgeServerDevLaunchHandler.java:23) ~[loader-4.0.44.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/fml_loader@4.0.44/net.neoforged.fml.loading.targets.CommonLaunchHandler.lambda$launchService$4(CommonLaunchHandler.java:118) ~[loader-4.0.44.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.run(Launcher.java:103) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.main(Launcher.java:74) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-11.0.5.jar%2382!/:?]
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.run(BootstrapLauncher.java:210) [bootstraplauncher-2.0.2.jar:?]
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:69) [bootstraplauncher-2.0.2.jar:?]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?]
+[2410月2026 14:05:30.972] [main/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[2410月2026 14:05:31.027] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/12501/MCreatorWorkspaces/spearcore/build/moddev/artifacts/neoforge-21.1.249.jar%23125!/assets/.mcassetsroot' uses unexpected schema
+[2410月2026 14:05:31.027] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/12501/MCreatorWorkspaces/spearcore/build/moddev/artifacts/neoforge-21.1.249.jar%23125!/data/.mcassetsroot' uses unexpected schema
+[2410月2026 14:05:31.033] [main/INFO] [net.neoforged.neoforge.gametest.GameTestHooks/]: Enabled Gametest Namespaces: [spearcore]
+[2410月2026 14:05:31.106] [main/INFO] [KubeJS Server/]: Capturing errors for server scripts enabled
+[2410月2026 14:05:31.117] [main/INFO] [KubeJS Server/]: server_scripts:main.js#2: Hello, World! (Loaded server example script)
+[2410月2026 14:05:31.117] [main/INFO] [KubeJS Server/]: Loaded script server_scripts:main.js in 0.0 s
+[2410月2026 14:05:31.126] [main/INFO] [KubeJS Server/]: Loaded 1/1 KubeJS server scripts in 0.02 s with 0 errors and 0 warnings
+[2410月2026 14:05:31.127] [main/INFO] [KubeJS/]: Loaded 15 data packs: bundle, trade_rebalance, vanilla, KubeJS Virtual Resource Pack [Before Mods, data], mod_data, mod/rhino, mod/neoforge, mod/kubejs, mod/betteradvancedtooltips, KubeJS Virtual Resource Pack [Internal, data], KubeJS Virtual Resource Pack [Registries, data], KubeJS Virtual Resource Pack [After Mods, data], KubeJS File Resource Pack [data], mod/spearcore, KubeJS Virtual Resource Pack [Last, data]
+[2410月2026 14:05:32.309] [main/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Loaded 1298 recipes
+[2410月2026 14:05:32.481] [main/INFO] [net.minecraft.advancements.AdvancementTree/]: Loaded 1400 advancements
+[2410月2026 14:05:33.288] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
+[2410月2026 14:05:33.289] [Server thread/INFO] [KubeJS Server/]: Capturing errors for server scripts disabled
+[2410月2026 14:05:33.295] [Server thread/INFO] [KubeJS Server/]: Server resource reload complete!
+[2410月2026 14:05:33.318] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[2410月2026 14:05:33.474] [Server thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Time elapsed: 186 ms
+[2410月2026 14:05:33.512] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: Started game test server
+[2410月2026 14:05:33.535] [Server thread/INFO] [net.neoforged.neoforge.server.permission.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[2410月2026 14:05:33.611] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: 7 tests are now running at position -1606396, -59, -12003891!
+[2410月2026 14:05:33.868] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestRunner/]: Running test batch 'spearcore:0' (7 tests)...
+[2410月2026 14:05:34.053] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: [       ]
+[2410月2026 14:05:34.269] [Server thread/WARN] [net.minecraft.gametest.framework.LogTestReporter/]: (optional) hitmomentumfollowsconfig failed at -1606386, -60, -12003891. 默认关闭时命中不该减速，x 速度变成了 0.0
+[2410月2026 14:05:34.344] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: [+x++   ]
+[2410月2026 14:05:34.363] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: [+x+++++]
+[2410月2026 14:05:34.363] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: ========= 7 GAME TESTS COMPLETE IN 751.9 ms ======================
+[2410月2026 14:05:34.363] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 7 required tests passed :)
+[2410月2026 14:05:34.363] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: 1 optional tests failed
+[2410月2026 14:05:34.363] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]:    - hitmomentumfollowsconfig
+[2410月2026 14:05:34.364] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: ====================================================
+[2410月2026 14:05:34.377] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server
+[2410月2026 14:05:34.377] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Saving players
+[2410月2026 14:05:34.377] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Saving worlds
+[2410月2026 14:05:34.792] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Saving chunks for level 'ServerLevel[Test Level]'/minecraft:overworld
+[2410月2026 14:05:35.321] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Saving chunks for level 'ServerLevel[Test Level]'/minecraft:the_end
+[2410月2026 14:05:35.341] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Saving chunks for level 'ServerLevel[Test Level]'/minecraft:the_nether
+[2410月2026 14:05:35.371] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[2410月2026 14:05:35.371] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[2410月2026 14:05:35.371] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[2410月2026 14:05:35.371] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved
+[2410月2026 14:05:35.424] [Server thread/INFO] [KubeJS/]: Closed KubeJS Virtual Resource Pack [Before Mods, data]
+[2410月2026 14:05:35.425] [Server thread/INFO] [KubeJS/]: Closed KubeJS Virtual Resource Pack [Internal, data]
+[2410月2026 14:05:35.425] [Server thread/INFO] [KubeJS/]: Closed KubeJS Virtual Resource Pack [Registries, data]
+[2410月2026 14:05:35.425] [Server thread/INFO] [KubeJS/]: Closed KubeJS Virtual Resource Pack [After Mods, data]
+[2410月2026 14:05:35.425] [Server thread/INFO] [KubeJS/]: Closed KubeJS Virtual Resource Pack [Last, data]
+[2410月2026 14:05:35.427] [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: Game test server shutting down
