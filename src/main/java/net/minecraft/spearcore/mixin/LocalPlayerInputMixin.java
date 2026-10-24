@@ -8,6 +8,8 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.item.SpearItem;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
@@ -49,6 +51,23 @@ public class LocalPlayerInputMixin {
     }
 
     /** 举矛时写回"乘 0.2 之前"的原值（此刻 input 字段里还是旧值）；否则用原版算出来的值。 */
+    /**
+     * 举矛时允许起跑。
+     *
+     * <p>原版那个"使用物品 → 移动输入 ×0.2"的分支里还有一句 {@code sprintTriggerTime = 0}，
+     * 它会让"双击 W / 按冲刺键"都无法起跑。这是在源头放行，而不是每 tick 事后 setSprinting(true)
+     * —— 参考 Backported Spears 的做法。</p>
+     *
+     * <p>{@code require = 0}：万一某个版本没有这个方法，注入静默跳过而不是崩；
+     * 那种情况下由 {@code SpearSprintHandler} 兜底。</p>
+     */
+    @Inject(method = "canStartSprinting", at = @At("HEAD"), cancellable = true, require = 0)
+    private void spearcore$allowSprintWhileUsingSpear(CallbackInfoReturnable<Boolean> cir) {
+        if (spearcore$isUsingSpear(Minecraft.getInstance().player)) {
+            cir.setReturnValue(true);
+        }
+    }
+
     private static float spearcore$unslowed(float previous, float multiplied) {
         return spearcore$isUsingSpear(Minecraft.getInstance().player) ? previous : multiplied;
     }
