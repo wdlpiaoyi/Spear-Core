@@ -62,6 +62,10 @@ public class SpearcoreMod {
           // 没装 EF 时它永远不会被加载，也就不会 NoClassDefFoundError。
           boolean epicFightLoaded = net.neoforged.fml.ModList.get().isLoaded("epicfight");
           net.minecraft.spearcore.compat.CompatFlags.setEpicFight(epicFightLoaded);
+          if (epicFightLoaded && net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+              // 客户端专属：EF 会把玩家渲染器整个替换掉，所以要向它注册自己的物品渲染器
+              net.minecraft.spearcore.compat.epicfight.client.EpicFightSpearRenderer.init();
+          }
           if (epicFightLoaded) {
               net.minecraft.spearcore.compat.epicfight.EpicFightCompat.init(modEventBus);
           }
