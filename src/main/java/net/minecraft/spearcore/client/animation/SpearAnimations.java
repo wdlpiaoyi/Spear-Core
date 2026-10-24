@@ -74,6 +74,18 @@ public class SpearAnimations {
 
     // ==================== 第三人称使用物品 ====================
 
+    /**
+     * Epic Fight 在场时的角度适配参数。
+     *
+     * <p>EF 会用自己的动画系统摆手臂，我们这套姿势是"原版手臂 + PoseStack 微调"，
+     * 直接套上去矛的朝向会偏。下面这组数字是给 EF 单独用的：俯仰更小、偏航略收、下沉一点，
+     * 让矛相对 EF 的手臂姿态指向前方而不是朝天。<b>数值需要实机微调</b>，改这里就行。</p>
+     */
+    private static final float EF_RAISE_PITCH_DEG = 52.0f;
+    private static final float EF_YAW_DEG = 76.0f;
+    private static final float EF_OFFSET_Y = -0.055f;
+    private static final float EF_OFFSET_Z = 0.02f;
+
     public static void thirdPersonUseItem(float fs2, PoseStack poseStack, float timeHeld,
                                           HumanoidArm humanoidArm, ItemStack itemStack,
                                           LivingEntity livingEntity, float partialTick) {
@@ -86,6 +98,22 @@ public class SpearAnimations {
         int n = humanoidArm == HumanoidArm.RIGHT ? 1 : -1;
         float f4 = 1.0f - easeOutBack(1.0f - useParams.raiseProgress());
         float f6 = hitFeedbackAmount(spearHitTicks + partialTick);
+        if (net.minecraft.spearcore.compat.CompatFlags.epicFight()) {
+            // EF 适配版：同一套进度曲线，只换角度/偏移，让矛相对 EF 的手臂指向正前方
+            poseStack.translate(0.0,
+                    -f6 * 0.4 + EF_OFFSET_Y * (useParams.raiseProgress() - useParams.raiseBackProgress()),
+                    -spear.getForwardMovement() * (f4 - useParams.raiseBackProgress()) + f6
+                            + EF_OFFSET_Z * (useParams.raiseProgress() - useParams.raiseBackProgress()));
+            poseStack.rotateAround(Axis.XN.rotationDegrees(
+                            EF_RAISE_PITCH_DEG * (useParams.raiseProgress() - useParams.raiseBackProgress())
+                                    - 40.0f * (f2 - f3)),
+                    0.0f, -0.03125f, 0.125f);
+            poseStack.rotateAround(Axis.YP.rotationDegrees(
+                            n * EF_YAW_DEG * (useParams.raiseProgress() - useParams.swayProgress()
+                                    + 3.0f * f3 + f2)),
+                    0.0f, 0.0f, 0.125f);
+            return;
+        }
         poseStack.translate(0.0, -f6 * 0.4, -spear.getForwardMovement() * (f4 - useParams.raiseBackProgress()) + f6);
         poseStack.rotateAround(Axis.XN.rotationDegrees(
                         70.0f * (useParams.raiseProgress() - useParams.raiseBackProgress()) - 40.0f * (f2 - f3)),

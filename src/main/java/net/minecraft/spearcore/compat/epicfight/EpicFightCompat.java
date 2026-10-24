@@ -35,8 +35,6 @@ public final class EpicFightCompat {
     /** 只在确认 Epic Fight 已加载后调用。 */
     public static void init(IEventBus modEventBus) {
         modEventBus.addListener(EpicFightCompat::registerCapabilities);
-        // 实验性：蓄力/冲刺/戳出时播放 EF 的长矛动作
-        EpicFightSpearAnimation.init();
         // 启动收尾时主动解析一次：所有注册都已完成，结果会落到日志里，
         // 出问题时一眼能看出是"没找到 EF 长矛能力"还是别的。
         modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) ->
