@@ -8,6 +8,8 @@ import net.minecraft.spearcore.item.SpearItem;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * 举矛时取消原版"正在使用物品 → 移动输入 ×0.2"的减速。
@@ -42,6 +44,23 @@ public class LocalPlayerInputMixin {
                     opcode = Opcodes.PUTFIELD))
     private void spearcore$keepForwardImpulse(Input input, float value, Operation<Void> original) {
         original.call(input, spearcore$isUsingSpear((LocalPlayer) (Object) this) ? input.forwardImpulse : value);
+    }
+
+    /**
+     * 举矛时允许起跑。
+     *
+     * <p>原版"使用物品 → 移动输入 ×0.2"的分支里还有一句 {@code sprintTriggerTime = 0}，
+     * 它让双击 W / 按冲刺键都无法起跑。这里在源头放行（参考 Backported Spears 的做法），
+     * 比每 tick 事后 {@code setSprinting(true)} 干净得多。</p>
+     *
+     * <p>{@code require = 0}：该方法若在某个版本不存在，注入静默跳过而不是崩；
+     * 那种情况由 {@code SpearSprintHandler} 兜底。</p>
+     */
+    @Inject(method = "canStartSprinting", at = @At("HEAD"), cancellable = true, require = 0)
+    private void spearcore$allowSprintWhileUsingSpear(CallbackInfoReturnable<Boolean> cir) {
+        if (spearcore$isUsingSpear((LocalPlayer) (Object) this)) {
+            cir.setReturnValue(true);
+        }
     }
 
     private static boolean spearcore$isUsingSpear(LocalPlayer player) {

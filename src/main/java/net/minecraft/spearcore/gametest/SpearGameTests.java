@@ -132,7 +132,10 @@ public final class SpearGameTests {
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void hitMomentumFollowsConfig(GameTestHelper helper) {
-        helper.assertFalse(SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.get(), "slowDownAttackerOnHit 默认应为 false");
+        // 测试不依赖本地配置文件：先把开关强制回默认，跑完再恢复原值
+        boolean spearcore$originalSlowDown = SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.get();
+        SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.set(false);
+        helper.assertFalse(SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.get(), "slowDownAttackerOnHit 默认应为 false（测试内已强制复位）");
 
         // 第一段：默认（关闭）—— 命中后水平速度不变，不用重新起跑
         double defaultSpeed = spearcore$stabAndReadSpeed(helper, 1, 1);
@@ -150,6 +153,7 @@ public final class SpearGameTests {
         helper.assertTrue(Math.abs(slowedSpeed - 0.18D) < 1.0E-6D,
                 "打开开关后水平速度应被削到 0.18，实际 " + slowedSpeed);
 
+        SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.set(spearcore$originalSlowDown);
         helper.succeed();
     }
 
