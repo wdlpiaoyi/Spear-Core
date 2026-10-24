@@ -8,3 +8,6 @@
 /libs/
 /run/
 /.mcreator/
+
+# GameTest 独立运行目录（结构体/世界/日志都是本地生成物）
+run-gametest/
