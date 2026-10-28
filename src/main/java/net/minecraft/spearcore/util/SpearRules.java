@@ -48,9 +48,6 @@ public final class SpearRules {
     /** 创造模式攻击距离：JAVA 6.5；BEDROCK 7.5。 */
     public enum CreativeMaxRange { JAVA, BEDROCK }
 
-    /** 蓄力时能否疾跑：JAVA/BEDROCK 不能；MODDED 能。 */
-    public enum SprintWhileCharging { JAVA, MODDED }
-
     /** 副手蓄力：JAVA 允许；BEDROCK 禁止。 */
     public enum OffhandCharging { JAVA, BEDROCK }
 
@@ -187,14 +184,6 @@ public final class SpearRules {
     }
 
     // ========== 移动 / 副手 / 突进 / 减速 ==========
-
-    public static SprintWhileCharging sprintWhileCharging() {
-        return read(SpearConfig.SPRINT_WHILE_CHARGING, SprintWhileCharging.JAVA);
-    }
-
-    public static boolean allowsSprintWhileCharging() {
-        return sprintWhileCharging() == SprintWhileCharging.MODDED;
-    }
 
     public static OffhandCharging offhandCharging() {
         return read(SpearConfig.OFFHAND_CHARGING, OffhandCharging.JAVA);

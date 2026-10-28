@@ -200,7 +200,6 @@ chargeRepeatHit = "JAVA"
 jabRepeatHit = "JAVA"
 durability = "JAVA"
 creativeMaxRange = "JAVA"
-sprintWhileCharging = "JAVA"
 offhandCharging = "JAVA"
 lunge = "JAVA"
 hitSlowDown = "JAVA"
@@ -218,7 +217,6 @@ mobSpearDropChance = "JAVA"
 | `jabRepeatHit` | `JAVA` / `MODDED` | 戳刺重复命中：JAVA 没有额外冷却；MODDED 同目标 10 tick 内跳过。 |
 | `durability` | `JAVA` / `BEDROCK` / `MODDED` | 耐久。JAVA：59/131/190/250/32/1561/2031；BEDROCK：每级 +1；MODDED：本模组原表（铜 195、金 59）。 |
 | `creativeMaxRange` | `JAVA` / `BEDROCK` | 创造模式攻击距离上限：JAVA 6.5，BEDROCK 7.5。 |
-| `sprintWhileCharging` | `JAVA` / `MODDED` | 蓄力（举矛）时能否疾跑。JAVA/基岩版不能；MODDED 能。 |
 | `offhandCharging` | `JAVA` / `BEDROCK` | 能否用副手举矛蓄力。JAVA 可以；BEDROCK 不行。 |
 | `lunge` | `JAVA` / `MODDED` | 突进力度与饥饿门槛。JAVA：0.458 / 饥饿 <6 禁用；MODDED：0.65 / 饥饿 ≤7 禁用。 |
 | `hitSlowDown` | `JAVA` / `MODDED` | 命中后攻击者自己水平速度 ×0.6 并取消奔跑。JAVA 有（原版手感）；MODDED 没有。 |
@@ -228,9 +226,18 @@ mobSpearDropChance = "JAVA"
 另有两条**不提供配置项**的固定规则：
 
 - **击落骑手所需的速度阈值写死为 Java 版数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界合金 9 格每秒）——这是原版 Java 版唯一可信的一套数值，基岩版对齐后与此相同。
-- 火焰附加点亮蜡烛/营火/TNT、蓄力重连间隔、暴击粒子等属于版本底层差异，不在本模组复刻范围内。
+- 判定层差异凡能复刻的都做成了开关（例如 `chargeRepeatHit` 对应基岩版的 0.5 秒重连间隔）；**引擎/渲染层**差异不在复刻范围（基岩版火焰附加点燃蜡烛/营火/TNT、蓄力暴击粒子）。
 
 `jabDamage = "BEDROCK"` 时，多出来的 1 点伤害加在攻击力属性上，因此**属性面板、戳刺、蓄力基线会一起 +1**（蓄力基线取武器攻击力是本模组的既有设计，见下文"与原版的差异"）。
+
+## 与原版的差异
+
+以下几处是本模组有意与 Java 原版不同（都已在上一节有对应开关），其余行为默认按原版还原：
+
+- **戳刺速度加成**：原版戳刺只看武器攻击力，不随移动速度增加；本模组默认不加（`jabSpeedBonus = "MODDED"` 才启用）。
+- **蓄力伤害基线**：原版蓄力伤害的基线是固定的 1 点（空手伤害），与武器攻击力无关；本模组以武器攻击力为基线，所以 `jabDamage` 的 +1 在蓄力里也会生效。
+- **同目标接触冷却**：原版一次蓄力对同一目标只结算一次，戳刺也没有额外冷却；本模组提供 10 tick 的版本（`chargeRepeatHit`、`jabRepeatHit` 的 JAVA 档才是原版行为）。
+- **怪物携带长矛**：原版只有僵尸/尸壳/僵尸村民/僵尸马骑手带铁矛、猪灵/僵尸猪灵带金矛；本模组的概率表与随机材质属于 MODDED 档（`mobSpearEquipTable`、`mobSpearDropChance`）。
 
 ---
 

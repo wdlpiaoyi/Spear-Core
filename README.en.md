@@ -201,7 +201,6 @@ chargeRepeatHit = "JAVA"
 jabRepeatHit = "JAVA"
 durability = "JAVA"
 creativeMaxRange = "JAVA"
-sprintWhileCharging = "JAVA"
 offhandCharging = "JAVA"
 lunge = "JAVA"
 hitSlowDown = "JAVA"
@@ -219,7 +218,6 @@ mobSpearDropChance = "JAVA"
 | `jabRepeatHit` | `JAVA` / `MODDED` | Re-stabbing: JAVA no extra cooldown; MODDED skips a target for 10 ticks. |
 | `durability` | `JAVA` / `BEDROCK` / `MODDED` | Durability. JAVA: 59/131/190/250/32/1561/2031; BEDROCK: +1 per tier; MODDED: this mod's old table (copper 195, gold 59). |
 | `creativeMaxRange` | `JAVA` / `BEDROCK` | Creative attack range cap: JAVA 6.5, BEDROCK 7.5. |
-| `sprintWhileCharging` | `JAVA` / `MODDED` | Whether you can sprint while charging. Vanilla cannot; MODDED can. |
 | `offhandCharging` | `JAVA` / `BEDROCK` | Charging from the off hand. JAVA allows it; BEDROCK does not. |
 | `lunge` | `JAVA` / `MODDED` | Lunge strength and hunger gate. JAVA: 0.458 / blocked below hunger 6; MODDED: 0.65 / blocked at hunger ≤7. |
 | `hitSlowDown` | `JAVA` / `MODDED` | On hit, cut the attacker's own horizontal speed to 60% and cancel sprinting. JAVA has it; MODDED does not. |
@@ -229,9 +227,18 @@ mobSpearDropChance = "JAVA"
 Two rules are **deliberately not configurable**:
 
 - **The rider-dismount speed thresholds are hard-wired to the Java Edition data** (wood 14 / gold 13 / stone 13 / copper 12 / iron 11 / diamond 10 / netherite 9 blocks per second) — that is the only trustworthy vanilla set, and Bedrock was aligned to it.
-- Fire Aspect lighting candles/campfires/TNT, charge re-hit intervals, crit particles and similar engine-level differences are out of scope.
+- Every judgable version difference was turned into a switch where possible (e.g. `chargeRepeatHit` mirrors Bedrock's 0.5 s re-hit interval); **engine / rendering** differences are out of scope (Bedrock's Fire Aspect igniting candles/campfires/TNT, charge crit particles).
 
 With `jabDamage = "BEDROCK"` the extra point goes onto the attack-damage attribute, so the **tooltip, the stab and the charge baseline all gain +1 together** (the charge using weapon attack power is a pre-existing deviation of this mod, see the deviations section).
+
+## Deviations from vanilla
+
+These are the places where this mod intentionally differs from Java Edition vanilla (each has a switch in the previous section); everything else defaults to vanilla behaviour:
+
+- **Stab speed bonus**: vanilla stab damage only uses the weapon's attack damage and never scales with movement speed; this mod does not add it by default (`jabSpeedBonus = "MODDED"` enables it).
+- **Charge damage baseline**: vanilla charge damage has a fixed baseline of 1 (bare-hand damage), independent of the weapon; this mod uses the weapon's attack damage as the baseline, so the `jabDamage` +1 also applies to charges.
+- **Per-target contact cooldown**: vanilla resolves a charge against each target once and has no extra stab cooldown; this mod offers the 10-tick variants (`chargeRepeatHit` / `jabRepeatHit`; their JAVA setting is the vanilla behaviour).
+- **Mob spears**: vanilla only has zombies/husks/zombie villagers/zombie horsemen with iron spears and piglins/zombified piglins with golden spears; this mod's chance table and random materials are the MODDED setting (`mobSpearEquipTable`, `mobSpearDropChance`).
 
 ---
 

@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.item.SpearItem;
-import net.minecraft.spearcore.util.SpearRules;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,10 +46,9 @@ public class LocalPlayerInputMixin {
         original.call(input, spearcore$shouldKeepImpulse() ? input.forwardImpulse : value);
     }
 
-    /** 只有 MODDED（允许蓄力疾跑）才取消 0.2 倍移动减速；JAVA / BEDROCK 保持原版手感。 */
+    /** 原版蓄力时移动输入会被乘 0.2，这里去掉这层减速（基岩版同样不减速）。 */
     private boolean spearcore$shouldKeepImpulse() {
-        return SpearRules.allowsSprintWhileCharging()
-                && spearcore$isUsingSpear((LocalPlayer) (Object) this);
+        return spearcore$isUsingSpear((LocalPlayer) (Object) this);
     }
 
     /**
@@ -65,7 +63,7 @@ public class LocalPlayerInputMixin {
      */
     @Inject(method = "canStartSprinting", at = @At("HEAD"), cancellable = true, require = 0)
     private void spearcore$allowSprintWhileUsingSpear(CallbackInfoReturnable<Boolean> cir) {
-        if (SpearRules.allowsSprintWhileCharging() && spearcore$isUsingSpear((LocalPlayer) (Object) this)) {
+        if (spearcore$isUsingSpear((LocalPlayer) (Object) this)) {
             cir.setReturnValue(true);
         }
     }

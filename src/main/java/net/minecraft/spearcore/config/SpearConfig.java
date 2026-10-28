@@ -86,12 +86,6 @@ public class SpearConfig {
                     "BEDROCK：7.5（未经实测，按社区资料）。")
             .defineEnum("creativeMaxRange", SpearRules.CreativeMaxRange.JAVA);
 
-    public static final ForgeConfigSpec.EnumValue<SpearRules.SprintWhileCharging> SPRINT_WHILE_CHARGING = BUILDER
-            .comment("蓄力（举矛）时能否疾跑。",
-                    "JAVA（默认）：不能，与原版 Java/基岩版一致。",
-                    "MODDED：可以，本模组原本的行为。")
-            .defineEnum("sprintWhileCharging", SpearRules.SprintWhileCharging.JAVA);
-
     public static final ForgeConfigSpec.EnumValue<SpearRules.OffhandCharging> OFFHAND_CHARGING = BUILDER
             .comment("能否用副手举矛蓄力。",
                     "JAVA（默认）：可以，与原版 Java 版一致。",
