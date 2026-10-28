@@ -47,6 +47,9 @@
 - 两条**不提供开关**的原版行为，别被旧说法带偏：蓄力（举矛）时**本来就能疾跑且不减速**（原版 `use_effects` 的 `speed_multiplier` 为 1.0、`can_sprint` 为 true）；命中目标时**攻击者自己会被减速**（`hitSlowDown` 的 `JAVA` 档才是原版手感）。
 - 版本事实（改动对应开关前先确认）：Java 版蓄力伤害**不吃**力量/虚弱（原版 bug MC-302778，`chargeStrength` 的 `JAVA` 档就是复刻它）；基岩版戳刺后有一段后摇才能再蓄力（MCPE-233837，对应 `jabToChargeDelay` 的 `BEDROCK`）。
 - `movingTargetAssist` 的 `MODDED` 档在**判断命中**时把目标判定箱按最近 3 tick 的位移往回挪（`SpearItem.compensatedTargetBox`），用来修 MC-310857「移动靶要预判」；只对玩家出手生效，怪物 AI 与伤害结算都不受影响，别顺手把「怪物的移动」也算进去。
+- **攻击距离**：`BaseSpearItem` **不要**统一给长矛挂 `ForgeMod.ENTITY_REACH` 修饰符（历史上挂过 `+1.5`，已删，见提交「长矛攻击距离回到原版 4.5 格」）。本模组自带长矛的射程 = `SpearStats` 的 2 / 4.5（创造 6.5、怪物按 `mobFactor` 算成 2.25）**加上**持有者 reach 超出 3.0 的部分——后半句是给冒险整合包的攻击距离加成用的，别删（`SpearItem#effectiveMaxRange`）。
+  - 第三方 / KubeJS 注册的长矛如果自己想要额外 reach，把属性修饰符写在该长矛自己的 `Item` 实现里，不要写进 `BaseSpearItem`，否则会和上面的换算叠算两遍（曾经变成 6.0 格）。
+  - 戳刺判定箱用 `hitboxMargin2`（默认 0.25，对齐原版 `PIERCING_WEAPON`）；蓄力判定箱用 `hitboxMargin` + `SpearRules.hitboxMargin()`（`JAVA` 档 0.125，对齐 `KINETIC_WEAPON`）。这两个数不是「越大越还原」。
 
 ## 6. 数据与资源约定（踩过的坑）
 

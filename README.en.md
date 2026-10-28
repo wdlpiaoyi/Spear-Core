@@ -331,7 +331,7 @@ public class MySpearItem extends ConfiguredSpearItem {
                                          SpearCondition.ofRelativeSpeed(225, 4.6F),
             /* forwardMovement */ 0.38f, /* minRange */ 2.0f, /* maxRange */ 4.5f,
             /* creative ranges */ 2.0f, 6.5f,
-            /* hitboxMargin2 */ 0.125f, /* mobFactor */ 0.5f,
+            /* hitboxMargin2 */ 0.25f, /* mobFactor */ 0.5f,
             /* dealsKnockback */ true, /* dismounts */ true));
     }
 }

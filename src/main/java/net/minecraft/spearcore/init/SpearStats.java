@@ -99,7 +99,8 @@ public class SpearStats {
                 SpearCondition.ofRelativeSpeed((int)(damageSec * 20.0F), 4.6F),
                 0.38F,
                 2.0F, 4.5F, 2.0F, 6.5F,
-                0.125F, 0.5F,
+                // 戳刺判定箱：原版 PIERCING_WEAPON 的 hitbox_margin 是 0.25F（蓄力的 KINETIC_WEAPON 是 0.125F）。
+                0.25F, 0.5F,
                 true, true
         );
     }

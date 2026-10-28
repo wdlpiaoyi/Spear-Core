@@ -22,7 +22,6 @@ import com.google.common.collect.Multimap;
 import java.util.UUID;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraftforge.common.ForgeMod;
 
 public abstract class BaseSpearItem extends SpearItem {
 
@@ -115,9 +114,6 @@ public abstract class BaseSpearItem extends SpearItem {
 
     // ========== 属性修饰符 ==========
 
-    private static final java.util.UUID SPEAR_RANGE_UUID =
-            java.util.UUID.fromString("7c9a1e2b-6f43-4d18-9a05-2b8f1c3d4e56");
-
     private static Multimap<Attribute, AttributeModifier> buildAttributeModifiers(SpearStats.Stats stats) {
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
 
@@ -131,9 +127,10 @@ public abstract class BaseSpearItem extends SpearItem {
                 new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier",
                         stats.getAttackSpeedModifier(), AttributeModifier.Operation.ADDITION));
 
-        builder.put(ForgeMod.ENTITY_REACH.get(),
-                new AttributeModifier(SPEAR_RANGE_UUID, "Spear reach",
-                        1.5, AttributeModifier.Operation.ADDITION));
+        // 这里故意不再挂 ENTITY_REACH（历史上挂过 +1.5）。
+        // 原版长矛的射程来自攻击范围数据（2~4.5），玩家交互距离仍是 3.0；
+        // SpearItem#effectiveMaxRange 会把「持有者 reach 超出 3.0 的部分」加到射程上，
+        // 所以整合包的攻击距离加成照样生效；这在物品上再挂一份就会算两遍（曾经变成 6.0 格）。
 
         return builder.build();
     }

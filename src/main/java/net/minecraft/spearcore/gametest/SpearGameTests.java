@@ -14,6 +14,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -26,6 +27,8 @@ import net.minecraftforge.event.RegisterGameTestsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+
+import java.util.UUID;
 
 /**
  * GameTest：由游戏本体自己跑、自己判定、自己报告失败数。
@@ -79,7 +82,7 @@ public final class SpearGameTests {
         helper.succeed();
     }
 
-    /** 移植后的属性修饰符代码（EquipmentSlot + Multimap + ENTITY_REACH）确实挂上了属性。 */
+    /** 属性修饰符只该有攻击力/攻击速度：射程由 stats 的 2/4.5 加上持有者 reach 超出 3.0 的部分换算，物品上不能再挂一份。 */
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void spearAttributesAreRegistered(GameTestHelper helper) {
@@ -87,7 +90,63 @@ public final class SpearGameTests {
         var modifiers = stack.getAttributeModifiers(EquipmentSlot.MAINHAND);
         helper.assertTrue(modifiers.containsKey(Attributes.ATTACK_DAMAGE), "缺少攻击力修饰符");
         helper.assertTrue(modifiers.containsKey(Attributes.ATTACK_SPEED), "缺少攻击速度修饰符");
-        helper.assertTrue(modifiers.containsKey(ForgeMod.ENTITY_REACH.get()), "缺少交互距离修饰符（ENTITY_REACH）");
+        helper.assertFalse(modifiers.containsKey(ForgeMod.ENTITY_REACH.get()),
+                "长矛不应再挂 ENTITY_REACH 修饰符（射程已由 stats + 持有者 reach 换算，重复计入会变成 6 格）");
+        helper.succeed();
+    }
+
+    /** 攻击距离必须等于原版：玩家 2~4.5、创造 6.5、怪物 2.25。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void attackRangeFollowsVanilla(GameTestHelper helper) {
+        for (Item item : spearcore$allSpears()) {
+            SpearItem spear = (SpearItem) item;
+            helper.assertTrue(spear.getMinRange() == 2.0F, "最小攻击距离应为 2，实际 " + spear.getMinRange());
+            helper.assertTrue(spear.getMaxRange() == 4.5F, "最大攻击距离应为 4.5，实际 " + spear.getMaxRange());
+            helper.assertTrue(spear.getMaxCreativeRange() == 6.5F,
+                    "创造模式最大攻击距离应为 6.5，实际 " + spear.getMaxCreativeRange());
+            helper.assertTrue(spear.getMobFactor() == 0.5F, "怪物射程系数应为 0.5，实际 " + spear.getMobFactor());
+        }
+        Mob mob = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        helper.assertTrue(Math.abs(iron.effectiveMaxRange(mob) - 2.25F) < 1.0e-4F,
+                "怪物最大攻击距离应为 2.25，实际 " + iron.effectiveMaxRange(mob));
+        helper.succeed();
+    }
+
+    /** 整合包给持有者加 reach 时，长矛射程必须跟着变长（不能被上面的修复一刀切掉）。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void reachBonusStillApplies(GameTestHelper helper) {
+        Player player = helper.makeMockSurvivalPlayer();
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        helper.assertTrue(Math.abs(iron.effectiveMaxRange(player) - 4.5F) < 1.0e-4F,
+                "无加成时玩家最大攻击距离应为 4.5，实际 " + iron.effectiveMaxRange(player));
+        AttributeInstance reach = player.getAttribute(ForgeMod.ENTITY_REACH.get());
+        helper.assertTrue(reach != null, "测试玩家没有 ENTITY_REACH 属性");
+        AttributeModifier bonus = new AttributeModifier(UUID.randomUUID(), "game test reach",
+                2.0D, AttributeModifier.Operation.ADDITION);
+        reach.addTransientModifier(bonus);
+        try {
+            helper.assertTrue(Math.abs(iron.effectiveMaxRange(player) - 6.5F) < 1.0e-4F,
+                    "reach +2 没有计入长矛射程，实际 " + iron.effectiveMaxRange(player));
+        } finally {
+            reach.removeModifier(bonus);
+        }
+        helper.succeed();
+    }
+
+    /** 判定箱对齐原版：蓄力 0.125、戳刺 0.25。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void jabHitboxMatchesVanilla(GameTestHelper helper) {
+        for (Item item : spearcore$allSpears()) {
+            SpearItem spear = (SpearItem) item;
+            helper.assertTrue(spear.getHitboxMargin() == 0.125F,
+                    "蓄力判定箱应为 0.125，实际 " + spear.getHitboxMargin());
+            helper.assertTrue(spear.getHitboxMargin2() == 0.25F,
+                    "戳刺判定箱应为 0.25，实际 " + spear.getHitboxMargin2());
+        }
         helper.succeed();
     }
 
@@ -538,5 +597,18 @@ public final class SpearGameTests {
         boolean hit = spearItem.performStabAttack(attacker, spear, EquipmentSlot.MAINHAND, false);
         helper.assertTrue(hit, "戳刺没有命中目标（车道 x=" + attackerX + "）");
         return attacker.getDeltaMovement().x;
+    }
+
+    /** 七把长矛的实例，顺序固定（木/石/铜/铁/金/钻/下界）。 */
+    private static Item[] spearcore$allSpears() {
+        return new Item[]{
+                SpearCoreItems.WOODEN_SPEAR.get(),
+                SpearCoreItems.STONE_SPEAR.get(),
+                SpearCoreItems.COPPER_SPEAR.get(),
+                SpearCoreItems.IRON_SPEAR.get(),
+                SpearCoreItems.GOLDEN_SPEAR.get(),
+                SpearCoreItems.DIAMOND_SPEAR.get(),
+                SpearCoreItems.NETHERITE_SPEAR.get(),
+        };
     }
 }
