@@ -169,6 +169,10 @@ jar {
     from { configurations.embed.collect { zipTree(it) } }
     // 排除适配层里那个嵌套 jar（类已经由 mixinextras-common 直接并进来了，留着只是白占 600KB）
     exclude 'META-INF/jars/MixinExtras-*.jar'
+    // 同时排除 jarjar 元数据：shading 已经把类摊进 jar 根目录，这里不再需要 jar-in-jar。
+    // 留着 metadata.json 会让 Forge 去找已被排除的 META-INF/jars/MixinExtras-*.jar，
+    // 启动时打出 "Failed to load mod file META-INF\jars\MixinExtras-*.jar"。
+    exclude 'META-INF/jarjar/**'
     // 两个 jar 都有 LICENSE_MixinExtras，取第一份即可
     duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 }
