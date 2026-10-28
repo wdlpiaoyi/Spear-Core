@@ -63,6 +63,18 @@ public final class SpearRules {
     /** 怪物掉落率：JAVA 8.5%（抢夺每级 +1%）；MODDED 固定 15%。 */
     public enum MobSpearDropChance { JAVA, MODDED }
 
+    /** 最小攻击距离：JAVA 原版 2 格起手；MODDED 0 格，贴脸也能戳/蓄力。 */
+    public enum MinAttackRange { JAVA, MODDED }
+
+    /** 蓄力伤害基线是否吃攻击力修饰符：JAVA 不吃（裸武器攻击力）；BEDROCK 吃（力量药水等）。 */
+    public enum ChargeStrength { JAVA, BEDROCK }
+
+    /** 戳刺命中后到能重新蓄力的间隔：JAVA 0；BEDROCK 该矛的使用冷却。 */
+    public enum JabToChargeDelay { JAVA, BEDROCK }
+
+    /** 移动靶延迟补偿：JAVA 原版需预判；MODDED 按玩家看到的位置判定。 */
+    public enum MovingTargetAssist { JAVA, MODDED }
+
     // ========== 数值表 ==========
 
     /** Java 原版耐久：木 / 石 / 铜 / 铁 / 金 / 钻 / 下界合金。 */
@@ -231,5 +243,43 @@ public final class SpearRules {
 
     public static boolean usesVanillaDropChance() {
         return mobSpearDropChance() == MobSpearDropChance.JAVA;
+    }
+
+    // ========== 距离 / 蓄力基线 / 戳刺后摇 / 移动靶 ==========
+
+    public static MinAttackRange minAttackRange() {
+        return read(SpearConfig.MIN_ATTACK_RANGE, MinAttackRange.JAVA);
+    }
+
+    /** 最小攻击距离是否归零（贴脸也能戳刺、也能起手蓄力）。 */
+    public static boolean ignoresMinRange() {
+        return minAttackRange() == MinAttackRange.MODDED;
+    }
+
+    public static ChargeStrength chargeStrength() {
+        return read(SpearConfig.CHARGE_STRENGTH, ChargeStrength.JAVA);
+    }
+
+    /** 蓄力伤害的基线要不要算上力量/虚弱等攻击力修饰符。 */
+    public static boolean chargeGainsAttributeModifiers() {
+        return chargeStrength() == ChargeStrength.BEDROCK;
+    }
+
+    public static JabToChargeDelay jabToChargeDelay() {
+        return read(SpearConfig.JAB_TO_CHARGE_DELAY, JabToChargeDelay.JAVA);
+    }
+
+    /** 戳刺命中后要挂多久的"禁止蓄力"冷却；JAVA 为 0（无间隔）。 */
+    public static int jabToChargeDelayTicks(int useCooldownTicks) {
+        return jabToChargeDelay() == JabToChargeDelay.BEDROCK ? useCooldownTicks : 0;
+    }
+
+    public static MovingTargetAssist movingTargetAssist() {
+        return read(SpearConfig.MOVING_TARGET_ASSIST, MovingTargetAssist.JAVA);
+    }
+
+    /** 是否做移动靶延迟补偿（按玩家看到的位置判定）。 */
+    public static boolean compensatesMovingTargets() {
+        return movingTargetAssist() == MovingTargetAssist.MODDED;
     }
 }

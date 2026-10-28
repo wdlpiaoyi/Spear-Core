@@ -14,7 +14,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -241,6 +243,102 @@ public final class SpearGameTests {
                     "BEDROCK 铁矛攻击力加成应为 3，实际 " + spearcore$attackDamageBonus(SpearCoreItems.IRON_SPEAR.get()));
         } finally {
             SpearConfig.JAB_DAMAGE.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 最小攻击距离：JAVA 有下限（怪物按 mobFactor 减半）/ MODDED 归零，贴脸也能出手。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void minAttackRangeFollowsConfig(GameTestHelper helper) {
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        Mob attacker = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        SpearRules.MinAttackRange original = SpearConfig.MIN_ATTACK_RANGE.get();
+        try {
+            SpearConfig.MIN_ATTACK_RANGE.set(SpearRules.MinAttackRange.JAVA);
+            helper.assertTrue(Math.abs(iron.effectiveMinRange(attacker) - 1.0F) < 1.0E-6F,
+                    "JAVA 怪物最小攻击距离应为 2×0.5=1.0，实际 " + iron.effectiveMinRange(attacker));
+            SpearConfig.MIN_ATTACK_RANGE.set(SpearRules.MinAttackRange.MODDED);
+            helper.assertTrue(iron.effectiveMinRange(attacker) == 0.0F,
+                    "MODDED 最小攻击距离应为 0，实际 " + iron.effectiveMinRange(attacker));
+        } finally {
+            SpearConfig.MIN_ATTACK_RANGE.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 蓄力基线是否吃攻击力修饰符：JAVA 只取裸值（力量药水无效，原版 MC-302778）/ BEDROCK 吃修饰符。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void chargeStrengthFollowsConfig(GameTestHelper helper) {
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        Mob user = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        user.getAttribute(Attributes.ATTACK_DAMAGE).addTransientModifier(
+                new AttributeModifier("spearcore_test_strength", 5.0D, AttributeModifier.Operation.ADDITION));
+        SpearRules.ChargeStrength original = SpearConfig.CHARGE_STRENGTH.get();
+        try {
+            SpearConfig.CHARGE_STRENGTH.set(SpearRules.ChargeStrength.JAVA);
+            float javaBase = iron.chargeBaseDamage(user);
+            helper.assertTrue(
+                    Math.abs(javaBase - (float) user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE)) < 1.0E-6F,
+                    "JAVA 蓄力基线应忽略修饰符，实际 " + javaBase);
+            SpearConfig.CHARGE_STRENGTH.set(SpearRules.ChargeStrength.BEDROCK);
+            float bedrockBase = iron.chargeBaseDamage(user);
+            helper.assertTrue(Math.abs(bedrockBase - (javaBase + 5.0F)) < 1.0E-6F,
+                    "BEDROCK 蓄力基线应包含 +5 力量，实际 " + bedrockBase + "（JAVA " + javaBase + "）");
+        } finally {
+            SpearConfig.CHARGE_STRENGTH.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 戳刺后重新蓄力的间隔：JAVA 0 tick / BEDROCK 该矛的使用冷却（铁 19t、木 13t）。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void jabToChargeDelayFollowsConfig(GameTestHelper helper) {
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        SpearItem wood = (SpearItem) SpearCoreItems.WOODEN_SPEAR.get();
+        helper.assertTrue(iron.getUseCooldownTicks() == 19,
+                "铁矛使用冷却应为 19t，实际 " + iron.getUseCooldownTicks());
+        helper.assertTrue(wood.getUseCooldownTicks() == 13,
+                "木矛使用冷却应为 13t，实际 " + wood.getUseCooldownTicks());
+        SpearRules.JabToChargeDelay original = SpearConfig.JAB_TO_CHARGE_DELAY.get();
+        try {
+            SpearConfig.JAB_TO_CHARGE_DELAY.set(SpearRules.JabToChargeDelay.JAVA);
+            helper.assertTrue(SpearRules.jabToChargeDelayTicks(19) == 0, "JAVA 戳刺后不应有间隔");
+            SpearConfig.JAB_TO_CHARGE_DELAY.set(SpearRules.JabToChargeDelay.BEDROCK);
+            helper.assertTrue(SpearRules.jabToChargeDelayTicks(19) == 19, "BEDROCK 铁矛戳刺后应冷却 19t");
+            helper.assertTrue(SpearRules.jabToChargeDelayTicks(13) == 13, "BEDROCK 木矛戳刺后应冷却 13t");
+        } finally {
+            SpearConfig.JAB_TO_CHARGE_DELAY.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 移动靶补偿（MC-310857）：JAVA 按服务器真实位置判定 / MODDED 按客户端看到的位置回退 3 tick。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void movingTargetAssistFollowsConfig(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer();
+        Mob moving = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 3);
+        moving.setDeltaMovement(0.28D, 0.0D, 0.0D);
+        SpearRules.MovingTargetAssist original = SpearConfig.MOVING_TARGET_ASSIST.get();
+        try {
+            SpearConfig.MOVING_TARGET_ASSIST.set(SpearRules.MovingTargetAssist.JAVA);
+            helper.assertTrue(SpearItem.movingTargetCompensation(player) == 0.0D, "JAVA 不应有移动靶补偿");
+            double javaShift = SpearItem.compensatedTargetBox(player, moving, 0.0F).minX
+                    - moving.getBoundingBox().minX;
+            helper.assertTrue(Math.abs(javaShift) < 1.0E-6D, "JAVA 判定箱不应被移动，实际偏移 " + javaShift);
+
+            SpearConfig.MOVING_TARGET_ASSIST.set(SpearRules.MovingTargetAssist.MODDED);
+            helper.assertTrue(Math.abs(SpearItem.movingTargetCompensation(player) - 3.0D) < 1.0E-6D,
+                    "MODDED 应回退 3 tick，实际 " + SpearItem.movingTargetCompensation(player));
+            double moddedShift = SpearItem.compensatedTargetBox(player, moving, 0.0F).minX
+                    - moving.getBoundingBox().minX;
+            helper.assertTrue(Math.abs(moddedShift - (-0.28D * 3.0D)) < 1.0E-6D,
+                    "MODDED 判定箱应按 0.28 格/tick × 3 回退，实际偏移 " + moddedShift);
+        } finally {
+            SpearConfig.MOVING_TARGET_ASSIST.set(original);
         }
         helper.succeed();
     }

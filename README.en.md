@@ -206,6 +206,10 @@ lunge = "JAVA"
 hitSlowDown = "JAVA"
 mobSpearEquipTable = "JAVA"
 mobSpearDropChance = "JAVA"
+minAttackRange = "JAVA"
+chargeStrength = "JAVA"
+jabToChargeDelay = "JAVA"
+movingTargetAssist = "JAVA"
 ```
 
 | Option | Values (first is default) | Meaning |
@@ -223,22 +227,29 @@ mobSpearDropChance = "JAVA"
 | `hitSlowDown` | `JAVA` / `MODDED` | On hit, cut the attacker's own horizontal speed to 60% and cancel sprinting. JAVA has it; MODDED does not. |
 | `mobSpearEquipTable` | `JAVA` / `MODDED` | Mob loadout: JAVA vanilla list (iron/golden spears), MODDED this mod's chances + random materials. |
 | `mobSpearDropChance` | `JAVA` / `MODDED` | Mob spear drop chance: JAVA 8.5% (+1% per Looting level), MODDED fixed 15%. |
+| `minAttackRange` | `JAVA` / `MODDED` | Minimum attack range: JAVA 2 blocks (halved for mobs); MODDED 0 — you can poke at point-blank range. |
+| `chargeStrength` | `JAVA` / `BEDROCK` | Whether the charge baseline takes attack-damage modifiers (Strength/Weakness). JAVA does not ([MC-302778](https://bugs.mojang.com/browse/MC-302778)); BEDROCK does. |
+| `jabToChargeDelay` | `JAVA` / `BEDROCK` | Delay before you can start another charge after a jab: JAVA 0 ticks; BEDROCK the spear's use-cooldown (wood 13, iron 19, netherite 23 ticks). |
+| `movingTargetAssist` | `JAVA` / `MODDED` | Moving-target compensation ([MC-310857](https://bugs.mojang.com/browse/MC-310857)): JAVA judges at the server-side position; MODDED rewinds the hitbox 3 ticks to what the client sees. |
 
 Two rules are **deliberately not configurable**:
 
 - **The rider-dismount speed thresholds are hard-wired to the Java Edition data** (wood 14 / gold 13 / stone 13 / copper 12 / iron 11 / diamond 10 / netherite 9 blocks per second) — that is the only trustworthy vanilla set, and Bedrock was aligned to it.
 - Every judgable version difference was turned into a switch where possible (e.g. `chargeRepeatHit` mirrors Bedrock's 0.5 s re-hit interval); **engine / rendering** differences are out of scope (Bedrock's Fire Aspect igniting candles/campfires/TNT, charge crit particles).
 
-With `jabDamage = "BEDROCK"` the extra point goes onto the attack-damage attribute, so the **tooltip, the stab and the charge baseline all gain +1 together** (the charge using weapon attack power is a pre-existing deviation of this mod, see the deviations section).
+With `jabDamage = "BEDROCK"` the extra point goes onto the attack-damage attribute, so the **tooltip and the stab gain +1 together**; whether the charge gains it too depends on `chargeStrength` (with `BEDROCK` the charge baseline also takes modifiers).
 
 ## Deviations from vanilla
 
 These are the places where this mod intentionally differs from Java Edition vanilla (each has a switch in the previous section); everything else defaults to vanilla behaviour:
 
+- **Charge damage baseline**: vanilla uses a fixed baseline of 1 (bare-hand damage) plus the relative-speed multiplier; this mod always uses the weapon's attack damage as the baseline, and `chargeStrength` only decides whether modifiers such as Strength/Weakness count.
 - **Stab speed bonus**: vanilla stab damage only uses the weapon's attack damage and never scales with movement speed; this mod does not add it by default (`jabSpeedBonus = "MODDED"` enables it).
-- **Charge damage baseline**: vanilla charge damage has a fixed baseline of 1 (bare-hand damage), independent of the weapon; this mod uses the weapon's attack damage as the baseline, so the `jabDamage` +1 also applies to charges.
-- **Per-target contact cooldown**: vanilla resolves a charge against each target once and has no extra stab cooldown; this mod offers the 10-tick variants (`chargeRepeatHit` / `jabRepeatHit`; their JAVA setting is the vanilla behaviour).
-- **Mob spears**: vanilla only has zombies/husks/zombie villagers/zombie horsemen with iron spears and piglins/zombified piglins with golden spears; this mod's chance table and random materials are the MODDED setting (`mobSpearEquipTable`, `mobSpearDropChance`).
+- **Per-target contact cooldown**: vanilla resolves a charge against each target once and has no extra stab cooldown; this mod defaults to that, and the `MODDED` settings of `chargeRepeatHit` / `jabRepeatHit` add a 10-tick cooldown.
+- **Zero minimum range**: vanilla cannot hit anything closer than 2 blocks; `minAttackRange = "MODDED"` removes that limit.
+- **Jab recovery**: vanilla Java lets you charge again immediately after a jab; `jabToChargeDelay = "BEDROCK"` adds the spear's use-cooldown as recovery.
+- **Moving-target assist**: vanilla judges at the server-side position (you must lead moving targets); `movingTargetAssist = "MODDED"` rewinds 3 ticks to the position the client sees.
+- **Mob spears**: vanilla only has zombies/husks/zombie villagers/zombie horsemen with iron spears and piglins/zombified piglins with golden spears; this mod defaults to that list, and the chance table + random materials are the `MODDED` setting (`mobSpearEquipTable`, `mobSpearDropChance`).
 
 ---
 

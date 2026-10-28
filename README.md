@@ -205,6 +205,10 @@ lunge = "JAVA"
 hitSlowDown = "JAVA"
 mobSpearEquipTable = "JAVA"
 mobSpearDropChance = "JAVA"
+minAttackRange = "JAVA"
+chargeStrength = "JAVA"
+jabToChargeDelay = "JAVA"
+movingTargetAssist = "JAVA"
 ```
 
 | 配置项 | 可选值（第一个是默认） | 说明 |
@@ -222,22 +226,29 @@ mobSpearDropChance = "JAVA"
 | `hitSlowDown` | `JAVA` / `MODDED` | 命中后攻击者自己水平速度 ×0.6 并取消奔跑。JAVA 有（原版手感）；MODDED 没有。 |
 | `mobSpearEquipTable` | `JAVA` / `MODDED` | 怪物携带名单：JAVA 原版名单（铁/金矛），MODDED 本模组概率表 + 随机材质。 |
 | `mobSpearDropChance` | `JAVA` / `MODDED` | 怪物矛掉落率：JAVA 8.5%（抢夺每级 +1%），MODDED 固定 15%。 |
+| `minAttackRange` | `JAVA` / `MODDED` | 最小攻击距离：JAVA 2 格（怪物按 mobFactor 减半）；MODDED 归零，贴脸也能出手。 |
+| `chargeStrength` | `JAVA` / `BEDROCK` | 蓄力基线是否吃攻击力修饰符（力量/虚弱药水）。JAVA 不吃（原版 [MC-302778](https://bugs.mojang.com/browse/MC-302778)）；BEDROCK 吃。 |
+| `jabToChargeDelay` | `JAVA` / `BEDROCK` | 戳刺命中后重新举矛蓄力的间隔：JAVA 0 tick；BEDROCK 该矛的使用冷却（木 13、铁 19、下界合金 23 tick）。 |
+| `movingTargetAssist` | `JAVA` / `MODDED` | 移动靶补偿（[MC-310857](https://bugs.mojang.com/browse/MC-310857)）：JAVA 按服务器真实位置判定；MODDED 按客户端看到的位置回退 3 tick。 |
 
 另有两条**不提供配置项**的固定规则：
 
 - **击落骑手所需的速度阈值写死为 Java 版数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界合金 9 格每秒）——这是原版 Java 版唯一可信的一套数值，基岩版对齐后与此相同。
 - 判定层差异凡能复刻的都做成了开关（例如 `chargeRepeatHit` 对应基岩版的 0.5 秒重连间隔）；**引擎/渲染层**差异不在复刻范围（基岩版火焰附加点燃蜡烛/营火/TNT、蓄力暴击粒子）。
 
-`jabDamage = "BEDROCK"` 时，多出来的 1 点伤害加在攻击力属性上，因此**属性面板、戳刺、蓄力基线会一起 +1**（蓄力基线取武器攻击力是本模组的既有设计，见下文"与原版的差异"）。
+`jabDamage = "BEDROCK"` 时，多出来的 1 点伤害加在攻击力属性上，因此**属性面板与戳刺会一起 +1**；蓄力是否也 +1 取决于 `chargeStrength`（`BEDROCK` 时蓄力基线也吃攻击力修饰符）。
 
 ## 与原版的差异
 
-以下几处是本模组有意与 Java 原版不同（都已在上一节有对应开关），其余行为默认按原版还原：
+以下几处是本模组有意与 Java 原版不同（能做成开关的都已在上一节列出），其余行为默认按原版还原：
 
+- **蓄力伤害基线**：原版是固定 1 点（空手伤害）加相对速度倍数；本模组始终以武器攻击力为基线，`chargeStrength` 只决定力量/虚弱这类修饰符算不算。
 - **戳刺速度加成**：原版戳刺只看武器攻击力，不随移动速度增加；本模组默认不加（`jabSpeedBonus = "MODDED"` 才启用）。
-- **蓄力伤害基线**：原版蓄力伤害的基线是固定的 1 点（空手伤害），与武器攻击力无关；本模组以武器攻击力为基线，所以 `jabDamage` 的 +1 在蓄力里也会生效。
-- **同目标接触冷却**：原版一次蓄力对同一目标只结算一次，戳刺也没有额外冷却；本模组提供 10 tick 的版本（`chargeRepeatHit`、`jabRepeatHit` 的 JAVA 档才是原版行为）。
-- **怪物携带长矛**：原版只有僵尸/尸壳/僵尸村民/僵尸马骑手带铁矛、猪灵/僵尸猪灵带金矛；本模组的概率表与随机材质属于 MODDED 档（`mobSpearEquipTable`、`mobSpearDropChance`）。
+- **同目标接触冷却**：原版一次蓄力对同一目标只结算一次，戳刺也没有额外冷却；本模组默认就是原版行为，`chargeRepeatHit` / `jabRepeatHit` 的 `MODDED` 档才加 10 tick 冷却。
+- **最小攻击距离归零**：原版 2 格内打不到；`minAttackRange = "MODDED"` 时归零，可以贴脸捅。
+- **戳刺后摇**：原版 Java 版戳完能立刻再举矛；`jabToChargeDelay = "BEDROCK"` 时按该矛的使用冷却补上这段后摇。
+- **移动靶补偿**：原版按服务器位置判定（打移动靶要留提前量）；`movingTargetAssist = "MODDED"` 时按客户端看到的位置回退 3 tick。
+- **怪物携带长矛**：原版只有僵尸/尸壳/僵尸村民/僵尸马骑手带铁矛、猪灵/僵尸猪灵带金矛；本模组默认走原版名单，概率表与随机材质属于 `MODDED` 档（`mobSpearEquipTable`、`mobSpearDropChance`）。
 
 ---
 

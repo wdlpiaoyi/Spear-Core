@@ -17,7 +17,7 @@
 ./gradlew runGameTestServer    # 集成测试
 ```
 
-- GameTest 的**通过标准**是日志出现 `All 14 required tests passed :)`（数量会随测试增加而变），失败则是 `N required tests failed :(`。退出码不总是可靠，**以日志为准**。
+- GameTest 的**通过标准**是日志出现 `All N required tests passed :)`（数量会随测试增加而变），失败则是 `N required tests failed :(`。退出码不总是可靠，**以日志为准**。
 - 测试结构模板在 `gameteststructures/`，由 `stageGameTestStructures` 任务自动拷进 `run/`。
 - Gradle 需要写 `~/.gradle` 缓存与锁文件；如果运行环境有文件沙箱，给它放行，否则会报 `Could not create parent directory for lock file`。
 - 发布 jar 必须过 `reobfJar`（`jar` 已 `finalizedBy 'reobfJar'`）。别绕过它，否则 SRG 名不匹配，进真实游戏就 `NoSuchMethodError`。
@@ -39,11 +39,13 @@
 
 ## 5. 行为配置体系（改玩法前必读）
 
-- `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`）+ `[behavior]` 段的 13 个行为开关。
-- `util/SpearRules.java`：13 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
+- `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`）+ `[behavior]` 段的 17 个行为开关。
+- `util/SpearRules.java`：17 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
 - 约定：每个开关的默认值是 `JAVA`（= 原版 Java 行为）；**某版本取值和 Java 一样时，不要为它提供重复选项**（例如「戳刺速度加成」只有 `JAVA`/`MODDED` 两个值）。新增开关时同步改：`SpearConfig`（带中文注释）+ `SpearRules` + `README.md`（中文）与 `README.en.md`（英文）+ `kjs-guide.md`。
 - 击落骑手的速度阈值**固定为 Java 数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9），见 `SpearStats.dismountSpeedFor`，不要再加开关。
 - 两条**不提供开关**的原版行为，别被旧说法带偏：蓄力（举矛）时**本来就能疾跑且不减速**（原版 `use_effects` 的 `speed_multiplier` 为 1.0、`can_sprint` 为 true）；命中目标时**攻击者自己会被减速**（`hitSlowDown` 的 `JAVA` 档才是原版手感）。
+- 版本事实（改动对应开关前先确认）：Java 版蓄力伤害**不吃**力量/虚弱（原版 bug MC-302778，`chargeStrength` 的 `JAVA` 档就是复刻它）；基岩版戳刺后有一段后摇才能再蓄力（MCPE-233837，对应 `jabToChargeDelay` 的 `BEDROCK`）。
+- `movingTargetAssist` 的 `MODDED` 档在**判断命中**时把目标判定箱按最近 3 tick 的位移往回挪（`SpearItem.compensatedTargetBox`），用来修 MC-310857「移动靶要预判」；只对玩家出手生效，怪物 AI 与伤害结算都不受影响，别顺手把「怪物的移动」也算进去。
 
 ## 6. 数据与资源约定（踩过的坑）
 

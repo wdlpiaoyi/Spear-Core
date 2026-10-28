@@ -116,6 +116,31 @@ public class SpearConfig {
                     "MODDED：固定 15%，本模组原本的数值。")
             .defineEnum("mobSpearDropChance", SpearRules.MobSpearDropChance.JAVA);
 
+    public static final ForgeConfigSpec.EnumValue<SpearRules.MinAttackRange> MIN_ATTACK_RANGE = BUILDER
+            .comment("长矛的最小攻击距离（判定射线的起点）。",
+                    "JAVA（默认）：2 格，与原版一致——贴脸的目标反而打不到，得先退开一点。",
+                    "MODDED：0 格，任意近的距离都能戳刺、也能起手蓄力。")
+            .defineEnum("minAttackRange", SpearRules.MinAttackRange.JAVA);
+
+    public static final ForgeConfigSpec.EnumValue<SpearRules.ChargeStrength> CHARGE_STRENGTH = BUILDER
+            .comment("蓄力伤害的基线是否吃攻击力修饰符（力量/虚弱药水、其他攻击力加成）。",
+                    "JAVA（默认）：不吃，与原版 Java 版一致——蓄力伤害取武器的裸攻击力（MC-302778）。",
+                    "BEDROCK：吃，与原版基岩版一致——力量药水等会加进蓄力伤害。")
+            .defineEnum("chargeStrength", SpearRules.ChargeStrength.JAVA);
+
+    public static final ForgeConfigSpec.EnumValue<SpearRules.JabToChargeDelay> JAB_TO_CHARGE_DELAY = BUILDER
+            .comment("戳刺命中后，要等多久才能重新举矛蓄力。",
+                    "JAVA（默认）：0 tick，与原版 Java 版一致——戳完立刻能蓄力。",
+                    "BEDROCK：等该长矛的使用冷却结束（木 0.65s … 下界合金 1.15s），与原版基岩版一致。",
+                    "          原版只写了\"若干 tick\"（MCPE-233837），这里按该矛的使用冷却近似。")
+            .defineEnum("jabToChargeDelay", SpearRules.JabToChargeDelay.JAVA);
+
+    public static final ForgeConfigSpec.EnumValue<SpearRules.MovingTargetAssist> MOVING_TARGET_ASSIST = BUILDER
+            .comment("打移动目标时的延迟补偿。",
+                    "JAVA（默认）：不补偿，与原版一致——服务器按目标的真实位置判定，打移动靶要自己留提前量（MC-310857）。",
+                    "MODDED：按玩家屏幕上看到的位置判定，把目标判定箱按最近 3 tick 的位移往回挪，打移动靶不用预判。")
+            .defineEnum("movingTargetAssist", SpearRules.MovingTargetAssist.JAVA);
+
     static {
         BUILDER.pop();
     }
