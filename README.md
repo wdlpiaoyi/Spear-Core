@@ -277,6 +277,8 @@ MIT License
 | 六把原版材质矛 | `#spearcore:spears` |
 | 全部七把矛 | `#spearcore:spear` |
 | 原版矛标签 | `#minecraft:spears` |
+| 近战武器归类 | `#minecraft:swords`（自动连带进入 `#minecraft:tools` 与 `#forge:tools`） |
+| 猪灵喜爱 | `#minecraft:piglin_loved`（仅金矛） |
 | 伤害类型 | `spearcore:spear` |
 | 突进附魔 | `spearcore:lunge`（`supported_items` 即 `#spearcore:spear`，最高 3 级） |
 | 玩家属性 | `spearcore:spear_stab_multiplier`（戳刺伤害倍率，默认 1.0）、`spearcore:spear_charge_multiplier`（冲锋伤害倍率，默认 1.0） |
@@ -666,6 +668,8 @@ Everything public you can hook into from another mod, a datapack, or a KubeJS sc
 | The six vanilla-material spears | `#spearcore:spears` |
 | All seven spears | `#spearcore:spear` |
 | Vanilla spear tag | `#minecraft:spears` |
+| Melee weapon tag | `#minecraft:swords` (which also pulls them into `#minecraft:tools` and `#forge:tools`) |
+| Piglin loved | `#minecraft:piglin_loved` (golden spear only) |
 | Damage type | `spearcore:spear` |
 | Lunge enchantment | `spearcore:lunge` (`supported_items` is `#spearcore:spear`, max level 3) |
 | Player attributes | `spearcore:spear_stab_multiplier` (stab damage multiplier, default 1.0), `spearcore:spear_charge_multiplier` (charge damage multiplier, default 1.0) |

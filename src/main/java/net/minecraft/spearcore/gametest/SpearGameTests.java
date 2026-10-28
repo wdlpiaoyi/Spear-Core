@@ -1,13 +1,16 @@
 package net.minecraft.spearcore.gametest;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.config.SpearConfig;
 import net.minecraft.spearcore.init.SpearCoreItems;
 import net.minecraft.spearcore.init.SpearStats;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.util.SpearRules;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -363,6 +366,58 @@ public final class SpearGameTests {
         boolean hit = spearItem.performStabAttack(attacker, spear, EquipmentSlot.MAINHAND, false);
         helper.assertTrue(hit, "戳刺没有命中目标（车道 x=" + attackerX + "）");
         return new StabResult(attacker, target, before - target.getHealth());
+    }
+
+    /**
+     * 长矛必须挂进合适的物品 tag —— 这是和其他模组/数据包互通的前提。
+     *
+     * <p>1.20.1 的 tag 目录是 tags/items（复数），写成 1.21 的 tags/item 会被静默忽略，
+     * 原仓库就是踩了这个坑（所有 tag 实际都没生效）。这条测试同时验证本模组 tag
+     * 与原版 / Forge 的归类 tag，防止再犯。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void spearsCarryItemTags(GameTestHelper helper) {
+        TagKey<Item> spearsTag = TagKey.create(Registries.ITEM, new ResourceLocation(SpearcoreMod.MODID, "spears"));
+        TagKey<Item> spearTag = TagKey.create(Registries.ITEM, new ResourceLocation(SpearcoreMod.MODID, "spear"));
+        TagKey<Item> swordsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "swords"));
+        TagKey<Item> toolsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "tools"));
+        TagKey<Item> minecraftSpearsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "spears"));
+        TagKey<Item> forgeToolsTag = TagKey.create(Registries.ITEM, new ResourceLocation("forge", "tools"));
+        TagKey<Item> piglinLovedTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "piglin_loved"));
+
+        // #spearcore:spears 按上游约定只含「原版材质」的六把（铜是模组自加的，单独一个 tag）
+        Item[] vanillaMaterialSpears = {
+                SpearCoreItems.WOODEN_SPEAR.get(),
+                SpearCoreItems.STONE_SPEAR.get(),
+                SpearCoreItems.IRON_SPEAR.get(),
+                SpearCoreItems.GOLDEN_SPEAR.get(),
+                SpearCoreItems.DIAMOND_SPEAR.get(),
+                SpearCoreItems.NETHERITE_SPEAR.get(),
+        };
+        Item[] allSpears = {
+                SpearCoreItems.WOODEN_SPEAR.get(),
+                SpearCoreItems.STONE_SPEAR.get(),
+                SpearCoreItems.COPPER_SPEAR.get(),
+                SpearCoreItems.IRON_SPEAR.get(),
+                SpearCoreItems.GOLDEN_SPEAR.get(),
+                SpearCoreItems.DIAMOND_SPEAR.get(),
+                SpearCoreItems.NETHERITE_SPEAR.get(),
+        };
+        for (Item item : vanillaMaterialSpears) {
+            helper.assertTrue(new ItemStack(item).is(spearsTag), "长矛没有进入 #spearcore:spears：" + item);
+        }
+        for (Item item : allSpears) {
+            ItemStack stack = new ItemStack(item);
+            helper.assertTrue(stack.is(spearTag), "长矛没有进入 #spearcore:spear：" + item);
+            helper.assertTrue(stack.is(minecraftSpearsTag), "长矛没有进入 #minecraft:spears：" + item);
+            helper.assertTrue(stack.is(swordsTag), "长矛没有进入 #minecraft:swords：" + item);
+            helper.assertTrue(stack.is(toolsTag), "长矛没有进入 #minecraft:tools：" + item);
+            helper.assertTrue(stack.is(forgeToolsTag), "长矛没有进入 #forge:tools：" + item);
+        }
+        helper.assertTrue(new ItemStack(SpearCoreItems.GOLDEN_SPEAR.get()).is(piglinLovedTag),
+                "金矛没有进入 #minecraft:piglin_loved");
+        helper.succeed();
     }
 
     /** 在指定 x 车道摆一对"持矛攻击者 + 目标"，戳一次，返回攻击者戳完的水平速度。 */
