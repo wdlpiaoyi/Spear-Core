@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.init.SpearStats;
 import net.minecraft.spearcore.util.SpearCondition;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -120,9 +121,11 @@ public abstract class BaseSpearItem extends SpearItem {
     private static Multimap<Attribute, AttributeModifier> buildAttributeModifiers(SpearStats.Stats stats) {
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
 
+        // 基岩版戳刺伤害每级 +1：加在属性上，属性面板与实际伤害保持一致。
         builder.put(Attributes.ATTACK_DAMAGE,
                 new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier",
-                        stats.attackDamageBonus(), AttributeModifier.Operation.ADDITION));
+                        stats.attackDamageBonus() + SpearRules.jabDamageBonus(),
+                        AttributeModifier.Operation.ADDITION));
 
         builder.put(Attributes.ATTACK_SPEED,
                 new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier",
@@ -141,6 +144,16 @@ public abstract class BaseSpearItem extends SpearItem {
             return super.getDefaultAttributeModifiers(slot);
         }
         return buildAttributeModifiers(SpearStats.get(getSelfItem()));
+    }
+
+    /**
+     * 耐久按配置在运行时解析：物品构造期配置接口可能还没加载，所以只能在这里算。
+     * 物品栏耐久条与工具提示都会经过 ItemStack#getMaxDamage()，因此会同步变化。
+     */
+    @Override
+    public int getMaxDamage(ItemStack stack) {
+        SpearStats.Stats stats = SpearStats.get(getSelfItem());
+        return SpearRules.durability(stats.materialName(), stats.durability());
     }
 
     // ========== SpearItem 抽象方法实现 ==========
@@ -228,7 +241,7 @@ public abstract class BaseSpearItem extends SpearItem {
     public float getMaxRange() { return maxRange; }
 
     @Override
-    public float getHitboxMargin() { return hitboxMargin; }
+    public float getHitboxMargin() { return SpearRules.hitboxMargin(hitboxMargin); }
 
     @Override
     public float getHitboxMargin2() { return hitboxMargin2; }
@@ -243,7 +256,7 @@ public abstract class BaseSpearItem extends SpearItem {
     public float getMinCreativeRange() { return minCreativeRange; }
 
     @Override
-    public float getMaxCreativeRange() { return maxCreativeRange; }
+    public float getMaxCreativeRange() { return SpearRules.creativeMaxRange(maxCreativeRange); }
 
     @Override
     public float getMobFactor() { return mobFactor; }

@@ -7,6 +7,7 @@ import net.minecraft.spearcore.config.SpearConfig;
 import net.minecraft.spearcore.init.SpearCoreItems;
 import net.minecraft.spearcore.init.SpearStats;
 import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -125,35 +126,158 @@ public final class SpearGameTests {
 
     /**
      * 命中目标后给攻击者自己减速（水平速度 ×0.6）并由 setSprinting(false) 取消奔跑，
-     * 这个"撞完得重新起跑"的手感由 slowDownAttackerOnHit 控制，<b>默认关闭</b>。
+     * 这个"撞完得重新起跑"的手感由 {@code behavior.hitSlowDown} 控制：
+     * JAVA（默认）有、MODDED 没有。
      *
      * <p>两段都在同一个测试里跑，避免翻配置影响到并行/同批次的其他测试。</p>
      */
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void hitMomentumFollowsConfig(GameTestHelper helper) {
-        // 测试不依赖本地配置文件：先把开关强制回默认，跑完再恢复原值
-        boolean spearcore$originalSlowDown = SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.get();
-        SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.set(false);
-        helper.assertFalse(SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.get(), "slowDownAttackerOnHit 默认应为 false（测试内已强制复位）");
+        // 测试不依赖本地配置文件：先强制到默认值，跑完再恢复原值
+        SpearRules.HitSlowDown original = SpearConfig.HIT_SLOW_DOWN.get();
+        SpearConfig.HIT_SLOW_DOWN.set(SpearRules.HitSlowDown.JAVA);
+        helper.assertTrue(SpearRules.slowsDownAttackerOnHit(),
+                "hitSlowDown 默认应为 JAVA（测试内已强制复位）");
 
-        // 第一段：默认（关闭）—— 命中后水平速度不变，不用重新起跑
-        double defaultSpeed = spearcore$stabAndReadSpeed(helper, 1, 1);
-        helper.assertTrue(Math.abs(defaultSpeed - 0.3D) < 1.0E-6D,
-                "默认关闭时命中不该减速，x 速度变成了 " + defaultSpeed);
+        // 第一段：JAVA —— 命中后自己也被削到 0.3 × 0.6 = 0.18
+        double vanillaSpeed = spearcore$stabAndReadSpeed(helper, 1, 1);
+        helper.assertTrue(Math.abs(vanillaSpeed - 0.18D) < 1.0E-6D,
+                "JAVA 模式命中后自己应减速到 0.18，实际 x 速度 " + vanillaSpeed);
 
-        // 第二段：打开开关 —— 应当被削到 0.3 × 0.6 = 0.18
-        double slowedSpeed;
+        // 第二段：MODDED —— 命中后速度不变，不用重新起跑
+        double moddedSpeed;
         try {
-            SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.set(true);
-            slowedSpeed = spearcore$stabAndReadSpeed(helper, 3, 1);
+            SpearConfig.HIT_SLOW_DOWN.set(SpearRules.HitSlowDown.MODDED);
+            moddedSpeed = spearcore$stabAndReadSpeed(helper, 3, 1);
         } finally {
-            SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.set(false);
+            SpearConfig.HIT_SLOW_DOWN.set(original);
         }
-        helper.assertTrue(Math.abs(slowedSpeed - 0.18D) < 1.0E-6D,
-                "打开开关后水平速度应被削到 0.18，实际 " + slowedSpeed);
+        helper.assertTrue(Math.abs(moddedSpeed - 0.3D) < 1.0E-6D,
+                "MODDED 模式命中不该减速，x 速度变成了 " + moddedSpeed);
 
-        SpearConfig.SLOW_DOWN_ATTACKER_ON_HIT.set(spearcore$originalSlowDown);
+        helper.succeed();
+    }
+
+    /** 耐久按 behavior.durability 切换：JAVA 金 32 / BEDROCK 33 / MODDED 59。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void durabilityFollowsConfig(GameTestHelper helper) {
+        SpearRules.Durability original = SpearConfig.DURABILITY.get();
+        try {
+            SpearConfig.DURABILITY.set(SpearRules.Durability.JAVA);
+            helper.assertTrue(spearcore$maxDamage(SpearCoreItems.GOLDEN_SPEAR.get()) == 32,
+                    "JAVA 金矛耐久应为 32，实际 " + spearcore$maxDamage(SpearCoreItems.GOLDEN_SPEAR.get()));
+            helper.assertTrue(spearcore$maxDamage(SpearCoreItems.IRON_SPEAR.get()) == 250,
+                    "JAVA 铁矛耐久应为 250，实际 " + spearcore$maxDamage(SpearCoreItems.IRON_SPEAR.get()));
+
+            SpearConfig.DURABILITY.set(SpearRules.Durability.BEDROCK);
+            helper.assertTrue(spearcore$maxDamage(SpearCoreItems.GOLDEN_SPEAR.get()) == 33,
+                    "BEDROCK 金矛耐久应为 33，实际 " + spearcore$maxDamage(SpearCoreItems.GOLDEN_SPEAR.get()));
+            helper.assertTrue(spearcore$maxDamage(SpearCoreItems.IRON_SPEAR.get()) == 251,
+                    "BEDROCK 铁矛耐久应为 251，实际 " + spearcore$maxDamage(SpearCoreItems.IRON_SPEAR.get()));
+
+            SpearConfig.DURABILITY.set(SpearRules.Durability.MODDED);
+            helper.assertTrue(spearcore$maxDamage(SpearCoreItems.GOLDEN_SPEAR.get()) == 59,
+                    "MODDED 金矛耐久应为 59，实际 " + spearcore$maxDamage(SpearCoreItems.GOLDEN_SPEAR.get()));
+        } finally {
+            SpearConfig.DURABILITY.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 蓄力判定箱：JAVA 0.125 / MODDED 0.25。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void hitboxMarginFollowsConfig(GameTestHelper helper) {
+        SpearRules.ChargeHitboxMargin original = SpearConfig.CHARGE_HITBOX_MARGIN.get();
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        try {
+            SpearConfig.CHARGE_HITBOX_MARGIN.set(SpearRules.ChargeHitboxMargin.JAVA);
+            helper.assertTrue(Math.abs(iron.getHitboxMargin() - 0.125F) < 1.0E-6F,
+                    "JAVA 判定箱膨胀应为 0.125，实际 " + iron.getHitboxMargin());
+            SpearConfig.CHARGE_HITBOX_MARGIN.set(SpearRules.ChargeHitboxMargin.MODDED);
+            helper.assertTrue(Math.abs(iron.getHitboxMargin() - 0.25F) < 1.0E-6F,
+                    "MODDED 判定箱膨胀应为 0.25，实际 " + iron.getHitboxMargin());
+        } finally {
+            SpearConfig.CHARGE_HITBOX_MARGIN.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 创造模式攻击距离：JAVA 6.5 / BEDROCK 7.5。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void creativeRangeFollowsConfig(GameTestHelper helper) {
+        SpearRules.CreativeMaxRange original = SpearConfig.CREATIVE_MAX_RANGE.get();
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        try {
+            SpearConfig.CREATIVE_MAX_RANGE.set(SpearRules.CreativeMaxRange.JAVA);
+            helper.assertTrue(Math.abs(iron.getMaxCreativeRange() - 6.5F) < 1.0E-6F,
+                    "JAVA 创造距离上限应为 6.5，实际 " + iron.getMaxCreativeRange());
+            SpearConfig.CREATIVE_MAX_RANGE.set(SpearRules.CreativeMaxRange.BEDROCK);
+            helper.assertTrue(Math.abs(iron.getMaxCreativeRange() - 7.5F) < 1.0E-6F,
+                    "BEDROCK 创造距离上限应为 7.5，实际 " + iron.getMaxCreativeRange());
+        } finally {
+            SpearConfig.CREATIVE_MAX_RANGE.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 戳刺伤害：JAVA 铁矛 +2 攻击力 / BEDROCK +3（每级 +1 点）。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void jabDamageFollowsConfig(GameTestHelper helper) {
+        SpearRules.JabDamage original = SpearConfig.JAB_DAMAGE.get();
+        try {
+            SpearConfig.JAB_DAMAGE.set(SpearRules.JabDamage.JAVA);
+            helper.assertTrue(Math.abs(spearcore$attackDamageBonus(SpearCoreItems.IRON_SPEAR.get()) - 2.0F) < 1.0E-6F,
+                    "JAVA 铁矛攻击力加成应为 2，实际 " + spearcore$attackDamageBonus(SpearCoreItems.IRON_SPEAR.get()));
+            SpearConfig.JAB_DAMAGE.set(SpearRules.JabDamage.BEDROCK);
+            helper.assertTrue(Math.abs(spearcore$attackDamageBonus(SpearCoreItems.IRON_SPEAR.get()) - 3.0F) < 1.0E-6F,
+                    "BEDROCK 铁矛攻击力加成应为 3，实际 " + spearcore$attackDamageBonus(SpearCoreItems.IRON_SPEAR.get()));
+        } finally {
+            SpearConfig.JAB_DAMAGE.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 击落骑手的速度阈值写死 Java 版数据，与任何配置项无关。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void dismountThresholdIsVanillaData(GameTestHelper helper) {
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("wood") - 14.0F) < 1.0E-6F, "木矛击落阈值应为 14");
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("gold") - 13.0F) < 1.0E-6F, "金矛击落阈值应为 13");
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("stone") - 13.0F) < 1.0E-6F, "石矛击落阈值应为 13");
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("copper") - 12.0F) < 1.0E-6F, "铜矛击落阈值应为 12");
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("iron") - 11.0F) < 1.0E-6F, "铁矛击落阈值应为 11");
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("diamond") - 10.0F) < 1.0E-6F, "钻矛击落阈值应为 10");
+        helper.assertTrue(Math.abs(SpearStats.dismountSpeedFor("netherite") - 9.0F) < 1.0E-6F, "下界合金矛击落阈值应为 9");
+
+        var ironStats = SpearStats.get(SpearCoreItems.IRON_SPEAR.get());
+        helper.assertTrue(ironStats.dismounts(), "铁矛应当能击落骑手");
+        helper.assertTrue(ironStats.dismountConditions().isPresent(), "铁矛应当带击落条件");
+        helper.assertTrue(Math.abs(ironStats.dismountConditions().get().minSpeed() - 11.0F) < 1.0E-6F,
+                "铁矛击落条件里的速度阈值应为 11，实际 "
+                        + ironStats.dismountConditions().get().minSpeed());
+        helper.succeed();
+    }
+
+    /** 突进力度：JAVA 0.458 / MODDED 0.65。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void lungeStrengthFollowsConfig(GameTestHelper helper) {
+        SpearRules.Lunge original = SpearConfig.LUNGE.get();
+        try {
+            SpearConfig.LUNGE.set(SpearRules.Lunge.JAVA);
+            helper.assertTrue(Math.abs(SpearRules.lungeStrength() - 0.458F) < 1.0E-6F,
+                    "JAVA 突进力度应为 0.458，实际 " + SpearRules.lungeStrength());
+            SpearConfig.LUNGE.set(SpearRules.Lunge.MODDED);
+            helper.assertTrue(Math.abs(SpearRules.lungeStrength() - 0.65F) < 1.0E-6F,
+                    "MODDED 突进力度应为 0.65，实际 " + SpearRules.lungeStrength());
+        } finally {
+            SpearConfig.LUNGE.set(original);
+        }
         helper.succeed();
     }
 
@@ -180,6 +304,21 @@ public final class SpearGameTests {
         double pushed = spearcore$stabAndReadTargetPush(helper, 3, 1, Enchantments.KNOCKBACK, 2);
         helper.assertTrue(pushed > plain, "击退附魔没有加大击退：" + plain + " -> " + pushed);
         helper.succeed();
+    }
+
+    /** 读一件长矛当前配置下的最大耐久。 */
+    private static int spearcore$maxDamage(Item item) {
+        return new ItemStack(item).getMaxDamage();
+    }
+
+    /** 读一件长矛主手时的攻击力修饰符数值（ADDITION 的 amount）。 */
+    private static float spearcore$attackDamageBonus(Item item) {
+        var modifiers = new ItemStack(item).getAttributeModifiers(EquipmentSlot.MAINHAND)
+                .get(Attributes.ATTACK_DAMAGE);
+        if (modifiers == null || modifiers.isEmpty()) {
+            return 0.0F;
+        }
+        return (float) modifiers.iterator().next().getAmount();
     }
 
     /** 摆一对"持矛攻击者 + 目标"，戳一次，返回目标掉的血量。 */

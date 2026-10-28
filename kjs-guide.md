@@ -251,7 +251,7 @@ event.create('命名空间:名字', 'spearcore:spear')
     .forwardMovement(0.38)           // 冲锋前推力度
     .mobFactor(0.5)                  // 怪物攻击距离倍率
     .knockback(true)                 // 是否击退
-    .dismount(false)                 // 是否击落骑手
+    .dismount(false)                 // 是否击落骑手（内建七把矛已改为 true，击落阈值固定 Java 版数据）
     .materialName('custom')          // 标记名
     .texture('命名空间:item/名字')      // 图标贴图(手持自动找 _in_hand)
     .inHandTexture('命名空间:item/手持图') // 可选：单独指定手持贴图
@@ -502,7 +502,7 @@ event.create('namespace:name', 'spearcore:spear')
     .forwardMovement(0.38)           // lunge forward push
     .mobFactor(0.5)                  // mob attack range multiplier
     .knockback(true)                 // knock targets back
-    .dismount(false)                 // pull riders off mounts
+    .dismount(false)                 // pull riders off mounts (built-in spears now default to true; thresholds are fixed to Java values)
     .materialName('custom')          // label
     .texture('namespace:item/name')      // icon texture (in-hand auto uses _in_hand)
     .inHandTexture('namespace:item/in_hand') // optional: set the in-hand texture explicitly

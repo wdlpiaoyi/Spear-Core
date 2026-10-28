@@ -3,6 +3,7 @@ package net.minecraft.spearcore.mixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,6 +22,9 @@ public class SpearCooldownAttackMixin {
 
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof SpearItem)) return;
+
+        // 基岩版走使用冷却，不走原版攻击蓄力条。
+        if (SpearRules.usesUseCooldown()) return;
 
         if (player.getAttackStrengthScale(0.0F) < 0.95F) {
             cir.setReturnValue(false);

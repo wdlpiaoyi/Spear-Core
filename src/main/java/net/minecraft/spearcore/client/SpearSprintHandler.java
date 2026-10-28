@@ -3,6 +3,7 @@ package net.minecraft.spearcore.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.SpearcoreMod;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -34,6 +35,12 @@ public class SpearSprintHandler {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+
+        // JAVA / BEDROCK：蓄力（举矛）时不能疾跑，与原版一致，这里整个不介入。
+        if (!SpearRules.allowsSprintWhileCharging()) {
+            reset();
+            return;
+        }
 
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
