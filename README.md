@@ -207,7 +207,7 @@ tetraExtraReachScale = 0.3
 
 这项功能原先是独立的 **Spear Core Resourcepack Compat** 模组，现已并入本体：如果你装过它（`spearrpcompat` 的 jar），删掉那个 jar 即可，装载本模组后行为不变。
 
-### Tetra 兼容
+### Tetra 兼容 (WIP)
 
 `tetraCompat` 控制 Tetra 单头工具的长矛化：同时装了**长手柄**（`single/handle` → `long_handle/`）和**矛头**（`single/head` → `spearhead/`）的单头工具，会像本模组的长矛一样工作——左键戳刺、右键蓄力（不再是 Tetra 的投掷），并复用同一套长矛姿态与命中判定。
 
