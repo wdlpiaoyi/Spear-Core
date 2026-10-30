@@ -4,7 +4,7 @@
 >
 > 这份文档只讲 KubeJS 的用法，不需要写 Java、不需要编译。 / This guide only covers the KubeJS side: no Java and no compiling required.
 >
-> **版本提示**：这份教程**两个分支都适用**。1.20.1 + Forge 用 KubeJS **2001.6.5-build.26+forge**，1.21.1 + NeoForge 用 2101.x —— 脚本写法完全一致。 / **Version note**: this guide applies to **both branches**. 1.20.1 + Forge uses KubeJS **2001.6.5-build.26+forge**, 1.21.1 + NeoForge uses 2101.x — the script syntax is identical.
+> **版本提示**：本教程只针对本仓库的 **1.20.1 + Forge**（KubeJS 用 **2001.6.5-build.26+forge**）。上游另有 1.21.x 方向，版本号与加载器不同；脚本写法基本一致，但不要照搬版本号。 / **Version note**: this guide targets **1.20.1 + Forge** in this repository (KubeJS **2001.6.5-build.26+forge**). Upstream also has a 1.21.x line with different loaders/versions; the script syntax is similar, but do not copy the version numbers.
 
 ---
 
@@ -12,8 +12,8 @@
 
 ## 0. 前提
 
-- 游戏版本 **1.21.1**，加载器 **NeoForge**（Spear Core 本身只支持这一档）。
-- 装了 **KubeJS**（NeoForge 版，版本号形如 `2101.x`）。
+- 游戏版本 **1.20.1**，加载器 **Forge**。
+- 装了 **KubeJS**（Forge 版，版本号形如 `2001.x`）。
 - 装了 **Spear Core**。
 - KubeJS 和 Spear Core **客户端、服务端都要装**。只装服务端的话物品能存在但没有模型。
 
@@ -263,8 +263,8 @@ event.create('命名空间:名字', 'spearcore:spear')
 
 ## 0. Requirements
 
-- Minecraft **1.21.1** with **NeoForge** (the only target Spear Core supports).
-- **KubeJS** for NeoForge, version like `2101.x`.
+- Minecraft **1.20.1** with **Forge**.
+- **KubeJS** for Forge, version like `2001.x`.
 - **Spear Core**.
 - Both KubeJS and Spear Core must be installed on the **client and the server**. Server-only means the item exists but renders as nothing.
 

@@ -7,8 +7,8 @@
 - **Spear Core**：给 Minecraft 1.20.1 Forge 加长矛的模组（七种材质：木/石/铜/铁/金/钻石/下界合金）。
 - 本仓库是 `github.com/lyingice/Spear-Core` 的 fork，**只维护 `1.20.1-forge` 分支**。
   - `origin` = 自己的 fork（`wdlpiaoyi/Spear-Core`），`upstream` = 原作者。
-  - `main` 分支是上游 1.21.1 的代码，**不要在这里改，也不要把它合并进 1.20.1-forge**。
 - 展示名是 **Spear Core Forked**，但 `modId`、根包 `net.minecraft.spearcore`、注册命名空间 `spearcore`、物品 ID 与 tag **一律不改**——Avaritia 长矛等模组按 modId 写死兼容，动注册空间等于破坏兼容。
+- 本仓库**只维护 1.20.1-forge**，没有 1.21.1 分支；`main` 是上游遗留代码（1.21.x / NeoForge 方向），不构建、不维护，不要改，也不要合并进 `1.20.1-forge`。
 - 玩法还原目标：Java 版长矛行为（1.21.11 / 26.1.x 的数据），并通过配置项允许切到基岩版或「本模组自己的」行为。
 
 ## 2. 构建与测试（改完必须跑）
@@ -71,7 +71,7 @@
 
 ### Tetra 兼容层（单头工具）
 
-- 判定：Tetra 单头工具同时有 `single/head`（key 以 `spearhead/` 开头）和 `single/handle`（key 以 `long_handle/` 开头）才算长矛；入口 `compat/tetra/TetraSpearProfile`，必须先用 `ModList.isLoaded("tetra")` + `SpearConfig.TETRA_COMPAT` 守卫，任何异常只记一次日志并当作「不是长矛」。
+- 判定：Tetra 单头工具同时有 `single/head`（模块 key 匹配 `single/spearhead`）和 `single/handle`（匹配 `single/long_handle`）才算长矛；**模块 key 是 `ResourceLocation.getPath()`，不是模块 JSON 里 `improvements` 的 `spearhead/` 写法**，匹配函数在 `TetraSpearProfile.isSpearheadModuleKey/isLongHandleModuleKey`。入口 `compat/tetra/TetraSpearProfile`，必须先用 `ModList.isLoaded("tetra")` + `SpearConfig.TETRA_COMPAT` 守卫，任何异常只记一次日志并当作「不是长矛」。
 - **不要 mixin Tetra 的 `ItemModularHandheld`**：发行版 jar 里它的 override 是 SRG 名，Mixin 的 refmap 只覆盖 MC 类，映射不到模组类的 override；改为在 `ItemStack`（MC 类）上拦截 `getUseDuration` / `getUseAnimation` / `onUseTick` / `releaseUsing` / `finishUsingItem`，配置放 `spearcore.tetra.mixins.json`（`required=false`，`TetraMixinPlugin`）。
 - 行为逻辑统一在 `item/SpearLike` + `init/SpearCombat` + `init/SpearLikeSupport`，不要再写 `instanceof SpearItem`；AI goals / 怪物发矛 / 附魔分类保持 SpearItem-only（Tetra 怪没有 AI）。
 - 数值：`compat/tetra/TetraSpearStats.fit` 从 Tetra 属性拟合，不复刻本模组材质预设，高数值区间必须放缓（`soft` 值）；改动公式要同步 `TetraCompatGameTests`。
@@ -82,7 +82,7 @@
 
 ### 第三方兼容缝（AvaritiaSpear 1.4.0 等）
 
-- AvaritiaSpear 1.4.0 按**字面描述符** mixin 本模组的成员（`remap=false`），下面的名字 / 参数类型是稳定 ABI，**只能新增重载，不能删改**：
+- AvaritiaSpear 1.4.0 是**上游作者**按上游 Spear Core 写的联动模组，按**字面描述符** mixin 上游的成员（`remap=false`）；本仓库为兼容保留了同样的签名，下面的名字 / 参数类型是稳定 ABI，**只能新增重载，不能删改**：
   - `SpearItem.jerotesLungeForwardMaybe(LivingEntity)`
   - `SpearItem.rushAttack(LivingEntity, float)`
   - `SpearItem.getHitEntitiesAlong(LivingEntity, SpearItem, float, Predicate<Entity>)`（旧的 `SpearItem` 参数版本；`SpearLike` 重载是给 Tetra 用的，两者必须共用同一实现）

@@ -3,6 +3,7 @@ package net.minecraft.spearcore.gametest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.spearcore.SpearcoreMod;
+import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
@@ -99,6 +100,33 @@ public final class TetraCompatGameTests {
 
         helper.assertTrue(TetraSpearStats.fit(10.0D, 0.0D, 4.0D).style() == SpearStyle.MODULAR_3D,
                 "带额外距离的 Tetra 拟合结果仍应是 3D 模块化风格");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraModuleKeysMatchSingleHeadedLayout(GameTestHelper helper) {
+        // Tetra 的模块 key 是资源路径（single/spearhead），不是模块 JSON 里 improvements 的 spearhead/ 写法。
+        // 3.3.1 之前按旧写法匹配，导致所有 Tetra 单头工具都被当成普通武器。
+        String[] spearheads = {"single/spearhead", "spearhead", "addon/tools/spearhead"};
+        for (String key : spearheads) {
+            helper.assertTrue(TetraSpearProfile.isSpearheadModuleKey(key), "应识别矛头模块 key: " + key);
+        }
+        String[] notSpearheads = {"single/head", "spearhead_alt", "xspearhead"};
+        for (String key : notSpearheads) {
+            helper.assertTrue(!TetraSpearProfile.isSpearheadModuleKey(key), "不应把该 key 当成矛头: " + key);
+        }
+        helper.assertTrue(!TetraSpearProfile.isSpearheadModuleKey(null), "null 不应识别为矛头");
+
+        String[] longHandles = {"single/long_handle", "long_handle", "addon/tools/long_handle"};
+        for (String key : longHandles) {
+            helper.assertTrue(TetraSpearProfile.isLongHandleModuleKey(key), "应识别长手柄模块 key: " + key);
+        }
+        String[] notLongHandles = {"single/basic_handle", "long_handle_alt", "xlong_handle"};
+        for (String key : notLongHandles) {
+            helper.assertTrue(!TetraSpearProfile.isLongHandleModuleKey(key), "不应把该 key 当成手柄: " + key);
+        }
+        helper.assertTrue(!TetraSpearProfile.isLongHandleModuleKey(null), "null 不应识别为长手柄");
         helper.succeed();
     }
 

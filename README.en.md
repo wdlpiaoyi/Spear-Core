@@ -8,7 +8,7 @@
 
 > Targets **Minecraft 1.20.1 · Forge** (client and server both).
 >
-> This branch = 1.20.1 + Forge; 1.21.1 + NeoForge lives on `main`, feature parity.
+> This repository maintains **1.20.1 + Forge only**; there is no 1.21.1 branch (`main` is leftover upstream code, not built or maintained).
 >
 > This repository is a fork of `github.com/wdlpiaoyi/Spear-Core` (upstream `lyingice/Spear-Core`), maintained by wdlpiaoyi and deepseek.
 >
@@ -221,10 +221,12 @@ This used to be the standalone **Spear Core Resourcepack Compat** mod and is now
 
 ### Mod compatibility (Avaritia Spear)
 
-**Avaritia Spear 1.4.0** depends on a few public methods of this mod (its mixins target them by literal signature). 3.3.0 changed `getHitEntitiesAlong`'s second parameter from `SpearItem` to `SpearLike`, which made it fail at startup with `InvalidInjectionException`; 3.3.1 restores the old `SpearItem` overload and forwards the `SpearLike` version to the same implementation, so **both work**.
+**Avaritia Spear 1.4.0** is an add-on made by the **upstream author, Lyingice**: it compiles against the `spearcore` mod id and the public methods of upstream Spear Core, and its mixins target upstream code by literal signature. This repository is a fork that keeps the same mod id, package and public methods, so it stays compatible — **Avaritia Spear does not depend on this fork**.
+
+3.3.0 changed `getHitEntitiesAlong`'s second parameter from `SpearItem` to `SpearLike`, which made Avaritia Spear fail at startup with `InvalidInjectionException`; 3.3.1 restores the old `SpearItem` overload and forwards the `SpearLike` version to the same implementation, so **both work**.
 
 - Read the "third-party compatibility seams" section of `AGENTS.md` before touching these public methods; `CompatibilityGameTests` checks by reflection that they still exist.
-- `avaritia_spear` 1.4.0 + this mod 3.3.1+ is the tested combination; older Avaritia Spear builds were not tested individually.
+- `avaritia_spear` 1.4.0 + this fork 3.3.1+ is the tested combination; older Avaritia Spear builds were not tested individually.
 
 ### Behaviour switches (`[behavior]`)
 
@@ -307,7 +309,7 @@ They are disabled by default — see the Configuration section above. You can al
 Yes. Spears take enchantments like any other weapon. Lunge is the spear-specific one.
 
 **Q: Does it support other versions?**
-This branch is **1.20.1 + Forge**; **1.21.1 + NeoForge** lives on the `main` branch. Gameplay is identical.
+This repository targets **1.20.1 + Forge only**; there is no 1.21.1 branch, and `main` is leftover upstream code that is neither built nor maintained.
 
 **Q: Does it conflict with other mods?**
 **JEI** (recipe viewing), **KubeJS** (add your own spears from scripts) and **Punchy** (first-person view animation) are all supported.
@@ -399,7 +401,7 @@ All of them are on Forge's `MinecraftForge.EVENT_BUS` (the game bus):
 
 ## KubeJS (supported)
 
-A script can register a real spear, with exactly the same syntax as on the 1.21.1 branch:
+A script can register a real spear, with the same syntax as on the upstream 1.21.x version:
 
 ```js
 StartupEvents.registry('item', event => {
@@ -446,7 +448,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 ### Building and verifying
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
 ./gradlew runServer          # headless boot; the startup check prints "已注册 7 把长矛"
 ./gradlew runGameTestServer  # automated tests judged by the game itself
 ```

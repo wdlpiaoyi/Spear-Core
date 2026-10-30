@@ -55,4 +55,21 @@ public final class TetraSpearProfile {
             return true;
         }
     }
+
+    /**
+     * Tetra 的模块 key 是「模块资源路径」（{@code ResourceLocation.getPath()}），不是模块 JSON 里
+     * {@code improvements} 的写法：单头工具的矛头模块在运行时是 {@code single/spearhead}。
+     *
+     * <p>这里同时接受 {@code spearhead} 与 {@code <命名空间>/spearhead}，方便附属模组新增同语义模块。</p>
+     */
+    public static boolean isSpearheadModuleKey(String key) {
+        return key != null && (key.equals("spearhead") || key.endsWith("/spearhead"));
+    }
+
+    /**
+     * 长手柄模块的运行时 key 是 {@code single/long_handle}；匹配规则同 {@link #isSpearheadModuleKey(String)}。
+     */
+    public static boolean isLongHandleModuleKey(String key) {
+        return key != null && (key.equals("long_handle") || key.endsWith("/long_handle"));
+    }
 }

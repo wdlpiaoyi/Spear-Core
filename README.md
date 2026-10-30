@@ -8,7 +8,7 @@
 
 > 适用版本：**Minecraft 1.20.1 · Forge**（客户端与服务端都要装）
 >
-> 本分支 = 1.20.1 + Forge；1.21.1 + NeoForge 是 `main` 分支，两边功能一致。
+> 本仓库只维护 1.20.1 + Forge；没有 1.21.1 分支（`main` 只是上游遗留代码，不构建、不维护）。
 >
 > 本仓库是 `github.com/wdlpiaoyi/Spear-Core` 的 fork（上游 `lyingice/Spear-Core`），由 wdlpiaoyi 与 deepseek 维护。
 >
@@ -220,10 +220,12 @@ tetraExtraReachScale = 0.3
 
 ### 模组兼容（Avaritia Spear）
 
-**Avaritia Spear 1.4.0** 依赖本模组的一些公开方法（它的 mixin 直接按字面签名注入）。3.3.0 把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，导致它启动时报 `InvalidInjectionException`；3.3.1 已恢复旧的 `SpearItem` 参数重载，并把 `SpearLike` 版本转发到同一份实现，**两边都能用**。
+**Avaritia Spear 1.4.0** 是**上游作者 Lyingice** 制作的联动模组：它按 `spearcore` 这个 modId 和上游 Spear Core 的公开方法编译，mixins 也直接按字面签名注入上游代码。本仓库是 fork，保留相同的 modId / 包名 / 公开方法，所以能继续兼容，**不是它依赖本 fork**。
+
+3.3.0 曾把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，导致 Avaritia Spear 启动时报 `InvalidInjectionException`；3.3.1 已恢复旧的 `SpearItem` 参数重载，并把 `SpearLike` 版本转发到同一份实现，**两边都能用**。
 
 - 改动这些公开方法前先看 `AGENTS.md` 的「第三方兼容缝」；`CompatibilityGameTests` 会用反射检查它们还在。
-- `avaritia_spear` 1.4.0 + 本模组 3.3.1+ 是验证过的组合；旧版 Avaritia Spear 未逐一测试。
+- `avaritia_spear` 1.4.0 + 本 fork 3.3.1+ 是验证过的组合；旧版 Avaritia Spear 未逐一测试。
 
 ### 行为开关（`[behavior]`）
 
@@ -306,7 +308,7 @@ movingTargetAssist = "JAVA"
 能，矛按普通武器规则吃附魔。突进是它专属的。
 
 **Q：支持别的版本吗？**
-这个分支是 **1.20.1 + Forge**；**1.21.1 + NeoForge** 在 `main` 分支上，两者玩法一致。
+这个仓库只做 **1.20.1 + Forge**，没有 1.21.1 分支；`main` 是上游遗留代码，不构建也不维护。
 
 **Q：和别的 mod 冲突吗？**
 **JEI**（查配方）、**KubeJS**（用脚本加自己的矛）与 **Punchy**（第一人称视角动画）都已支持。
@@ -397,7 +399,7 @@ public class MySpearItem extends ConfiguredSpearItem {
 
 ## KubeJS（已支持）
 
-脚本里可以直接注册真正的矛，写法与 1.21.1 分支完全一致：
+脚本里可以直接注册真正的矛，写法与上游 1.21.x 版本一致：
 
 ```js
 StartupEvents.registry('item', event => {
@@ -445,7 +447,7 @@ StartupEvents.registry('item', event => {
 ### 自己构建与验证
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```

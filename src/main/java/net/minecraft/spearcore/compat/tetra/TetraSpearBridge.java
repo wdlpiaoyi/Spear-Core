@@ -21,10 +21,6 @@ final class TetraSpearBridge {
     private static final String HEAD_SLOT = "single/head";
     private static final String HANDLE_SLOT = "single/handle";
 
-    /** 矛头模块的 key 前缀；长手柄同理。 */
-    private static final String SPEARHEAD_PREFIX = "spearhead/";
-    private static final String LONG_HANDLE_PREFIX = "long_handle/";
-
     private TetraSpearBridge() {
     }
 
@@ -42,7 +38,8 @@ final class TetraSpearBridge {
         if (headKey == null || handleKey == null) {
             return null;
         }
-        if (!headKey.startsWith(SPEARHEAD_PREFIX) || !handleKey.startsWith(LONG_HANDLE_PREFIX)) {
+        if (!TetraSpearProfile.isSpearheadModuleKey(headKey)
+                || !TetraSpearProfile.isLongHandleModuleKey(handleKey)) {
             return null;
         }
 
