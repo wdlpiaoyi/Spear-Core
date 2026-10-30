@@ -54,9 +54,11 @@ public class SpearClientExtensions implements IClientItemExtensions {
             SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
             return true;
         }
-        // Tetra 的 3D 模型在 jab 后会被原版「攻击冷却下沉」带着上下位移，看起来像多播一遍掏出动画。
-        // 3D 工具直接固定在举稳状态，位移交给长矛自己的攻击/蓄力姿态。
-        applyItemArmTransform(poseStack, arm, modular ? 1.0F : equipProcess);
+        // 3D 工具的空闲/蓄力/戳刺必须用同一个装备进度基线，否则 idle 会比 jab/charge 低 0.6 格：
+        // 上面两个分支固定 equipProcess = 0.0，而这里如果传 1.0，applyItemArmTransform 的 y
+        // 会再减 0.6，看起来就是「举矛/戳刺是一个位置，收矛又是另一个位置」。固定 0.0 同时也
+        // 顺带消除了 jab 后攻击冷却下沉造成的「二次掏出」观感。
+        applyItemArmTransform(poseStack, arm, modular ? 0.0F : equipProcess);
         if (modular) TetraClientPose.firstPerson(poseStack);
         return true;
     }

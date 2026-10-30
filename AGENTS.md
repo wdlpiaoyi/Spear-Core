@@ -77,7 +77,7 @@
 - 数值：`compat/tetra/TetraSpearStats.fit` 从 Tetra 属性拟合，不复刻本模组材质预设，高数值区间必须放缓（`soft` 值）；改动公式要同步 `TetraCompatGameTests`。
 - Tetra 自己贡献的额外攻击距离（长手柄 / 插槽等的 `forge:entity_reach`）优先取 `IModularItem.getAttributeValue(stack, ForgeMod.ENTITY_REACH.get())`，取不到再退回遍历 `ItemStack` 的修饰符（`ADDITION` + `MULTIPLY_BASE` 折算）；只按配置 `tetraExtraReachScale`（0~1，默认 0.3，读取失败回落 0.3）计入射程，其他来源的 reach 不缩放。若来源完全统计不到，`SpearCombat.effectiveMaxRangeWithFallback` 会把全部额外距离当作 Tetra 来源，避免配置静默失效。纯函数在 `SpearCombat.weakenExtraReach`，测试是 `tetraExtraReachIsWeakened` / `tetraReachFallbackAppliesWhenBonusUnknown`。
 - Tetra 工具固定 Java 语义：`usesJabCooldown()` 返回 false、`jabToChargeDelayTicks()` 返回 0，不受 `jabCooldown` / `jabToChargeDelay` 配置影响；文档要写明。
-- 客户端：3D 模型与贴图长矛的差异走 `client/TetraClientPose` + `client/TetraPoseConfig`，游戏内按 F9 打开 `client/gui/TetraPoseScreen` 实时调平移 / XYZ 旋转 / 缩放，参数保存在 `config/spearcore-tetra-pose.json`；动画本身复用 `SpearAnimations`。MODULAR_3D 的第一人称固定 `equipProcess = 1.0`，否则 jab 后原版攻击冷却会带着模型上下沉浮，看起来像多播一遍掏出动画。
+- 客户端：3D 模型与贴图长矛的差异走 `client/TetraClientPose` + `client/TetraPoseConfig`，游戏内按 F9 打开 `client/gui/TetraPoseScreen` 实时调平移 / XYZ 旋转 / 缩放，参数保存在 `config/spearcore-tetra-pose.json`；动画本身复用 `SpearAnimations`。MODULAR_3D 的第一人称必须和蓄力/戳刺分支用同一个 `equipProcess = 0.0` 基线；传 1.0 会让 idle 比 jab/charge 低 0.6 格（`applyItemArmTransform` 的 y 再减 0.6），同时也会在 jab 后跟着原版攻击冷却上下沉浮，看起来像多播一遍掏出动画。
 - 依赖：`compileOnly 'curse.maven:tetra-289712:8570756'`（Tetra 1.20.1-6.17.0）；未安装 Tetra 或 `tetraCompat=false` 时不得加载任何 Tetra 类。
 
 ### 第三方兼容缝（AvaritiaSpear 1.4.0 等）

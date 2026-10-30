@@ -4,7 +4,7 @@ license="MIT License"
 
 [[mods]]
 modId="spearcore"
-version="3.3.3"
+version="3.3.4"
 displayName="Spear Core Forked"
 displayURL="https://github.com/wdlpiaoyi/Spear-Core"
 logoFile="spear.png"
