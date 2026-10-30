@@ -1,5 +1,7 @@
 # Spear Core Forked · 矛核心
 
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+
 > 简体中文（默认） ｜ [English version](README.en.md)
 >
 > 给 Minecraft 加了一套长矛：能蓄力冲锋、能戳刺、跑得越快伤害越高，怪物也会拿着它追着你捅。
@@ -427,6 +429,3 @@ StartupEvents.registry('item', event => {
 GameTest 的判定看日志：`All N required tests passed :)` 或 `N required tests failed :(`，
 退出码等于失败的必需测试数。测试结构模板在 `gameteststructures/`，Gradle 会拷进 `run/`。
 
----
-
-[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)

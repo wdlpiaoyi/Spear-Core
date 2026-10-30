@@ -1,5 +1,7 @@
 # Spear Core Forked
 
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+
 > English ｜ [简体中文](README.md)
 >
 > A set of **spears** for Minecraft: charge, stab, hit harder the faster you run — and mobs will chase you with one too.
@@ -429,6 +431,3 @@ Read the verdict from the log: `All N required tests passed :)` or `N required t
 the exit code equals the number of failed required tests. The structure template lives in
 `gameteststructures/` and Gradle stages it into `run/`.
 
----
-
-[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
