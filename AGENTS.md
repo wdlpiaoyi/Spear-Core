@@ -79,6 +79,18 @@
 - Tetra 工具固定 Java 语义：`usesJabCooldown()` 返回 false、`jabToChargeDelayTicks()` 返回 0，不受 `jabCooldown` / `jabToChargeDelay` 配置影响；文档要写明。
 - 客户端：3D 模型与贴图长矛的差异集中在 `client/TetraClientPose`（第一/第三人称微调），动画本身复用 `SpearAnimations`。
 - 依赖：`compileOnly 'curse.maven:tetra-289712:8570756'`（Tetra 1.20.1-6.17.0）；未安装 Tetra 或 `tetraCompat=false` 时不得加载任何 Tetra 类。
+
+### 第三方兼容缝（AvaritiaSpear 1.4.0 等）
+
+- AvaritiaSpear 1.4.0 按**字面描述符** mixin 本模组的成员（`remap=false`），下面的名字 / 参数类型是稳定 ABI，**只能新增重载，不能删改**：
+  - `SpearItem.jerotesLungeForwardMaybe(LivingEntity)`
+  - `SpearItem.rushAttack(LivingEntity, float)`
+  - `SpearItem.getHitEntitiesAlong(LivingEntity, SpearItem, float, Predicate<Entity>)`（旧的 `SpearItem` 参数版本；`SpearLike` 重载是给 Tetra 用的，两者必须共用同一实现）
+  - `SpearAttackHandler.onPlayerAttack(AttackEntityEvent)`
+  - `SpearSounds.ITEM_SPEAR_ATTACK/HIT/USE`、`ITEM_SPEAR_LUNGE_1/2/3`
+  - `SpearCondition(int, float, float)`
+- `gametest/CompatibilityGameTests` 用反射钉住上述签名；改这些类之前先跑它。
+- 3.3.0 曾把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，AvaritiaSpear 启动直接 `InvalidInjectionException` —— 这是必须避免的回归。
 - `CompatPackResources.listResources` 是贴图集（TextureAtlas）唯一认的入口，别删；`FilePackResources` 在空 path 会拼出 `assets/<ns>//`，所以空 path 要用 `textures` 兜底。
 - 本体必须保留 `src/main/resources/pack.mcmeta`（`pack_format: 15`），否则启动会弹 ResourcePackInfo 警告。
 - 开关是 `SpearConfig.resourcepackCompat`（默认 `true`），由 `resourcepack/ResourcepackCompat.enabled()` 读取（配置未加载时回落 `true`）。该功能原先独立仓库 `Spear-Core-Resourcepack-Compat`，已并入本体，别在业务代码里再引 `spearrpcompat`。

@@ -254,8 +254,30 @@ public abstract class SpearItem extends Item implements SpearLike {
     /** 客户端渲染实体比服务器晚约 3 tick；移动靶补偿按这个 tick 数回退。 */
     private static final double MOVING_TARGET_COMPENSATION_TICKS = 3.0;
 
+    /**
+     * 兼容旧签名：AvaritiaSpear 1.4.0 的 mixin 按
+     * {@code (LivingEntity, SpearItem, float, Predicate)List} 这个描述符注入（remap=false）。
+     * 不要删除、也不要改参数类型——只能新增重载。
+     */
+    public static List<EntityHitResult> getHitEntitiesAlong(LivingEntity user, SpearItem spear,
+                                                             float hitboxMargin, Predicate<Entity> predicate) {
+        return getHitEntitiesAlongInternal(user, spear, hitboxMargin, predicate);
+    }
+
+    /**
+     * 新的通用签名（SpearItem 与 Tetra 长矛共用入口）。
+     * SpearItem 走旧签名重载，保证第三方注入（如 AvaritiaSpear 的秒杀）真的作用在执行路径上。
+     */
     public static List<EntityHitResult> getHitEntitiesAlong(LivingEntity user, SpearLike spear,
                                                              float hitboxMargin, Predicate<Entity> predicate) {
+        if (spear instanceof SpearItem item) {
+            return getHitEntitiesAlong(user, item, hitboxMargin, predicate);
+        }
+        return getHitEntitiesAlongInternal(user, spear, hitboxMargin, predicate);
+    }
+
+    private static List<EntityHitResult> getHitEntitiesAlongInternal(LivingEntity user, SpearLike spear,
+                                                                     float hitboxMargin, Predicate<Entity> predicate) {
         Vec3 look = getHeadLookAngle(user);
         Vec3 eyePos = user.getEyePosition();
         Vec3 start = eyePos.add(look.scale(spear.effectiveMinRange(user)));

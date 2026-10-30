@@ -219,6 +219,13 @@ This used to be the standalone **Spear Core Resourcepack Compat** mod and is now
 - Only the player's held single-headed tool is affected; Tetra's mob AI, offhand jab and other behaviour stay as-is.
 - 3D-model vs flat-texture view differences can be tuned in `client/TetraClientPose` (zero offset by default).
 
+### Mod compatibility (Avaritia Spear)
+
+**Avaritia Spear 1.4.0** depends on a few public methods of this mod (its mixins target them by literal signature). 3.3.0 changed `getHitEntitiesAlong`'s second parameter from `SpearItem` to `SpearLike`, which made it fail at startup with `InvalidInjectionException`; 3.3.1 restores the old `SpearItem` overload and forwards the `SpearLike` version to the same implementation, so **both work**.
+
+- Read the "third-party compatibility seams" section of `AGENTS.md` before touching these public methods; `CompatibilityGameTests` checks by reflection that they still exist.
+- `avaritia_spear` 1.4.0 + this mod 3.3.1+ is the tested combination; older Avaritia Spear builds were not tested individually.
+
 ### Behaviour switches (`[behavior]`)
 
 One option per detail, **all defaulting to `JAVA`** (= vanilla Java Edition behaviour). Each option only lists the versions whose behaviour actually differs; a version that matches Java is never offered as a duplicate.
@@ -439,7 +446,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 ### Building and verifying
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
 ./gradlew runServer          # headless boot; the startup check prints "已注册 7 把长矛"
 ./gradlew runGameTestServer  # automated tests judged by the game itself
 ```

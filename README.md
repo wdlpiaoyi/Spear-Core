@@ -218,6 +218,13 @@ tetraExtraReachScale = 0.3
 - 只改玩家手持的单头工具；怪物 AI、副手戳刺等 Tetra 原有行为不变。
 - 3D 模型与贴图长矛的视角差异，可在 `client/TetraClientPose` 里调偏移（默认不偏移）。
 
+### 模组兼容（Avaritia Spear）
+
+**Avaritia Spear 1.4.0** 依赖本模组的一些公开方法（它的 mixin 直接按字面签名注入）。3.3.0 把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，导致它启动时报 `InvalidInjectionException`；3.3.1 已恢复旧的 `SpearItem` 参数重载，并把 `SpearLike` 版本转发到同一份实现，**两边都能用**。
+
+- 改动这些公开方法前先看 `AGENTS.md` 的「第三方兼容缝」；`CompatibilityGameTests` 会用反射检查它们还在。
+- `avaritia_spear` 1.4.0 + 本模组 3.3.1+ 是验证过的组合；旧版 Avaritia Spear 未逐一测试。
+
 ### 行为开关（`[behavior]`）
 
 每个细节一个独立配置项，**默认一律是 `JAVA`**（= 原版 Java 版行为）。可选值只列出"行为确实不同"的版本，与 Java 一致的版本不会重复出现。
@@ -438,7 +445,7 @@ StartupEvents.registry('item', event => {
 ### 自己构建与验证
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```
