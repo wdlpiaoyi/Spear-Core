@@ -4,7 +4,10 @@ import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
@@ -25,6 +28,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(ItemStack.class)
 public abstract class ItemStackTetraMixin {
+
+    /**
+     * 右键起手蓄力。
+     *
+     * <p>Tetra 自己的 {@code use()} 只有在 {@code getUseDuration() > 0} 时才会进入 using；
+     * 它的矛头只提供 {@code throwable} aspect，不保证产生 {@code ItemEffect.throwable}，
+     * 因此右键会落到「无动作」。这里按本模组语义直接起手，并取消 Tetra 的原逻辑。</p>
+     */
+    @Inject(method = "use", at = @At("HEAD"), cancellable = true)
+    private void spearcore$tetraUse(Level level, Player player, InteractionHand hand,
+                                    CallbackInfoReturnable<InteractionResultHolder<ItemStack>> cir) {
+        SpearLike spear = spearLike();
+        if (spear == null) {
+            return;
+        }
+        cir.setReturnValue(SpearCombat.tryStartCharging(level, player, hand, (ItemStack) (Object) this, spear));
+    }
 
     @Inject(method = "getUseDuration", at = @At("HEAD"), cancellable = true)
     private void spearcore$tetraUseDuration(CallbackInfoReturnable<Integer> cir) {

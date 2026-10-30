@@ -217,7 +217,8 @@ This used to be the standalone **Spear Core Resourcepack Compat** mod and is now
 - **Tetra 1.20.1-6.17.0+ is required**; the 6.9.0 branch is not guaranteed to work.
 - Tetra tools always follow **Java semantics** and ignore `jabCooldown` (inventory-wide shared cooldown) and `jabToChargeDelay` (post-jab delay): both depend on item identity, while every Tetra material combination is a different item instance.
 - Only the player's held single-headed tool is affected; Tetra's mob AI, offhand jab and other behaviour stay as-is.
-- 3D-model vs flat-texture view differences can be tuned in `client/TetraClientPose` (zero offset by default).
+- 3D-model vs flat-texture view differences can be tuned in-game with **F9** (translate / XYZ rotate / scale, separate sets for first and third person); values are saved to `config/spearcore-tetra-pose.json`. The defaults are only a small correction, not a forced flattening of the model.
+- In creative mode Tetra spears follow vanilla sword semantics: left-click does not break blocks (`Item#canAttackBlock` returns `false`), so WieldYourPower-style "force break" never queues either.
 
 ### Mod compatibility (Avaritia Spear)
 
@@ -448,7 +449,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 ### Building and verifying
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
 ./gradlew runServer          # headless boot; the startup check prints "已注册 7 把长矛"
 ./gradlew runGameTestServer  # automated tests judged by the game itself
 ```

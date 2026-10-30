@@ -13,5 +13,8 @@
   "death.attack.spear.item": "%1$s 被 %2$s 用 %3$s 刺穿了",
   "death.attack.spear.player": "%1$s 被 %2$s 刺穿了",
   "attribute.spearcore.spear_stab_multiplier": "长矛戳击伤害",
-  "attribute.spearcore.spear_charge_multiplier": "长矛冲刺伤害"
+  "attribute.spearcore.spear_charge_multiplier": "长矛冲刺伤害",
+  "key.categories.spearcore": "长矛核心",
+  "key.spearcore.tetra_pose_editor": "编辑 Tetra 长矛姿态",
+  "screen.spearcore.tetra_pose": "Tetra 长矛姿态"
 }

@@ -47,15 +47,36 @@ final class TetraSpearBridge {
         double attackSpeed = modular.getAttributeValue(stack, Attributes.ATTACK_SPEED);
 
         // Tetra 的攻击距离（forge:attack_range，Forge 别名到 forge:entity_reach）会叠得很高：
-        // 长手柄 + 紫水晶插槽可轻松超过 2 格。只把 Tetra 自己贡献的 ADDITION 部分交给拟合，
-        // 由 TetraSpearStats 按配置比例计入。MULTIPLY_TOTAL 型 reach 修饰符不纳入（Tetra 当前不用）。
-        double tetraReachBonus = 0.0D;
-        for (var entry : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
-            if (entry.getKey() == ForgeMod.ENTITY_REACH.get()
-                    && entry.getValue().getOperation() == AttributeModifier.Operation.ADDITION) {
-                tetraReachBonus += entry.getValue().getAmount();
-            }
+        // 长手柄 + 紫水晶插槽可轻松超过 2 格。优先取 Tetra 自己合并后的 reach 总量（与属性面板一致），
+        // 取不到（例如修饰符只存在于 NBT / 别的路径）再退回遍历 ItemStack 修饰符。
+        // 交由 TetraSpearStats 按配置比例计入；玩家其他来源的 reach 不受影响。
+        double tetraReachBonus = modular.getAttributeValue(stack, ForgeMod.ENTITY_REACH.get());
+        if (!(tetraReachBonus > 0.0D)) {
+            tetraReachBonus = reachFromItemModifiers(stack);
         }
         return TetraSpearStats.fit(attackDamage, attackSpeed, tetraReachBonus);
+    }
+
+    /**
+     * 从 {@code ItemStack} 自身的属性修饰符里折算额外 reach。
+     *
+     * <p>{@code ADDITION} 直接相加；{@code MULTIPLY_BASE} 以原版 3.0 为基准折算成额外距离；
+     * {@code MULTIPLY_TOTAL} 不参与（Tetra 当前不用）。</p>
+     */
+    private static double reachFromItemModifiers(ItemStack stack) {
+        double addition = 0.0D;
+        double multiplyBase = 0.0D;
+        for (var entry : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
+            if (entry.getKey() != ForgeMod.ENTITY_REACH.get()) continue;
+            AttributeModifier modifier = entry.getValue();
+            switch (modifier.getOperation()) {
+                case ADDITION -> addition += modifier.getAmount();
+                case MULTIPLY_BASE -> multiplyBase += modifier.getAmount();
+                default -> {
+                    // MULTIPLY_TOTAL 与 Tetra 的 reach 无关，忽略。
+                }
+            }
+        }
+        return Math.max(0.0D, addition + 3.0D * multiplyBase);
     }
 }

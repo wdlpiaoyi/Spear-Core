@@ -285,7 +285,7 @@ public final class TetraSpearStats implements SpearLike {
 
     @Override
     public float effectiveMaxRange(Entity entity) {
-        return SpearCombat.effectiveMaxRange(this, entity, tetraReachBonus, reachScale());
+        return SpearCombat.effectiveMaxRangeWithFallback(this, entity, tetraReachBonus, reachScale());
     }
 
     @Override

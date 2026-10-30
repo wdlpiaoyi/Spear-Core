@@ -13,6 +13,8 @@ import net.minecraft.spearcore.util.SpearCondition;
 import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.spearcore.util.UseSpearSpecialEntity;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -131,6 +133,42 @@ public final class SpearCombat {
 
         if (hitSomething) {
             user.level().broadcastEntityEvent(user, (byte) 2);
+        }
+    }
+
+    // ========== 起手蓄力 ==========
+
+    /**
+     * 右键起手蓄力。本模组贴图矛与 Tetra 单头工具共用同一份判定，避免两边手感漂移。
+     *
+     * <p>Tetra 的 {@code use()} 只有在它自己算出 {@code getUseDuration > 0} 时才会
+     * {@code startUsingItem}；矛头 JSON 的 {@code aspects.throwable} 并不保证产生
+     * {@code ItemEffect.throwable}，所以不能指望 Tetra 自己进入 using。这里直接按本模组语义起手。</p>
+     */
+    public static InteractionResultHolder<ItemStack> tryStartCharging(Level level, Player player,
+                                                                     InteractionHand hand, ItemStack stack,
+                                                                     SpearLike spear) {
+        // 冷却期间不能起手蓄力（基岩版戳刺后的后摇，以及基岩版的使用冷却本身）。
+        if (player.getCooldowns().isOnCooldown(stack.getItem())) {
+            return InteractionResultHolder.pass(stack);
+        }
+        // 基岩版不能用副手举矛蓄力。
+        if (hand == InteractionHand.OFF_HAND && SpearRules.blocksOffhandCharging()) {
+            return InteractionResultHolder.pass(stack);
+        }
+        player.startUsingItem(hand);
+        playUseSound(player, spear);
+        return InteractionResultHolder.consume(stack);
+    }
+
+    /** 举矛音效；玩家与非玩家分开播，保持与原实现一致。 */
+    public static void playUseSound(net.minecraft.world.entity.Entity entity, SpearLike spear) {
+        if (entity instanceof Player player) {
+            entity.level().playSound(player, entity.getX(), entity.getY(), entity.getZ(),
+                    spear.getUseSound(), entity.getSoundSource(), 1.0f, 1.0f);
+        } else {
+            entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    spear.getUseSound(), entity.getSoundSource(), 1.0f, 1.0f);
         }
     }
 
@@ -435,6 +473,27 @@ public final class SpearCombat {
         double bonus = Math.max(0.0D, Math.min(extra, sourceBonus));
         double clampedScale = Math.max(0.0D, Math.min(1.0D, scale));
         return extra - bonus * (1.0D - clampedScale);
+    }
+
+    /**
+     * 带来源缩放的射程；当来源加成没有被统计到时，把玩家当前的额外距离整体视为该来源。
+     *
+     * <p>这是给 Tetra 这类「属性修饰符不在 {@code ItemStack} 上」的模组兜底：宁可按配置比例削弱
+     * 全部额外距离，也不要让 {@code tetraExtraReachScale} 静默失效。</p>
+     */
+    public static float effectiveMaxRangeWithFallback(SpearLike spear, Entity entity,
+                                                      double sourceBonus, double scale) {
+        double extra = reachOverVanilla(entity);
+        double bonus = Math.max(0.0D, Math.min(extra, sourceBonus));
+        if (extra > 0.0D && bonus <= 0.0D) {
+            bonus = extra;
+        }
+        return effectiveMaxRange(spear, entity, bonus, scale);
+    }
+
+    /** 玩家/实体超出原版 3.0 的额外攻击距离；供调试命令与兜底逻辑使用。 */
+    public static double extraReach(Entity entity) {
+        return reachOverVanilla(entity);
     }
 
     private static double reachOverVanilla(Entity entity) {

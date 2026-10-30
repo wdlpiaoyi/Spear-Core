@@ -72,12 +72,12 @@
 ### Tetra 兼容层（单头工具）
 
 - 判定：Tetra 单头工具同时有 `single/head`（模块 key 匹配 `single/spearhead`）和 `single/handle`（匹配 `single/long_handle`）才算长矛；**模块 key 是 `ResourceLocation.getPath()`，不是模块 JSON 里 `improvements` 的 `spearhead/` 写法**，匹配函数在 `TetraSpearProfile.isSpearheadModuleKey/isLongHandleModuleKey`。入口 `compat/tetra/TetraSpearProfile`，必须先用 `ModList.isLoaded("tetra")` + `SpearConfig.TETRA_COMPAT` 守卫，任何异常只记一次日志并当作「不是长矛」。
-- **不要 mixin Tetra 的 `ItemModularHandheld`**：发行版 jar 里它的 override 是 SRG 名，Mixin 的 refmap 只覆盖 MC 类，映射不到模组类的 override；改为在 `ItemStack`（MC 类）上拦截 `getUseDuration` / `getUseAnimation` / `onUseTick` / `releaseUsing` / `finishUsingItem`，配置放 `spearcore.tetra.mixins.json`（`required=false`，`TetraMixinPlugin`）。
+- **不要 mixin Tetra 的 `ItemModularHandheld`**：发行版 jar 里它的 override 是 SRG 名，Mixin 的 refmap 只覆盖 MC 类，映射不到模组类的 override；改为在 `ItemStack`（MC 类）上拦截 `use` / `getUseDuration` / `getUseAnimation` / `onUseTick` / `releaseUsing` / `finishUsingItem`。Tetra 的 `use()` 只有在它自己算出 `getUseDuration > 0` 时才会起手，矛头不保证产生 `throwable` 效果，所以 `use` 必须由本模组接管。另在 `Item` 上补 `canAttackBlock`（创造模式按原版剑返回 false），WieldYourPower 的强制破坏也看这个判定。配置放 `spearcore.tetra.mixins.json`（`required=false`，`TetraMixinPlugin`）。
 - 行为逻辑统一在 `item/SpearLike` + `init/SpearCombat` + `init/SpearLikeSupport`，不要再写 `instanceof SpearItem`；AI goals / 怪物发矛 / 附魔分类保持 SpearItem-only（Tetra 怪没有 AI）。
 - 数值：`compat/tetra/TetraSpearStats.fit` 从 Tetra 属性拟合，不复刻本模组材质预设，高数值区间必须放缓（`soft` 值）；改动公式要同步 `TetraCompatGameTests`。
-- Tetra 自己贡献的额外攻击距离（`forge:entity_reach` 的 ADDITION 和，来自长手柄 / 插槽等）只按配置 `tetraExtraReachScale`（0~1，默认 0.3，读取失败回落 0.3）计入射程；其他来源的 reach 不缩放。纯函数在 `SpearCombat.weakenExtraReach`，测试是 `tetraExtraReachIsWeakened`。
+- Tetra 自己贡献的额外攻击距离（长手柄 / 插槽等的 `forge:entity_reach`）优先取 `IModularItem.getAttributeValue(stack, ForgeMod.ENTITY_REACH.get())`，取不到再退回遍历 `ItemStack` 的修饰符（`ADDITION` + `MULTIPLY_BASE` 折算）；只按配置 `tetraExtraReachScale`（0~1，默认 0.3，读取失败回落 0.3）计入射程，其他来源的 reach 不缩放。若来源完全统计不到，`SpearCombat.effectiveMaxRangeWithFallback` 会把全部额外距离当作 Tetra 来源，避免配置静默失效。纯函数在 `SpearCombat.weakenExtraReach`，测试是 `tetraExtraReachIsWeakened` / `tetraReachFallbackAppliesWhenBonusUnknown`。
 - Tetra 工具固定 Java 语义：`usesJabCooldown()` 返回 false、`jabToChargeDelayTicks()` 返回 0，不受 `jabCooldown` / `jabToChargeDelay` 配置影响；文档要写明。
-- 客户端：3D 模型与贴图长矛的差异集中在 `client/TetraClientPose`（第一/第三人称微调），动画本身复用 `SpearAnimations`。
+- 客户端：3D 模型与贴图长矛的差异走 `client/TetraClientPose` + `client/TetraPoseConfig`，游戏内按 F9 打开 `client/gui/TetraPoseScreen` 实时调平移 / XYZ 旋转 / 缩放，参数保存在 `config/spearcore-tetra-pose.json`；动画本身复用 `SpearAnimations`。MODULAR_3D 的第一人称固定 `equipProcess = 1.0`，否则 jab 后原版攻击冷却会带着模型上下沉浮，看起来像多播一遍掏出动画。
 - 依赖：`compileOnly 'curse.maven:tetra-289712:8570756'`（Tetra 1.20.1-6.17.0）；未安装 Tetra 或 `tetraCompat=false` 时不得加载任何 Tetra 类。
 
 ### 第三方兼容缝（AvaritiaSpear 1.4.0 等）

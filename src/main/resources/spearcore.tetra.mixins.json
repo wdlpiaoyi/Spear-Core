@@ -6,7 +6,8 @@
   "refmap": "mixins.spearcore.refmap.json",
   "plugin": "net.minecraft.spearcore.compat.tetra.TetraMixinPlugin",
   "mixins": [
-    "ItemStackTetraMixin"
+    "ItemStackTetraMixin",
+    "ItemTetraCanAttackBlockMixin"
   ],
   "client": [
   ],

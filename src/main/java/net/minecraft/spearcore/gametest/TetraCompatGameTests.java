@@ -7,9 +7,13 @@ import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.RegisterGameTestsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -127,6 +131,30 @@ public final class TetraCompatGameTests {
             helper.assertTrue(!TetraSpearProfile.isLongHandleModuleKey(key), "不应把该 key 当成手柄: " + key);
         }
         helper.assertTrue(!TetraSpearProfile.isLongHandleModuleKey(null), "null 不应识别为长手柄");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraReachFallbackAppliesWhenBonusUnknown(GameTestHelper helper) {
+        // Tetra 的 reach 有时只体现在玩家的属性上，ItemStack 侧统计不到（bonus=0）。
+        // 这时兜底逻辑应把全部额外距离当成 Tetra 来源，而不是让 tetraExtraReachScale 静默失效。
+        Player player = helper.makeMockPlayer();
+        var reach = player.getAttribute(ForgeMod.ENTITY_REACH.get());
+        helper.assertTrue(reach != null, "测试玩家应带有 ENTITY_REACH 属性");
+        reach.addTransientModifier(new AttributeModifier(
+                java.util.UUID.fromString("9f0d3a5e-1c42-4a13-9d1e-0b6f9a2c7d11"),
+                "spearcore:test_reach", 2.0D, AttributeModifier.Operation.ADDITION));
+
+        SpearLike spear = TetraSpearStats.fit(4.0D, 0.0D, 0.0D);
+        float fallback = SpearCombat.effectiveMaxRangeWithFallback(spear, player, 0.0D, 0.3D);
+        float explicitBonus = SpearCombat.effectiveMaxRange(spear, player, 2.0D, 0.3D);
+        float withoutScaling = SpearCombat.effectiveMaxRange(spear, player, 0.0D, 1.0D);
+
+        helper.assertTrue(Math.abs(fallback - explicitBonus) < 1.0E-4F,
+                "来源未知时应按全部额外距离兜底: fallback=" + fallback + ", explicit=" + explicitBonus);
+        helper.assertTrue(fallback < withoutScaling - 1.0E-4F,
+                "兜底后必须真的削弱，而不是原样计入: fallback=" + fallback + ", full=" + withoutScaling);
         helper.succeed();
     }
 

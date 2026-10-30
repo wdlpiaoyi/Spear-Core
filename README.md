@@ -216,7 +216,8 @@ tetraExtraReachScale = 0.3
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
 - Tetra 工具固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种材料组合都是不同实例，无法按物品共享冷却。
 - 只改玩家手持的单头工具；怪物 AI、副手戳刺等 Tetra 原有行为不变。
-- 3D 模型与贴图长矛的视角差异，可在 `client/TetraClientPose` 里调偏移（默认不偏移）。
+- 3D 模型与贴图长矛的视角差异，可在游戏内按 **F9** 打开姿态编辑器实时调整（平移 / XYZ 旋转 / 缩放，第一和第三人称各一套），参数保存在 `config/spearcore-tetra-pose.json`；默认值只是微调，不强制压平模型。
+- 创造模式下 Tetra 长矛按原版剑的语义处理：左键不会破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
 
 ### 模组兼容（Avaritia Spear）
 
@@ -447,7 +448,7 @@ StartupEvents.registry('item', event => {
 ### 自己构建与验证
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```

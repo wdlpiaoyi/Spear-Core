@@ -157,27 +157,7 @@ public abstract class SpearItem extends Item implements SpearLike {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        // 冷却期间不能起手蓄力（基岩版戳刺后的后摇，以及基岩版的使用冷却本身）。
-        if (player.getCooldowns().isOnCooldown(this)) {
-            return InteractionResultHolder.pass(stack);
-        }
-        // 基岩版不能用副手举矛蓄力。
-        if (hand == InteractionHand.OFF_HAND && SpearRules.blocksOffhandCharging()) {
-            return InteractionResultHolder.pass(stack);
-        }
-        player.startUsingItem(hand);
-        makeSound(player);
-        return InteractionResultHolder.consume(stack);
-    }
-
-    private void makeSound(Entity entity) {
-        if (entity instanceof Player player) {
-            entity.level().playSound(player, entity.getX(), entity.getY(), entity.getZ(),
-                    getUseSound(), entity.getSoundSource(), 1.0f, 1.0f);
-        } else {
-            entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                    getUseSound(), entity.getSoundSource(), 1.0f, 1.0f);
-        }
+        return SpearCombat.tryStartCharging(level, player, hand, stack, this);
     }
 
     @Override

@@ -13,5 +13,8 @@
   "death.attack.spear.item": "%1$s was pierced by %2$s using %3$s",
   "death.attack.spear.player": "%1$s was pierced by %2$s",
   "attribute.spearcore.spear_stab_multiplier": "Spear Stab Damage",
-  "attribute.spearcore.spear_charge_multiplier": "Spear Charge Damage"
+  "attribute.spearcore.spear_charge_multiplier": "Spear Charge Damage",
+  "key.categories.spearcore": "Spear Core",
+  "key.spearcore.tetra_pose_editor": "Edit Tetra spear pose",
+  "screen.spearcore.tetra_pose": "Tetra Spear Pose"
 }

@@ -54,7 +54,9 @@ public class SpearClientExtensions implements IClientItemExtensions {
             SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
             return true;
         }
-        applyItemArmTransform(poseStack, arm, equipProcess);
+        // Tetra 的 3D 模型在 jab 后会被原版「攻击冷却下沉」带着上下位移，看起来像多播一遍掏出动画。
+        // 3D 工具直接固定在举稳状态，位移交给长矛自己的攻击/蓄力姿态。
+        applyItemArmTransform(poseStack, arm, modular ? 1.0F : equipProcess);
         if (modular) TetraClientPose.firstPerson(poseStack);
         return true;
     }

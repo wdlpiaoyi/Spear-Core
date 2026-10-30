@@ -13,5 +13,8 @@
   "death.attack.spear.item": "%1$sは%2$sの%3$sで突き刺された",
   "death.attack.spear.player": "%1$sは%2$sに突き刺された",
   "attribute.spearcore.spear_stab_multiplier": "槍の突きダメージ",
-  "attribute.spearcore.spear_charge_multiplier": "槍の突進ダメージ"
+  "attribute.spearcore.spear_charge_multiplier": "槍の突進ダメージ",
+  "key.categories.spearcore": "スピアコア",
+  "key.spearcore.tetra_pose_editor": "Tetra スピアの構えを編集",
+  "screen.spearcore.tetra_pose": "Tetra スピアの構え"
 }
