@@ -40,13 +40,17 @@ public class SpearClientExtensions implements IClientItemExtensions {
 
         // 处理使用物品的情况（如持矛准备攻击）
         if (player.isUsingItem() && player.getUseItem() == itemInHand) {
-            applyItemArmTransform(poseStack, arm, 0.0F);
-            if (modular) TetraClientPose.firstPerson(poseStack);
             // 计算使用物品的持续时间
             float useTicks = itemInHand.getUseDuration() - (player.getUseItemRemainingTicks() - partialTick + 1.0F);
             if (useTicks < 0) useTicks = 0;
-            // 执行第一人称使用动画
-            SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, itemInHand);
+            // 3D 模型用独立的平滑蓄力曲线 + 蓄力锚点，不再套贴图长矛的分段曲线（会在时间边界跳变）。
+            applyItemArmTransform(poseStack, arm, modular ? equipProcess : 0.0F);
+            if (modular) {
+                TetraClientPose.applyCharge(poseStack, true, useTicks);
+            } else {
+                // 执行第一人称使用动画
+                SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, itemInHand);
+            }
             return true;
         } else if (swingProcess > 0.0F) {
             applyItemArmTransform(poseStack, arm, 0.0F);
@@ -54,11 +58,9 @@ public class SpearClientExtensions implements IClientItemExtensions {
             SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
             return true;
         }
-        // 3D 工具的空闲/蓄力/戳刺必须用同一个装备进度基线，否则 idle 会比 jab/charge 低 0.6 格：
-        // 上面两个分支固定 equipProcess = 0.0，而这里如果传 1.0，applyItemArmTransform 的 y
-        // 会再减 0.6，看起来就是「举矛/戳刺是一个位置，收矛又是另一个位置」。固定 0.0 同时也
-        // 顺带消除了 jab 后攻击冷却下沉造成的「二次掏出」观感。
-        applyItemArmTransform(poseStack, arm, modular ? 0.0F : equipProcess);
+        // 空闲时保留装备进度，正常的「掏出/收起」动画要能看见；3D 模型的蓄力分支也使用同一个
+        // equipProcess，这样从空闲切到蓄力时不会有 0.6 格的位置跳变。
+        applyItemArmTransform(poseStack, arm, equipProcess);
         if (modular) TetraClientPose.firstPerson(poseStack);
         return true;
     }

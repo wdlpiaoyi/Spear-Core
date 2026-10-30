@@ -217,17 +217,19 @@ This used to be the standalone **Spear Core Resourcepack Compat** mod and is now
 - **Tetra 1.20.1-6.17.0+ is required**; the 6.9.0 branch is not guaranteed to work.
 - Tetra tools always follow **Java semantics** and ignore `jabCooldown` (inventory-wide shared cooldown) and `jabToChargeDelay` (post-jab delay): both depend on item identity, while every Tetra material combination is a different item instance.
 - Only the player's held single-headed tool is affected; Tetra's mob AI, offhand jab and other behaviour stay as-is.
-- 3D-model vs flat-texture view differences can be tuned in-game with **F9** (translate / XYZ rotate / scale, separate sets for first and third person); values are saved to `config/spearcore-tetra-pose.json`. The defaults are only a small correction, not a forced flattening of the model.
-- In creative mode Tetra spears follow vanilla sword semantics: left-click does not break blocks (`Item#canAttackBlock` returns `false`), so WieldYourPower-style "force break" never queues either.
+- The 3D model is replaced with a custom spear model (shaft + spearhead + collar) that **keeps Tetra's per-material colours**: the shaft/collar use the long handle's material colour and the head uses the spearhead's colour (from Tetra material JSON `tints.texture`).
+- Charging uses an independent smooth raise curve (not the flat-texture spear's segmented curve), so the charge motion no longer jumps or points the wrong way; the normal equip/unequip animation is kept.
+- **F9** opens the pose editor: **idle / charging** states x **first / third person**, with translate / XYZ rotate / scale per field and an **independent "Reset"** button on every row (resets only that field); values are saved to `config/spearcore-tetra-pose.json`.
+- Jabbing at a block / missing also plays the spear attack sound. In creative mode Tetra spears follow vanilla sword semantics: left-click does not break blocks (`Item#canAttackBlock` returns `false`), so WieldYourPower-style "force break" never queues either.
 
 ### Mod compatibility (Avaritia Spear)
 
 **Avaritia Spear 1.4.0** is an add-on made by the **upstream author, Lyingice**: it compiles against the `spearcore` mod id and the public methods of upstream Spear Core, and its mixins target upstream code by literal signature. This repository is a fork that keeps the same mod id, package and public methods, so it stays compatible — **Avaritia Spear does not depend on this fork**.
 
-3.3.0 changed `getHitEntitiesAlong`'s second parameter from `SpearItem` to `SpearLike`, which made Avaritia Spear fail at startup with `InvalidInjectionException`; 3.3.1 restores the old `SpearItem` overload and forwards the `SpearLike` version to the same implementation, so **both work**.
+An early 3.3.x build changed `getHitEntitiesAlong`'s second parameter from `SpearItem` to `SpearLike`, which made Avaritia Spear fail at startup with `InvalidInjectionException`; the old `SpearItem` overload is restored and the `SpearLike` version forwards to the same implementation, so **both work**.
 
 - Read the "third-party compatibility seams" section of `AGENTS.md` before touching these public methods; `CompatibilityGameTests` checks by reflection that they still exist.
-- `avaritia_spear` 1.4.0 + this fork 3.3.1+ is the tested combination; older Avaritia Spear builds were not tested individually.
+- `avaritia_spear` 1.4.0 + this fork 3.3.0 is the tested combination; older Avaritia Spear builds were not tested individually.
 
 ### Behaviour switches (`[behavior]`)
 
@@ -449,7 +451,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 ### Building and verifying
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.4.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
 ./gradlew runServer          # headless boot; the startup check prints "已注册 7 把长矛"
 ./gradlew runGameTestServer  # automated tests judged by the game itself
 ```

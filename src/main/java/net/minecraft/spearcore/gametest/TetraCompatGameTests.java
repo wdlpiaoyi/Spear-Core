@@ -3,6 +3,8 @@ package net.minecraft.spearcore.gametest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.spearcore.SpearcoreMod;
+import net.minecraft.spearcore.compat.tetra.TetraChargeRamp;
+import net.minecraft.spearcore.compat.tetra.TetraMaterialKey;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
 import net.minecraft.spearcore.init.SpearCombat;
@@ -155,6 +157,36 @@ public final class TetraCompatGameTests {
                 "来源未知时应按全部额外距离兜底: fallback=" + fallback + ", explicit=" + explicitBonus);
         helper.assertTrue(fallback < withoutScaling - 1.0E-4F,
                 "兜底后必须真的削弱，而不是原样计入: fallback=" + fallback + ", full=" + withoutScaling);
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraChargeRampIsClampedAndMonotonic(GameTestHelper helper) {
+        float previous = -1.0F;
+        for (float usedTicks = 0.0F; usedTicks <= 8.0F; usedTicks += 0.25F) {
+            float progress = TetraChargeRamp.progress(usedTicks);
+            helper.assertTrue(progress >= 0.0F && progress <= 1.0F,
+                    "蓄力进度越界: usedTicks=" + usedTicks + ", progress=" + progress);
+            helper.assertTrue(progress >= previous - 1.0E-5F,
+                    "蓄力进度必须单调不减: " + previous + " -> " + progress);
+            previous = progress;
+        }
+        helper.assertTrue(Math.abs(TetraChargeRamp.progress(1.0F)) < 1.0E-5F, "起手第 1 tick 不应抬升");
+        helper.assertTrue(Math.abs(TetraChargeRamp.progress(6.0F) - 1.0F) < 1.0E-5F, "5 tick 后应完全抬满");
+        helper.assertTrue(Math.abs(TetraChargeRamp.smoothProgress(6.0F) - 1.0F) < 1.0E-5F, "平滑曲线满蓄力应为 1");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraMaterialKeySuffixMatches(GameTestHelper helper) {
+        helper.assertTrue(TetraMaterialKey.matches("spearhead/iron", "iron"), "应匹配 spearhead/iron 与 iron");
+        helper.assertTrue(TetraMaterialKey.matches("iron", "iron"), "应匹配完全相同的 key");
+        helper.assertTrue(TetraMaterialKey.matches("addon/tools/long_handle/iron", "iron"), "应匹配多级前缀");
+        helper.assertTrue(!TetraMaterialKey.matches("spearhead/ironwood", "iron"), "ironwood 不能被 iron 误匹配");
+        helper.assertTrue(!TetraMaterialKey.matches(null, "iron"), "null key 不应匹配");
+        helper.assertTrue(!TetraMaterialKey.matches("spearhead/iron", null), "null 材料不应匹配");
         helper.succeed();
     }
 

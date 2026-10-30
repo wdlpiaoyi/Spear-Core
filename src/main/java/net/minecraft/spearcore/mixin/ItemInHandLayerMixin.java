@@ -60,8 +60,14 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
 
         float useTicks = livingEntity.getTicksUsingItem();
         if (useTicks != 0.0f && isUsedArm(livingEntity, humanoidArm)) {
-            SpearAnimations.thirdPersonUseItem(attackTime, poseStack, useTicks,
-                    humanoidArm, itemStack, livingEntity, Minecraft.getInstance().getPartialTick());
+            if (modular) {
+                // 3D 模型用自己的平滑蓄力曲线，跳过贴图长矛的 thirdPersonUseItem。
+                TetraClientPose.applyCharge(poseStack, false,
+                        useTicks + Minecraft.getInstance().getPartialTick());
+            } else {
+                SpearAnimations.thirdPersonUseItem(attackTime, poseStack, useTicks,
+                        humanoidArm, itemStack, livingEntity, Minecraft.getInstance().getPartialTick());
+            }
         }
 
         // 渲染物品

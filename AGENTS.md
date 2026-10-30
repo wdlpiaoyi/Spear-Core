@@ -77,7 +77,10 @@
 - 数值：`compat/tetra/TetraSpearStats.fit` 从 Tetra 属性拟合，不复刻本模组材质预设，高数值区间必须放缓（`soft` 值）；改动公式要同步 `TetraCompatGameTests`。
 - Tetra 自己贡献的额外攻击距离（长手柄 / 插槽等的 `forge:entity_reach`）优先取 `IModularItem.getAttributeValue(stack, ForgeMod.ENTITY_REACH.get())`，取不到再退回遍历 `ItemStack` 的修饰符（`ADDITION` + `MULTIPLY_BASE` 折算）；只按配置 `tetraExtraReachScale`（0~1，默认 0.3，读取失败回落 0.3）计入射程，其他来源的 reach 不缩放。若来源完全统计不到，`SpearCombat.effectiveMaxRangeWithFallback` 会把全部额外距离当作 Tetra 来源，避免配置静默失效。纯函数在 `SpearCombat.weakenExtraReach`，测试是 `tetraExtraReachIsWeakened` / `tetraReachFallbackAppliesWhenBonusUnknown`。
 - Tetra 工具固定 Java 语义：`usesJabCooldown()` 返回 false、`jabToChargeDelayTicks()` 返回 0，不受 `jabCooldown` / `jabToChargeDelay` 配置影响；文档要写明。
-- 客户端：3D 模型与贴图长矛的差异走 `client/TetraClientPose` + `client/TetraPoseConfig`，游戏内按 F9 打开 `client/gui/TetraPoseScreen` 实时调平移 / XYZ 旋转 / 缩放，参数保存在 `config/spearcore-tetra-pose.json`；动画本身复用 `SpearAnimations`。MODULAR_3D 的第一人称必须和蓄力/戳刺分支用同一个 `equipProcess = 0.0` 基线；传 1.0 会让 idle 比 jab/charge 低 0.6 格（`applyItemArmTransform` 的 y 再减 0.6），同时也会在 jab 后跟着原版攻击冷却上下沉浮，看起来像多播一遍掏出动画。
+- 客户端：3D 模型与贴图长矛的差异走 `client/TetraClientPose` + `client/TetraPoseConfig`，游戏内按 F9 打开 `client/gui/TetraPoseScreen` 调平移 / XYZ 旋转 / 缩放，参数保存在 `config/spearcore-tetra-pose.json`。GUI 必须分「空闲 / 蓄力 × 第一 / 第三人称」四组，每行参数有**独立「重置」**（只恢复该项默认值），**不要恢复「重置全部」**。
+- Tetra 的蓄力动画**不要**复用 `SpearAnimations.firstPersonUse`（贴图矛的分段曲线，套 3D 模型会在 dismount/knockback 边界跳变）；改走 `TetraChargeRamp`（前 1 tick 不动、之后 5 tick smoothstep）+ `TetraClientPose.applyCharge` 在空闲/蓄力锚点间插值。第一人称空闲与蓄力分支必须用同一个 `equipProcess`（来自原版装备进度，保留正常的掏出/收起动画）；戳刺分支固定 0.0。
+- 自绘模型：`client/TetraSpearModel` 注册 `spearcore:tetra_spear#inventory`，`compat/tetra/mixin/ItemRendererTetraModelMixin`（`getModel` HEAD，`require = 0`）替换 MODULAR_3D 栈；资源是 `assets/spearcore/models/item/tetra_spear.json` + `textures/item/tetra_spear.png`，tint 0=杆/箍（手柄材料）、tint 1=矛头（头部材料）。颜色由 `compat/tetra/TetraSpearColors` 读取 Tetra 材料数据（`glyph.tint` 优先，其次材质 `tints.texture`，按 `variantKey` 最后一段匹配），未装 Tetra 时任何 `se.mickelus.tetra.*` 类都不得加载（`client/TetraSpearColorsEvent` 先做 `ModList` 守卫）。
+- 指向方块 / 挥空：`SpearCooldownAttackMixin` 在非 ENTITY 分支对 MODULAR_3D 补 `player.swing` + 客户端 `playLocalSound(ITEM_SPEAR_ATTACK)`；创造模式 `canAttackBlock=false` 会让原版 startAttack 空转，所以不能指望原版音效。
 - 依赖：`compileOnly 'curse.maven:tetra-289712:8570756'`（Tetra 1.20.1-6.17.0）；未安装 Tetra 或 `tetraCompat=false` 时不得加载任何 Tetra 类。
 
 ### 第三方兼容缝（AvaritiaSpear 1.4.0 等）
@@ -90,7 +93,7 @@
   - `SpearSounds.ITEM_SPEAR_ATTACK/HIT/USE`、`ITEM_SPEAR_LUNGE_1/2/3`
   - `SpearCondition(int, float, float)`
 - `gametest/CompatibilityGameTests` 用反射钉住上述签名；改这些类之前先跑它。
-- 3.3.0 曾把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，AvaritiaSpear 启动直接 `InvalidInjectionException` —— 这是必须避免的回归。
+- 早期 3.3.x 曾把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，AvaritiaSpear 启动直接 `InvalidInjectionException` —— 这是必须避免的回归。
 - `CompatPackResources.listResources` 是贴图集（TextureAtlas）唯一认的入口，别删；`FilePackResources` 在空 path 会拼出 `assets/<ns>//`，所以空 path 要用 `textures` 兜底。
 - 本体必须保留 `src/main/resources/pack.mcmeta`（`pack_format: 15`），否则启动会弹 ResourcePackInfo 警告。
 - 开关是 `SpearConfig.resourcepackCompat`（默认 `true`），由 `resourcepack/ResourcepackCompat.enabled()` 读取（配置未加载时回落 `true`）。该功能原先独立仓库 `Spear-Core-Resourcepack-Compat`，已并入本体，别在业务代码里再引 `spearrpcompat`。
@@ -99,7 +102,7 @@
 
 1. `./gradlew compileJava` 通过。
 2. `./gradlew runGameTestServer` 日志出现 `All N required tests passed :)`。
-3. 改了行为 → 有对应 GameTest；改了配置项 → `README.md` 与 `README.en.md` + `kjs-guide.md` 同步；改了资源包兼容层 → `ResourcepackCompatGameTests` 必须通过（meta 补丁、贴图识别、路径重映射、真实包端到端）；改了 Tetra 兼容层 → `TetraCompatGameTests` 必须通过（公式单调性/放缓/边界、非长矛物品不误判）。
+3. 改了行为 → 有对应 GameTest；改了配置项 → `README.md` 与 `README.en.md` + `kjs-guide.md` 同步；改了资源包兼容层 → `ResourcepackCompatGameTests` 必须通过（meta 补丁、贴图识别、路径重映射、真实包端到端）；改了 Tetra 兼容层 → `TetraCompatGameTests` 必须通过（公式单调性/放缓/边界、非长矛物品不误判、蓄力曲线 0..1 单调、材料 key 边界匹配）。
 4. `git status` 只含预期文件，没有构建产物、IDE 文件、编辑器备份。
 5. 提交信息是中文、说清了动机。
 6. 涉及原版数值（伤害、阈值、概率、时长）时，注明来源（Minecraft Wiki / 原版 jar 反编译），不要凭印象编。

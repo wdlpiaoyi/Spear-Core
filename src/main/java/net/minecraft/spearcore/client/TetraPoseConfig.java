@@ -28,6 +28,9 @@ public final class TetraPoseConfig {
 
     public Pose firstPerson = Pose.firstPersonDefault();
     public Pose thirdPerson = Pose.thirdPersonDefault();
+    /** 蓄力（举矛）姿态，和空闲姿态分开调：抬起的轨迹、指向与蓄力时的抖动都不同。 */
+    public Pose chargeFirstPerson = Pose.chargeFirstPersonDefault();
+    public Pose chargeThirdPerson = Pose.chargeThirdPersonDefault();
 
     private TetraPoseConfig() {
     }
@@ -57,14 +60,35 @@ public final class TetraPoseConfig {
     private TetraPoseConfig sanitized() {
         if (firstPerson == null) firstPerson = Pose.firstPersonDefault();
         if (thirdPerson == null) thirdPerson = Pose.thirdPersonDefault();
-        firstPerson.sanitize();
-        thirdPerson.sanitize();
+        if (chargeFirstPerson == null) chargeFirstPerson = Pose.chargeFirstPersonDefault();
+        if (chargeThirdPerson == null) chargeThirdPerson = Pose.chargeThirdPersonDefault();
+        firstPerson.sanitize(Pose.firstPersonDefault());
+        thirdPerson.sanitize(Pose.thirdPersonDefault());
+        chargeFirstPerson.sanitize(Pose.chargeFirstPersonDefault());
+        chargeThirdPerson.sanitize(Pose.chargeThirdPersonDefault());
         return this;
     }
 
     public void reset() {
         firstPerson = Pose.firstPersonDefault();
         thirdPerson = Pose.thirdPersonDefault();
+        chargeFirstPerson = Pose.chargeFirstPersonDefault();
+        chargeThirdPerson = Pose.chargeThirdPersonDefault();
+    }
+
+    /** 取某个 (视角, 是否蓄力) 的默认姿态；GUI 的逐项重置与 sanitize 共用。 */
+    public static Pose defaults(boolean thirdPerson, boolean charging) {
+        if (thirdPerson) {
+            return charging ? Pose.chargeThirdPersonDefault() : Pose.thirdPersonDefault();
+        }
+        return charging ? Pose.chargeFirstPersonDefault() : Pose.firstPersonDefault();
+    }
+
+    public Pose pose(boolean thirdPerson, boolean charging) {
+        if (thirdPerson) {
+            return charging ? this.chargeThirdPerson : this.thirdPerson;
+        }
+        return charging ? this.chargeFirstPerson : this.firstPerson;
     }
 
     public void save() {
@@ -110,20 +134,28 @@ public final class TetraPoseConfig {
             this.scale = scale;
         }
 
-        static Pose firstPersonDefault() {
+        public static Pose firstPersonDefault() {
             // Tetra 3D 模型默认偏平，往下压一点、前倾 15° 更接近本模组长矛的持握角度。
             return new Pose(0.0D, 0.0D, 0.0D, -15.0D, 0.0D, 0.0D, 1.0D);
         }
 
-        static Pose thirdPersonDefault() {
+        public static Pose thirdPersonDefault() {
             return new Pose(0.0D, 0.0D, 0.0D, -10.0D, 0.0D, 0.0D, 1.0D);
         }
 
-        void sanitize() {
+        /** 蓄力锚点：比空闲更抬起、更朝前，具体数值由 F9 编辑器逐项微调。 */
+        public static Pose chargeFirstPersonDefault() {
+            return new Pose(0.0D, 0.02D, -0.10D, -35.0D, 8.0D, 0.0D, 1.0D);
+        }
+
+        public static Pose chargeThirdPersonDefault() {
+            return new Pose(0.0D, 0.02D, -0.06D, -22.0D, 6.0D, 0.0D, 1.0D);
+        }
+
+        void sanitize(Pose defaults) {
             if (!Double.isFinite(translateX) || !Double.isFinite(translateY) || !Double.isFinite(translateZ)
                     || !Double.isFinite(rotateX) || !Double.isFinite(rotateY) || !Double.isFinite(rotateZ)
                     || !Double.isFinite(scale) || scale <= 0.0D) {
-                Pose defaults = firstPersonDefault();
                 translateX = defaults.translateX;
                 translateY = defaults.translateY;
                 translateZ = defaults.translateZ;

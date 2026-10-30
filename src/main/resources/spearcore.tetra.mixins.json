@@ -10,6 +10,7 @@
     "ItemTetraCanAttackBlockMixin"
   ],
   "client": [
+    "ItemRendererTetraModelMixin"
   ],
   "injectors": {
     "defaultRequire": 0

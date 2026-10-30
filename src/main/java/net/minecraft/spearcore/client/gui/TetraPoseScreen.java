@@ -10,17 +10,22 @@ import net.minecraft.spearcore.client.TetraPoseConfig;
 /**
  * Tetra 3D 长矛姿态编辑器（默认 F9 打开）。
  *
- * <p>左右两个视角二选一编辑：平移、XYZ 旋转、缩放都是滑块，改动即时生效（关屏不丢），
- * 「保存并关闭」写入 {@code config/spearcore-tetra-pose.json}。</p>
+ * <p>两组状态分开调：空闲 / 蓄力；每组又有第一人称与第三人称。七个参数（平移 XYZ、旋转 XYZ、
+ * 缩放）各占一行，行尾有独立的「重置」按钮，只把该字段恢复成当前状态的默认值——不提供「重置全部」。</p>
+ *
+ * <p>改动即时生效（直接改内存里的配置对象），「保存并关闭」写入
+ * {@code config/spearcore-tetra-pose.json}。</p>
  */
 public class TetraPoseScreen extends Screen {
 
-    private static final int SLIDER_WIDTH = 240;
+    private static final int SLIDER_WIDTH = 200;
+    private static final int RESET_WIDTH = 60;
     private static final int SLIDER_HEIGHT = 18;
     private static final int ROW_HEIGHT = 24;
 
     private final TetraPoseConfig config = TetraPoseConfig.get();
     private boolean editingThirdPerson;
+    private boolean editingCharging;
 
     public TetraPoseScreen() {
         super(Component.translatable("screen.spearcore.tetra_pose"));
@@ -32,47 +37,65 @@ public class TetraPoseScreen extends Screen {
     }
 
     private TetraPoseConfig.Pose pose() {
-        return editingThirdPerson ? config.thirdPerson : config.firstPerson;
+        return config.pose(editingThirdPerson, editingCharging);
+    }
+
+    private TetraPoseConfig.Pose defaults() {
+        return TetraPoseConfig.defaults(editingThirdPerson, editingCharging);
     }
 
     private void rebuildPoseWidgets() {
         clearWidgets();
 
-        int x = (width - SLIDER_WIDTH) / 2;
-        int y = 56;
+        int x = (width - SLIDER_WIDTH - RESET_WIDTH - 6) / 2;
+        int y = 66;
         TetraPoseConfig.Pose pose = pose();
         for (Field field : Field.values()) {
             addRenderableWidget(new PoseSlider(x, y, SLIDER_WIDTH, SLIDER_HEIGHT, field, pose));
+            addRenderableWidget(Button.builder(Component.literal("重置"), button -> {
+                field.set(pose, field.get(defaults()));
+                rebuildPoseWidgets();
+            }).bounds(x + SLIDER_WIDTH + 6, y, RESET_WIDTH, SLIDER_HEIGHT).build());
             y += ROW_HEIGHT;
         }
 
-        int buttonWidth = 110;
-        int buttonsY = height - 36;
+        int buttonWidth = 120;
+        int gap = 6;
+        int buttonsY = height - 32;
+        int totalWidth = buttonWidth * 3 + gap * 2;
+        int startX = (width - totalWidth) / 2;
         addRenderableWidget(Button.builder(
                         Component.literal(editingThirdPerson ? "视角：第三人称" : "视角：第一人称"),
                         button -> {
                             editingThirdPerson = !editingThirdPerson;
                             rebuildPoseWidgets();
                         })
-                .bounds((width - buttonWidth * 3 - 10) / 2, buttonsY, buttonWidth, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("重置全部"), button -> {
-            config.reset();
-            rebuildPoseWidgets();
-        }).bounds((width - buttonWidth * 3 - 10) / 2 + buttonWidth + 5, buttonsY, buttonWidth, 20).build());
+                .bounds(startX, buttonsY, buttonWidth, 20).build());
+        addRenderableWidget(Button.builder(
+                        Component.literal(editingCharging ? "状态：蓄力" : "状态：空闲"),
+                        button -> {
+                            editingCharging = !editingCharging;
+                            rebuildPoseWidgets();
+                        })
+                .bounds(startX + buttonWidth + gap, buttonsY, buttonWidth, 20).build());
         addRenderableWidget(Button.builder(Component.literal("保存并关闭"), button -> {
             config.save();
             onClose();
-        }).bounds((width - buttonWidth * 3 - 10) / 2 + (buttonWidth + 5) * 2, buttonsY, buttonWidth, 20).build());
+        }).bounds(startX + (buttonWidth + gap) * 2, buttonsY, buttonWidth, 20).build());
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawCenteredString(font, title, width / 2, 16, 0xFFFFFF);
+        guiGraphics.drawCenteredString(font, title, width / 2, 14, 0xFFFFFF);
+        String hint = (editingThirdPerson ? "第三人称" : "第一人称") + " / "
+                + (editingCharging ? "蓄力" : "空闲")
+                + "；每行右侧「重置」只恢复该项默认值";
+        guiGraphics.drawCenteredString(font, Component.literal(hint), width / 2, 32, 0xA0A0A0);
         guiGraphics.drawCenteredString(font,
                 Component.literal("改动即时生效；保存后写入 config/spearcore-tetra-pose.json"),
-                width / 2, 30, 0xA0A0A0);
+                width / 2, 46, 0x808080);
     }
 
     @Override
@@ -202,7 +225,7 @@ public class TetraPoseScreen extends Screen {
 
         @Override
         protected void updateMessage() {
-            setMessage(Component.literal(field.format(field.denormalize(value))));
+            setMessage(Component.literal(field.format(field.get(pose))));
         }
 
         @Override

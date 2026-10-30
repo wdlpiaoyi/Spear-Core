@@ -216,17 +216,19 @@ tetraExtraReachScale = 0.3
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
 - Tetra 工具固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种材料组合都是不同实例，无法按物品共享冷却。
 - 只改玩家手持的单头工具；怪物 AI、副手戳刺等 Tetra 原有行为不变。
-- 3D 模型与贴图长矛的视角差异，可在游戏内按 **F9** 打开姿态编辑器实时调整（平移 / XYZ 旋转 / 缩放，第一和第三人称各一套），参数保存在 `config/spearcore-tetra-pose.json`；默认值只是微调，不强制压平模型。
-- 创造模式下 Tetra 长矛按原版剑的语义处理：左键不会破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
+- 3D 模型替换为自绘的长矛模型（长杆 + 矛头 + 箍），**保留按材料换色**：杆/箍取长手柄材料色，矛头取矛头材料色（Tetra 材料 JSON 的 `tints.texture`）。
+- 蓄力姿态用独立的平滑抬升曲线（不再套贴图长矛的分段曲线），避免举矛过程中跳变 / 指向偏移；正常的「掏出 / 收起」动画保留。
+- 游戏内按 **F9** 打开姿态编辑器：**空闲 / 蓄力**两种状态 × **第一 / 第三人称**两种视角，平移 / XYZ 旋转 / 缩放逐项可调，每行右侧有**独立「重置」**（只恢复该项默认值）；参数保存在 `config/spearcore-tetra-pose.json`。
+- 指向方块/挥空时也会播放长矛攻击音效；创造模式下按原版剑的语义处理：左键不会破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
 
 ### 模组兼容（Avaritia Spear）
 
 **Avaritia Spear 1.4.0** 是**上游作者 Lyingice** 制作的联动模组：它按 `spearcore` 这个 modId 和上游 Spear Core 的公开方法编译，mixins 也直接按字面签名注入上游代码。本仓库是 fork，保留相同的 modId / 包名 / 公开方法，所以能继续兼容，**不是它依赖本 fork**。
 
-3.3.0 曾把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，导致 Avaritia Spear 启动时报 `InvalidInjectionException`；3.3.1 已恢复旧的 `SpearItem` 参数重载，并把 `SpearLike` 版本转发到同一份实现，**两边都能用**。
+早期 3.3.x 曾把 `getHitEntitiesAlong` 的第二个参数从 `SpearItem` 改成 `SpearLike`，导致 Avaritia Spear 启动时报 `InvalidInjectionException`；现在恢复了旧的 `SpearItem` 参数重载，并把 `SpearLike` 版本转发到同一份实现，**两边都能用**。
 
 - 改动这些公开方法前先看 `AGENTS.md` 的「第三方兼容缝」；`CompatibilityGameTests` 会用反射检查它们还在。
-- `avaritia_spear` 1.4.0 + 本 fork 3.3.1+ 是验证过的组合；旧版 Avaritia Spear 未逐一测试。
+- `avaritia_spear` 1.4.0 + 本 fork 3.3.0 是验证过的组合；旧版 Avaritia Spear 未逐一测试。
 
 ### 行为开关（`[behavior]`）
 
@@ -448,7 +450,7 @@ StartupEvents.registry('item', event => {
 ### 自己构建与验证
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.4.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```
