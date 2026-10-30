@@ -5,7 +5,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.spearcore.SpearcoreMod;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearCombat;
+import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
@@ -60,13 +62,14 @@ public class SpearStabAttackPacket {
                 return;
             }
             ItemStack stack = player.getMainHandItem();
-            if (!(stack.getItem() instanceof SpearItem spear)) {
+            SpearLike spear = SpearLikeSupport.of(stack);
+            if (spear == null) {
                 return;
             }
-            if (!SpearItem.canPlayerPerformStab(player, spear)) {
+            if (!SpearCombat.canPlayerPerformStab(player, stack, spear)) {
                 return;
             }
-            spear.performStabAttack(player, stack, EquipmentSlot.MAINHAND, true);
+            SpearCombat.performStabAttack(player, stack, EquipmentSlot.MAINHAND, true);
             player.resetAttackStrengthTicker();
         });
         context.setPacketHandled(true);

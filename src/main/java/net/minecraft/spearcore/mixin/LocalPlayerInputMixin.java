@@ -2,7 +2,7 @@ package net.minecraft.spearcore.mixin;
 
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -76,6 +76,6 @@ public class LocalPlayerInputMixin {
     private static boolean spearcore$isUsingSpear(LocalPlayer player) {
         return player.isUsingItem()
                 && !player.getUseItem().isEmpty()
-                && player.getUseItem().getItem() instanceof SpearItem;
+                && SpearLikeSupport.of(player.getUseItem()) != null;
     }
 }

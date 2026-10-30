@@ -1,0 +1,16 @@
+{
+  "required": false,
+  "minVersion": "0.8.4",
+  "package": "net.minecraft.spearcore.compat.tetra.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "mixins.spearcore.refmap.json",
+  "plugin": "net.minecraft.spearcore.compat.tetra.TetraMixinPlugin",
+  "mixins": [
+    "ItemStackTetraMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

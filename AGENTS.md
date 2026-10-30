@@ -35,13 +35,13 @@
 - Java 17、Forge 1.20.1、official mappings、4 空格缩进、UTF-8、注释用中文。
 - 不要升级 Forge / mappings / Gradle 版本，不要换构建插件；这套版本是验证过的。
 - **不要引入 MCreator**：不加 `mcreator.gradle`、不加 `MCREATOR_*` 环境变量分支、不加 `will be REGENERATED on each build` 之类的注释。历史遗留已清理，见提交 `53e3126`。
-- 新增/修改注入逻辑放 `mixin/` 包，mixin 配置写进 `spearcore.mixins.json`（Punchy 相关放 `spearcore.punchy.mixins.json`，`required=false`）。
+- 新增/修改注入逻辑放 `mixin/` 包，mixin 配置写进 `spearcore.mixins.json`（Punchy 相关放 `spearcore.punchy.mixins.json`，Tetra 相关放 `spearcore.tetra.mixins.json`，两者都 `required=false` 且配各自的 `IMixinConfigPlugin`）。
 - **不要内嵌 MixinExtras**（shading / jarJar 都不要）：类被摊进本模组 jar 后，本模组会变成导出 `com.llamalad7.mixinextras.*` 的模块，只要别的模组也带了 MixinExtras（如 justenoughbreeding），ModLauncher 就报 `Modules spearcore and MixinExtras export package ... to module ...` 启动失败。1.20.1 只用原版 Mixin 注入器（`@Inject` / `@Redirect` / `@ModifyConstant`）。
 - 兼容层（KubeJS、Punchy）必须是**可选**依赖：`compileOnly` + 反射入口隔离，没装对应模组时零 ClassNotFound。
 
 ## 5. 行为配置体系（改玩法前必读）
 
-- `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`、`resourcepackCompat`）+ `[behavior]` 段的 17 个行为开关。
+- `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`、`resourcepackCompat`、`tetraCompat`）+ `[behavior]` 段的 17 个行为开关。
 - `util/SpearRules.java`：17 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
 - 约定：每个开关的默认值是 `JAVA`（= 原版 Java 行为）；**某版本取值和 Java 一样时，不要为它提供重复选项**（例如「戳刺速度加成」只有 `JAVA`/`MODDED` 两个值）。新增开关时同步改：`SpearConfig`（带中文注释）+ `SpearRules` + `README.md`（中文）与 `README.en.md`（英文）+ `kjs-guide.md`。
 - 击落骑手的速度阈值**固定为 Java 数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9），见 `SpearStats.dismountSpeedFor`，不要再加开关。
@@ -68,6 +68,16 @@
 - `resourcepack/` 下的类只在客户端加载（`Dist.CLIENT` 订阅者 + `AddPackFindersEvent`），专用服务器不得触碰资源栈。
 - 只处理 `assets/minecraft/textures/item/*_spear(_in_hand).png`，**不要**顺手转换模型、语言文件或 `custom_model_data`。
 - 一切补丁只在内存副本里，**绝不改写用户的资源包文件**；`pack_format` 只补成 15。
+
+### Tetra 兼容层（单头工具）
+
+- 判定：Tetra 单头工具同时有 `single/head`（key 以 `spearhead/` 开头）和 `single/handle`（key 以 `long_handle/` 开头）才算长矛；入口 `compat/tetra/TetraSpearProfile`，必须先用 `ModList.isLoaded("tetra")` + `SpearConfig.TETRA_COMPAT` 守卫，任何异常只记一次日志并当作「不是长矛」。
+- **不要 mixin Tetra 的 `ItemModularHandheld`**：发行版 jar 里它的 override 是 SRG 名，Mixin 的 refmap 只覆盖 MC 类，映射不到模组类的 override；改为在 `ItemStack`（MC 类）上拦截 `getUseDuration` / `getUseAnimation` / `onUseTick` / `releaseUsing` / `finishUsingItem`，配置放 `spearcore.tetra.mixins.json`（`required=false`，`TetraMixinPlugin`）。
+- 行为逻辑统一在 `item/SpearLike` + `init/SpearCombat` + `init/SpearLikeSupport`，不要再写 `instanceof SpearItem`；AI goals / 怪物发矛 / 附魔分类保持 SpearItem-only（Tetra 怪没有 AI）。
+- 数值：`compat/tetra/TetraSpearStats.fit` 从 Tetra 属性拟合，不复刻本模组材质预设，高数值区间必须放缓（`soft` 值）；改动公式要同步 `TetraCompatGameTests`。
+- Tetra 工具固定 Java 语义：`usesJabCooldown()` 返回 false、`jabToChargeDelayTicks()` 返回 0，不受 `jabCooldown` / `jabToChargeDelay` 配置影响；文档要写明。
+- 客户端：3D 模型与贴图长矛的差异集中在 `client/TetraClientPose`（第一/第三人称微调），动画本身复用 `SpearAnimations`。
+- 依赖：`compileOnly 'curse.maven:tetra-289712:8570756'`（Tetra 1.20.1-6.17.0）；未安装 Tetra 或 `tetraCompat=false` 时不得加载任何 Tetra 类。
 - `CompatPackResources.listResources` 是贴图集（TextureAtlas）唯一认的入口，别删；`FilePackResources` 在空 path 会拼出 `assets/<ns>//`，所以空 path 要用 `textures` 兜底。
 - 本体必须保留 `src/main/resources/pack.mcmeta`（`pack_format: 15`），否则启动会弹 ResourcePackInfo 警告。
 - 开关是 `SpearConfig.resourcepackCompat`（默认 `true`），由 `resourcepack/ResourcepackCompat.enabled()` 读取（配置未加载时回落 `true`）。该功能原先独立仓库 `Spear-Core-Resourcepack-Compat`，已并入本体，别在业务代码里再引 `spearrpcompat`。
@@ -76,7 +86,7 @@
 
 1. `./gradlew compileJava` 通过。
 2. `./gradlew runGameTestServer` 日志出现 `All N required tests passed :)`。
-3. 改了行为 → 有对应 GameTest；改了配置项 → `README.md` 与 `README.en.md` + `kjs-guide.md` 同步；改了资源包兼容层 → `ResourcepackCompatGameTests` 必须通过（meta 补丁、贴图识别、路径重映射、真实包端到端）。
+3. 改了行为 → 有对应 GameTest；改了配置项 → `README.md` 与 `README.en.md` + `kjs-guide.md` 同步；改了资源包兼容层 → `ResourcepackCompatGameTests` 必须通过（meta 补丁、贴图识别、路径重映射、真实包端到端）；改了 Tetra 兼容层 → `TetraCompatGameTests` 必须通过（公式单调性/放缓/边界、非长矛物品不误判）。
 4. `git status` 只含预期文件，没有构建产物、IDE 文件、编辑器备份。
 5. 提交信息是中文、说清了动机。
 6. 涉及原版数值（伤害、阈值、概率、时长）时，注明来源（Minecraft Wiki / 原版 jar 反编译），不要凭印象编。

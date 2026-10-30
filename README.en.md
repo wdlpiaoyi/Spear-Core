@@ -187,6 +187,9 @@ punchyStageBridge = true
 
 # Whether to recognise 1.21.9+ spear resource packs and patch them to pack_format 15 in memory
 resourcepackCompat = true
+
+# Whether Tetra single-headed tools (long handle + spearhead) should work like this mod's spears
+tetraCompat = true
 ```
 
 The first two switches (both **on by default**) control:
@@ -201,6 +204,16 @@ The first two switches (both **on by default**) control:
 `resourcepackCompat` controls support for **1.21.9+ spear resource packs**: when on (the default), every pack in `resourcepacks/` that contains spear textures is registered in the pack list as " [Spear Core 贴图兼容]", its `pack_format` is patched to 15 in memory, and its `minecraft:` spear textures are mapped onto the `spearcore:` namespace. **The pack files on disk are never modified.**
 
 This used to be the standalone **Spear Core Resourcepack Compat** mod and is now merged into this mod: if you installed its jar (`spearrpcompat`), delete that jar — behaviour is unchanged with this mod installed.
+
+### Tetra compatibility
+
+`tetraCompat` turns Tetra single-headed tools into spears: a tool that has **both** a long handle (`single/handle` → `long_handle/`) and a spearhead (`single/head` → `spearhead/`) charges on right-click (no longer throws) and jabs on left-click, reusing the same spear poses and hit detection.
+
+- Stats are **fitted** from Tetra's per-material attack damage / attack speed instead of copying this mod's fixed per-material presets (and never the odd ones, like the golden spear); high values taper off to avoid overpowered results. Modded and addon Tetra materials work through the same formula.
+- **Tetra 1.20.1-6.17.0+ is required**; the 6.9.0 branch is not guaranteed to work.
+- Tetra tools always follow **Java semantics** and ignore `jabCooldown` (inventory-wide shared cooldown) and `jabToChargeDelay` (post-jab delay): both depend on item identity, while every Tetra material combination is a different item instance.
+- Only the player's held single-headed tool is affected; Tetra's mob AI, offhand jab and other behaviour stay as-is.
+- 3D-model vs flat-texture view differences can be tuned in `client/TetraClientPose` (zero offset by default).
 
 ### Behaviour switches (`[behavior]`)
 
@@ -422,7 +435,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 ### Building and verifying
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.2.0.2.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
 ./gradlew runServer          # headless boot; the startup check prints "已注册 7 把长矛"
 ./gradlew runGameTestServer  # automated tests judged by the game itself
 ```

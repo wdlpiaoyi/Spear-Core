@@ -6,7 +6,7 @@ import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.spearcore.client.animation.SpearAnimations;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,8 +35,8 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> {
         ItemStack mainHand = entity.getMainHandItem();
         ItemStack offHand = entity.getOffhandItem();
 
-        boolean mainIsSpear = mainHand.getItem() instanceof SpearItem;
-        boolean offIsSpear = offHand.getItem() instanceof SpearItem;
+        boolean mainIsSpear = SpearLikeSupport.of(mainHand) != null;
+        boolean offIsSpear = SpearLikeSupport.of(offHand) != null;
 
         if (!mainIsSpear && !offIsSpear) return;
 
@@ -70,7 +70,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> {
     }
 
     private static boolean isSpearInHand(LivingEntity entity, InteractionHand hand) {
-        return entity.getItemInHand(hand).getItem() instanceof SpearItem;
+        return SpearLikeSupport.of(entity.getItemInHand(hand)) != null;
     }
 
     private static ModelPart getArm(HumanoidModel<?> model, HumanoidArm arm) {

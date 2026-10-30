@@ -76,7 +76,7 @@ public class SpearSprintHandler {
     private static boolean isUsingSpear(LocalPlayer player) {
         ItemStack use = player.getUseItem();
         return player.isUsingItem() && !use.isEmpty()
-                && use.getItem() instanceof net.minecraft.spearcore.item.SpearItem;
+                && net.minecraft.spearcore.init.SpearLikeSupport.of(use) != null;
     }
 
     /** 原版允许起跑的条件（饥饿、潜行、骑乘、失明、飞行）。 */

@@ -3,7 +3,8 @@ package net.minecraft.spearcore.client.animation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -33,7 +34,8 @@ public class SpearAnimations {
     // ==================== 第一人称举矛 ====================
 
     public static void firstPersonUse(float f, PoseStack poseStack, float f2, HumanoidArm humanoidArm, ItemStack itemStack) {
-        if (!(itemStack.getItem() instanceof SpearItem spear)) return;
+        SpearLike spear = SpearLikeSupport.of(itemStack);
+        if (spear == null) return;
         UseParams useParams = UseParams.compute(spear, f2);
         int n = humanoidArm == HumanoidArm.RIGHT ? 1 : -1;
         poseStack.translate(
@@ -63,7 +65,8 @@ public class SpearAnimations {
     public static void thirdPersonAttackItem(float attackTime, PoseStack poseStack, LivingEntity livingEntity) {
         if (attackTime <= 0.0f) return;
         float f = 0.0f;
-        if (livingEntity.getMainHandItem().getItem() instanceof SpearItem spear) {
+        SpearLike spear = SpearLikeSupport.of(livingEntity.getMainHandItem());
+        if (spear != null) {
             f = spear.getForwardMovement();
         }
         float f4 = easeInQuad(progress(attackTime, 0.05f, 0.2f));
@@ -77,7 +80,8 @@ public class SpearAnimations {
     public static void thirdPersonUseItem(float fs2, PoseStack poseStack, float timeHeld,
                                           HumanoidArm humanoidArm, ItemStack itemStack,
                                           LivingEntity livingEntity, float partialTick) {
-        if (!(itemStack.getItem() instanceof SpearItem spear)) return;
+        SpearLike spear = SpearLikeSupport.of(itemStack);
+        if (spear == null) return;
         if (timeHeld == 0.0f) return;
 
         float f2 = easeInQuad(progress(livingEntity.getAttackAnim(partialTick), 0.05f, 0.2f));
@@ -145,7 +149,8 @@ public class SpearAnimations {
         // 蓄力摆动
         if (livingEntity.getTicksUsingItem() > 0
                 && (!livingEntity.isUsingItem() || livingEntity.getUsedItemHand() == (isMainArm ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND))) {
-            if (itemStack.getItem() instanceof SpearItem spear) {
+            SpearLike spear = SpearLikeSupport.of(itemStack);
+            if (spear != null) {
                 UseParams useParams = UseParams.compute(spear, livingEntity.getTicksUsingItem());
                 modelPart.yRot += (float) (-n) * useParams.swayScaleFast() * ((float) Math.PI / 180f) * useParams.swayIntensity() * 1.0f;
                 modelPart.zRot += (float) (-n) * useParams.swayScaleSlow() * ((float) Math.PI / 180f) * useParams.swayIntensity() * 0.5f;
@@ -167,7 +172,7 @@ public class SpearAnimations {
                             float raiseProgressEnd, float swayProgress, float lowerProgress,
                             float raiseBackProgress, float swayIntensity, float swayScaleSlow, float swayScaleFast) {
 
-        public static UseParams compute(SpearItem spear, float usedTicks) {
+        public static UseParams compute(SpearLike spear, float usedTicks) {
             int delayTicks = spear.getDelayTicks();
             int dismountEnd = spear.getDismountEndTick();
             int knockbackEnd = spear.getKnockbackEndTick();

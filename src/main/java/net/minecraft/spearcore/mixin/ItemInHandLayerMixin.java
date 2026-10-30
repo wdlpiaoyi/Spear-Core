@@ -10,8 +10,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.spearcore.client.TetraClientPose;
 import net.minecraft.spearcore.client.animation.SpearAnimations;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
+import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,8 +41,9 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
                                     ItemDisplayContext itemDisplayContext, HumanoidArm humanoidArm,
                                     PoseStack poseStack, MultiBufferSource buffer, int light,
                                     CallbackInfo ci) {
-        if (!(itemStack.getItem() instanceof SpearItem)) return;
-        if (itemStack.isEmpty()) return;
+        SpearLike spear = SpearLikeSupport.of(itemStack);
+        if (spear == null) return;
+        boolean modular = spear.style() == SpearStyle.MODULAR_3D;
 
         poseStack.pushPose();
         ((ArmedModel) this.getParentModel()).translateToHand(humanoidArm, poseStack);
@@ -47,6 +51,7 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         boolean flag = humanoidArm == HumanoidArm.LEFT;
         poseStack.translate((float)(flag ? -1 : 1) / 16.0F, 0.125F, -0.625F);
+        if (modular) TetraClientPose.thirdPerson(poseStack);
 
         float attackTime = this.getParentModel().attackTime;
         if (attackTime > 0.0F && livingEntity.getMainArm() == humanoidArm) {

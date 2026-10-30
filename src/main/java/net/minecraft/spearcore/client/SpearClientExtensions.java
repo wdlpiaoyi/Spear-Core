@@ -4,6 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.client.animation.SpearAnimations;
 import net.minecraft.spearcore.compat.punchy.PunchyCompat;
+import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
+import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
@@ -28,12 +31,17 @@ public class SpearClientExtensions implements IClientItemExtensions {
                                            float partialTick, float equipProcess, float swingProcess) {
         if (PunchyCompat.isActive()) return false;
 
+        SpearLike spear = SpearLikeSupport.of(itemInHand);
+        if (spear == null) return false;
+        boolean modular = spear.style() == SpearStyle.MODULAR_3D;
+
         // 根据手臂方向确定偏移方向（右臂为正，左臂为负）
         int dir = arm == HumanoidArm.RIGHT ? 1 : -1;
 
         // 处理使用物品的情况（如持矛准备攻击）
         if (player.isUsingItem() && player.getUseItem() == itemInHand) {
             applyItemArmTransform(poseStack, arm, 0.0F);
+            if (modular) TetraClientPose.firstPerson(poseStack);
             // 计算使用物品的持续时间
             float useTicks = itemInHand.getUseDuration() - (player.getUseItemRemainingTicks() - partialTick + 1.0F);
             if (useTicks < 0) useTicks = 0;
@@ -42,10 +50,12 @@ public class SpearClientExtensions implements IClientItemExtensions {
             return true;
         } else if (swingProcess > 0.0F) {
             applyItemArmTransform(poseStack, arm, 0.0F);
+            if (modular) TetraClientPose.firstPerson(poseStack);
             SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
             return true;
         }
         applyItemArmTransform(poseStack, arm, equipProcess);
+        if (modular) TetraClientPose.firstPerson(poseStack);
         return true;
     }
 

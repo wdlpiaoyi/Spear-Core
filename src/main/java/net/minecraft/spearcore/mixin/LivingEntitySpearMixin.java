@@ -3,7 +3,8 @@ package net.minecraft.spearcore.mixin;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.spearcore.client.animation.SpearAnimations;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.util.SpearCooldownAccessor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -35,7 +36,7 @@ public abstract class LivingEntitySpearMixin extends Entity implements SpearCool
         if (!this.level().isClientSide) {
             LivingEntity self = (LivingEntity) (Object) this;
             ItemStack stack = self.getItemInHand(hand);
-            if (stack.getItem() instanceof SpearItem) {
+            if (SpearLikeSupport.of(stack) != null) {
                 this.RecentStabbedEntities = new Object2LongOpenHashMap<>();
             }
         }
@@ -63,7 +64,8 @@ public abstract class LivingEntitySpearMixin extends Entity implements SpearCool
     private void onGetCurrentSwingDuration(CallbackInfoReturnable<Integer> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
         ItemStack stack = self.getMainHandItem();
-        if (stack.getItem() instanceof SpearItem spear) {
+        SpearLike spear = SpearLikeSupport.of(stack);
+        if (spear != null) {
             int n = (int) (spear.getSwingTimes() * 20.0F);
             if (net.minecraft.world.effect.MobEffectUtil.hasDigSpeed(self)) {
                 cir.setReturnValue(n - (1 + net.minecraft.world.effect.MobEffectUtil.getDigSpeedAmplification(self)));

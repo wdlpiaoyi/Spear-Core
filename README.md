@@ -186,6 +186,9 @@ punchyStageBridge = true
 
 # 是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式
 resourcepackCompat = true
+
+# 是否让 Tetra 单头工具（长手柄 + 矛头）按本模组长矛工作
+tetraCompat = true
 ```
 
 前两个开关控制的是（**默认都开着**）：
@@ -200,6 +203,16 @@ resourcepackCompat = true
 `resourcepackCompat` 控制 **1.21.9+ 格式的长矛材质包**：开启时（默认）会把 `resourcepacks/` 里含长矛贴图的包以 " [Spear Core 贴图兼容]" 的名字注册进资源包列表，在内存里把 `pack_format` 补成 15，并把 `minecraft:` 下的长矛贴图映射到 `spearcore:` 命名空间。**磁盘上的资源包文件不会被改动。**
 
 这项功能原先是独立的 **Spear Core Resourcepack Compat** 模组，现已并入本体：如果你装过它（`spearrpcompat` 的 jar），删掉那个 jar 即可，装载本模组后行为不变。
+
+### Tetra 兼容
+
+`tetraCompat` 控制 Tetra 单头工具的长矛化：同时装了**长手柄**（`single/handle` → `long_handle/`）和**矛头**（`single/head` → `spearhead/`）的单头工具，会像本模组的长矛一样工作——左键戳刺、右键蓄力（不再是 Tetra 的投掷），并复用同一套长矛姿态与命中判定。
+
+- 数值由 Tetra 按材料算出的攻击力 / 攻击速度**拟合**，不复刻本模组各材质的固定数值（也不复刻金矛那类反常数值）；高数值区间会放缓，避免 overpowered。Tetra 新增的模组材料 / 附属材料同样适用。
+- 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
+- Tetra 工具固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种材料组合都是不同实例，无法按物品共享冷却。
+- 只改玩家手持的单头工具；怪物 AI、副手戳刺等 Tetra 原有行为不变。
+- 3D 模型与贴图长矛的视角差异，可在 `client/TetraClientPose` 里调偏移（默认不偏移）。
 
 ### 行为开关（`[behavior]`）
 
@@ -421,7 +434,7 @@ StartupEvents.registry('item', event => {
 ### 自己构建与验证
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.2.0.2.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```

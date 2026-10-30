@@ -4,7 +4,7 @@ license="MIT License"
 
 [[mods]]
 modId="spearcore"
-version="3.2.0.2"
+version="3.3.0"
 displayName="Spear Core Forked"
 displayURL="https://center.mcmod.cn/863182/"
 logoFile="spear.png"
@@ -25,6 +25,13 @@ authors="wdlpiaoyi,deepseek"
     modId="minecraft"
     mandatory=true
     versionRange="[1.20.1]"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.spearcore]]
+    modId="tetra"
+    mandatory=false
+    versionRange="[6.17.0,)"
     ordering="AFTER"
     side="BOTH"
 

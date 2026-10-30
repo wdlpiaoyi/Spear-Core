@@ -2,7 +2,9 @@ package net.minecraft.spearcore.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.network.SpearStabAttackPacket;
 import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.item.ItemStack;
@@ -26,16 +28,17 @@ public class SpearCooldownAttackMixin {
         if (player == null) return;
 
         ItemStack stack = player.getMainHandItem();
-        if (!(stack.getItem() instanceof SpearItem spear)) return;
+        SpearLike spear = SpearLikeSupport.of(stack);
+        if (spear == null) return;
 
-        boolean ready = SpearRules.usesUseCooldown()
-                ? !player.getCooldowns().isOnCooldown(spear)
+        boolean ready = spear.usesJabCooldown()
+                ? !player.getCooldowns().isOnCooldown(stack.getItem())
                 : player.getAttackStrengthScale(0.0F) >= 0.95F;
 
         if (!ready) {
             // 原版 Java：攻击蓄力不满时点左键不出手。
             // 基岩版走物品使用冷却，交给服务端 canPlayerPerformStab 判定，这里不拦。
-            if (!SpearRules.usesUseCooldown()) {
+            if (!spear.usesJabCooldown()) {
                 cir.setReturnValue(false);
                 cir.cancel();
             }

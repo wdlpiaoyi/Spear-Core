@@ -36,6 +36,16 @@ public class SpearConfig {
             .comment("是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式")
             .define("resourcepackCompat", true);
 
+    /**
+     * Tetra 兼容层总开关：单头工具同时装了「长手柄 + 矛头」时，让它按本模组长矛的方式工作
+     * （左键戳刺、右键蓄力、复用长矛姿态）。数值由 Tetra 材料属性拟合，不复刻本模组各材质的固定数值。
+     * 读取统一走 compat/tetra/TetraSpearProfile。
+     */
+    public static final ForgeConfigSpec.BooleanValue TETRA_COMPAT = BUILDER
+            .comment("是否让 Tetra 单头工具（长手柄 + 矛头）按本模组长矛的方式工作",
+                    "仅支持 Tetra 1.20.1-6.17.0 及以上；Tetra 工具固定按 Java 语义，不挂戳刺冷却与后摇。")
+            .define("tetraCompat", true);
+
     // ========== 行为开关 ==========
     // 每个细节一个独立枚举，默认 JAVA（= 原版 Java 版行为）。
     // 可选值只列出"行为确实不同"的版本：与 Java 一致的版本不会作为选项中重复出现。

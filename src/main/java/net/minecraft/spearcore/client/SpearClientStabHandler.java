@@ -1,6 +1,7 @@
 package net.minecraft.spearcore.client;
 
 import net.minecraft.spearcore.SpearcoreMod;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -21,7 +22,7 @@ public class SpearClientStabHandler {
             return;
         }
         ItemStack stack = player.getMainHandItem();
-        if (!(stack.getItem() instanceof SpearItem)) {
+        if (SpearLikeSupport.of(stack) == null) {
             return;
         }
         SpearItem.jerotesLungeForwardMaybe(player);

@@ -1,7 +1,7 @@
 package net.minecraft.spearcore.mixin;
 
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -20,7 +20,8 @@ public class LocalPlayerFovMixin {
     @Inject(method = "getFieldOfViewModifier", at = @At("HEAD"), cancellable = true)
     public void onGetFieldOfViewModifier(CallbackInfoReturnable<Float> cir) {
         AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
-        if (self.isUsingItem() && !self.getUseItem().isEmpty() && self.getUseItem().getItem() instanceof SpearItem) {
+        if (self.isUsingItem() && !self.getUseItem().isEmpty()
+                && SpearLikeSupport.of(self.getUseItem()) != null) {
             float f = 1.0F;
             if (self.getAbilities().flying) {
                 f *= 1.1F;

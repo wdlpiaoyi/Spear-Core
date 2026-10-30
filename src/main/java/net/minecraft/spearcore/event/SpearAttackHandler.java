@@ -1,7 +1,9 @@
 package net.minecraft.spearcore.event;
 
 import net.minecraft.spearcore.SpearcoreMod;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearCombat;
+import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -16,12 +18,13 @@ public class SpearAttackHandler {
         if (event.getEntity().level().isClientSide()) return;
         Player player = event.getEntity();
         ItemStack stack = player.getMainHandItem();
-        if (!(stack.getItem() instanceof SpearItem spear)) return;
+        SpearLike spear = SpearLikeSupport.of(stack);
+        if (spear == null) return;
 
         event.setCanceled(true);
-        if (!SpearItem.canPlayerPerformStab(player, spear)) return;
+        if (!SpearCombat.canPlayerPerformStab(player, stack, spear)) return;
 
-        spear.performStabAttack(player, stack, EquipmentSlot.MAINHAND, true);
+        SpearCombat.performStabAttack(player, stack, EquipmentSlot.MAINHAND, true);
         player.resetAttackStrengthTicker();
     }
 }

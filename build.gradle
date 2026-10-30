@@ -4,7 +4,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-version = '3.2.0.2'
+version = '3.3.0'
 group = 'net.minecraft.spearcore'
 archivesBaseName = 'spear-core-forked-1.20.1-forge'
 
@@ -65,6 +65,12 @@ repositories {
         name = 'modrinth'
         url = 'https://api.modrinth.com/maven'
     }
+    // Tetra 等 CurseForge mod 的只读镜像（Modrinth Maven 已不可用）。
+    // Tetra 是可选联动，只在编译期需要它的 API 来读取模块/属性。
+    maven {
+        name = 'cursemaven'
+        url = 'https://cursemaven.com'
+    }
 }
 
 dependencies {
@@ -98,6 +104,13 @@ dependencies {
     // mixin 目标是用字符串写的，但 Mixin 注解处理器需要 Punchy 在 classpath 上才能校验目标类。
     // OOYVGbHo = Punchy 2.8d 的 1.20.1-fabric/forge 里的 forge 构建版本 id。
     compileOnly 'maven.modrinth:punchy-fpa:OOYVGbHo'
+
+    // ===== Tetra 联动（可选依赖，仅编译期）=====
+    // 8570756 = CurseForge 上 Tetra 1.20.1-6.17.0 的文件 id。
+    // 只调用 Tetra 自己声明的接口（模块检测 / getAttributeValue / getEnchantability），
+    // 不碰它对原版方法的 SRG override，所以用原始发布 jar 编译即可，不需要 fg.deobf，
+    // 也不需要 mutil（已用 javac 探针验证）。运行期由玩家自己安装 Tetra + Mutil。
+    compileOnly 'curse.maven:tetra-289712:8570756'
 }
 
 mixin {
@@ -107,6 +120,8 @@ mixin {
     // 目标类缺失也不会崩。1.20.1 靠这些 config 写进 MANIFEST 的 MixinConfigs
     //（NeoForge 那边是 mods.toml 里的第二个 [[mixins]]）。
     config 'spearcore.punchy.mixins.json'
+    // Tetra 软桥接：目标全是原版 ItemStack（refmap 安全），没装 Tetra 时由插件跳过。
+    config 'spearcore.tetra.mixins.json'
     quiet
 }
 
