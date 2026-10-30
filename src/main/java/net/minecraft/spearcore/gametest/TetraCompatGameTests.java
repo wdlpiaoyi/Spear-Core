@@ -4,6 +4,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
+import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.item.ItemStack;
@@ -79,5 +80,33 @@ public final class TetraCompatGameTests {
                 "蓄力阶段条件（击落 / 击退 / 伤害）应全部存在");
         helper.assertTrue(stats.getDamageEndTick() > stats.getDelayTicks(), "伤害窗口必须晚于前摇");
         helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraExtraReachIsWeakened(GameTestHelper helper) {
+        // 全部额外距离都来自 Tetra 时，按系数保留：4 * 0.3 = 1.2。
+        assertReach(helper, 4.0D, 4.0D, 0.3D, 1.2D);
+        // 系数边界：0 = 完全不计，1 = 原样计入。
+        assertReach(helper, 4.0D, 4.0D, 0.0D, 0.0D);
+        assertReach(helper, 4.0D, 4.0D, 1.0D, 4.0D);
+        // 来源加成超过 extra 时按 extra 截断，避免出现负数。
+        assertReach(helper, 3.0D, 5.0D, 0.3D, 0.9D);
+        // 非 Tetra 来源的距离不缩放。
+        assertReach(helper, 2.0D, 0.0D, 0.3D, 2.0D);
+        // 没有超出原版射程时保持 0。
+        assertReach(helper, 0.0D, 4.0D, 0.3D, 0.0D);
+
+        helper.assertTrue(TetraSpearStats.fit(10.0D, 0.0D, 4.0D).style() == SpearStyle.MODULAR_3D,
+                "带额外距离的 Tetra 拟合结果仍应是 3D 模块化风格");
+        helper.succeed();
+    }
+
+    private static void assertReach(GameTestHelper helper, double extraReach, double sourceBonus,
+                                    double scale, double expected) {
+        double actual = SpearCombat.weakenExtraReach(extraReach, sourceBonus, scale);
+        helper.assertTrue(Math.abs(actual - expected) < 1.0E-6D,
+                "额外距离削弱不符: extra=" + extraReach + ", bonus=" + sourceBonus
+                        + ", scale=" + scale + ", expected=" + expected + ", actual=" + actual);
     }
 }

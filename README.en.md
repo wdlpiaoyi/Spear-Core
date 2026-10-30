@@ -190,6 +190,9 @@ resourcepackCompat = true
 
 # Whether Tetra single-headed tools (long handle + spearhead) should work like this mod's spears
 tetraCompat = true
+
+# Tetra's extra attack-range bonus is scaled into this mod's spear reach (0 = ignored, 1 = full, default 0.3)
+tetraExtraReachScale = 0.3
 ```
 
 The first two switches (both **on by default**) control:
@@ -210,6 +213,7 @@ This used to be the standalone **Spear Core Resourcepack Compat** mod and is now
 `tetraCompat` turns Tetra single-headed tools into spears: a tool that has **both** a long handle (`single/handle` → `long_handle/`) and a spearhead (`single/head` → `spearhead/`) charges on right-click (no longer throws) and jabs on left-click, reusing the same spear poses and hit detection.
 
 - Stats are **fitted** from Tetra's per-material attack damage / attack speed instead of copying this mod's fixed per-material presets (and never the odd ones, like the golden spear); high values taper off to avoid overpowered results. Modded and addon Tetra materials work through the same formula.
+- Attack range that Tetra itself grants (long handles, amethyst sockets, etc. via `forge:attack_range`) is scaled into this mod's spear reach by `tetraExtraReachScale` (0~1, default 0.3); reach granted by other mods or modpacks is unaffected.
 - **Tetra 1.20.1-6.17.0+ is required**; the 6.9.0 branch is not guaranteed to work.
 - Tetra tools always follow **Java semantics** and ignore `jabCooldown` (inventory-wide shared cooldown) and `jabToChargeDelay` (post-jab delay): both depend on item identity, while every Tetra material combination is a different item instance.
 - Only the player's held single-headed tool is affected; Tetra's mob AI, offhand jab and other behaviour stay as-is.

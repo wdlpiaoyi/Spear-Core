@@ -401,14 +401,47 @@ public final class SpearCombat {
     }
 
     public static float effectiveMaxRange(SpearLike spear, Entity entity) {
+        return effectiveMaxRange(spear, entity, 0.0D, 1.0D);
+    }
+
+    /**
+     * 带来源缩放的射程。
+     *
+     * <p>reach 超出原版 3.0 的部分里，{@code sourceBonus} 是「指定来源」贡献的那段，
+     * 只对这段乘 {@code scale}；其他来源（整合包加成、其他模组修饰符）仍全额计入。</p>
+     *
+     * @param sourceBonus 指定来源贡献的额外距离（如 Tetra 的 entity_reach 加成）
+     * @param scale       该来源的计入比例，0~1
+     */
+    public static float effectiveMaxRange(SpearLike spear, Entity entity, double sourceBonus, double scale) {
+        double extraReach = reachOverVanilla(entity);
+        double weakened = weakenExtraReach(extraReach, sourceBonus, scale);
         if (entity instanceof Player player) {
-            return (player.isCreative() ? spear.getMaxCreativeRange() : spear.getMaxRange())
-                    + (player.getAttribute(ForgeMod.ENTITY_REACH.get()) != null
-                    ? (float) Math.max(0, player.getAttributeValue(ForgeMod.ENTITY_REACH.get()) - 3) : 0);
+            return (player.isCreative() ? spear.getMaxCreativeRange() : spear.getMaxRange()) + (float) weakened;
         }
-        return spear.getMaxRange() * spear.getMobFactor()
-                + (entity instanceof LivingEntity le && le.getAttribute(ForgeMod.ENTITY_REACH.get()) != null
-                ? (float) Math.max(0, le.getAttributeValue(ForgeMod.ENTITY_REACH.get()) - 3) : 0);
+        return spear.getMaxRange() * spear.getMobFactor() + (float) weakened;
+    }
+
+    /**
+     * 只削弱指定来源的那部分额外距离，其他来源原样保留。
+     *
+     * @param extraReach  超出原版射程的总距离
+     * @param sourceBonus 指定来源贡献的距离
+     * @param scale       该来源的计入比例，0~1（超出范围会被夹紧）
+     * @return 削弱后的总额外距离
+     */
+    public static double weakenExtraReach(double extraReach, double sourceBonus, double scale) {
+        double extra = Math.max(0.0D, extraReach);
+        double bonus = Math.max(0.0D, Math.min(extra, sourceBonus));
+        double clampedScale = Math.max(0.0D, Math.min(1.0D, scale));
+        return extra - bonus * (1.0D - clampedScale);
+    }
+
+    private static double reachOverVanilla(Entity entity) {
+        if (entity instanceof LivingEntity living && living.getAttribute(ForgeMod.ENTITY_REACH.get()) != null) {
+            return Math.max(0.0D, living.getAttributeValue(ForgeMod.ENTITY_REACH.get()) - 3.0D);
+        }
+        return 0.0D;
     }
 
     private static double getSpearMultiplier(LivingEntity entity, Attribute attribute) {

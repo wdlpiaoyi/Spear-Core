@@ -46,6 +46,16 @@ public class SpearConfig {
                     "仅支持 Tetra 1.20.1-6.17.0 及以上；Tetra 工具固定按 Java 语义，不挂戳刺冷却与后摇。")
             .define("tetraCompat", true);
 
+    /**
+     * Tetra 的攻击距离延伸（长手柄、紫水晶插槽等）远大于本模组，直接全额计入会让长矛变成远程武器。
+     * 这里只缩放 Tetra 自己贡献的那段 {@code forge:entity_reach}，其他模组/整合包给的 reach 不受影响。
+     * 读取统一走 compat/tetra/TetraSpearStats.reachScale()（配置未加载时回落 0.3）。
+     */
+    public static final ForgeConfigSpec.DoubleValue TETRA_EXTRA_REACH_SCALE = BUILDER
+            .comment("Tetra 提供的攻击距离延伸按多大比例计入本模组长矛射程（0=完全不计，1=原样计入）",
+                    "只影响 Tetra 工具自己加的额外距离，0~1，默认 0.3。")
+            .defineInRange("tetraExtraReachScale", 0.3, 0.0, 1.0);
+
     // ========== 行为开关 ==========
     // 每个细节一个独立枚举，默认 JAVA（= 原版 Java 版行为）。
     // 可选值只列出"行为确实不同"的版本：与 Java 一致的版本不会作为选项中重复出现。

@@ -189,6 +189,9 @@ resourcepackCompat = true
 
 # 是否让 Tetra 单头工具（长手柄 + 矛头）按本模组长矛工作
 tetraCompat = true
+
+# Tetra 提供的攻击距离延伸按比例计入本模组长矛射程（0=完全不计，1=原样计入，默认 0.3）
+tetraExtraReachScale = 0.3
 ```
 
 前两个开关控制的是（**默认都开着**）：
@@ -209,6 +212,7 @@ tetraCompat = true
 `tetraCompat` 控制 Tetra 单头工具的长矛化：同时装了**长手柄**（`single/handle` → `long_handle/`）和**矛头**（`single/head` → `spearhead/`）的单头工具，会像本模组的长矛一样工作——左键戳刺、右键蓄力（不再是 Tetra 的投掷），并复用同一套长矛姿态与命中判定。
 
 - 数值由 Tetra 按材料算出的攻击力 / 攻击速度**拟合**，不复刻本模组各材质的固定数值（也不复刻金矛那类反常数值）；高数值区间会放缓，避免 overpowered。Tetra 新增的模组材料 / 附属材料同样适用。
+- Tetra 自己提供的攻击距离延伸（长手柄、紫水晶插槽等的 `forge:attack_range`）只按 `tetraExtraReachScale`（0~1，默认 0.3）计入长矛射程；其他模组 / 整合包给的 reach 不受影响。
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
 - Tetra 工具固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种材料组合都是不同实例，无法按物品共享冷却。
 - 只改玩家手持的单头工具；怪物 AI、副手戳刺等 Tetra 原有行为不变。

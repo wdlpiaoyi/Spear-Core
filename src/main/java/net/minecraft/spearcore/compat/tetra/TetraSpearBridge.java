@@ -1,8 +1,11 @@
 package net.minecraft.spearcore.compat.tetra;
 
 import net.minecraft.spearcore.item.SpearLike;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.ForgeMod;
 import se.mickelus.tetra.items.modular.IModularItem;
 import se.mickelus.tetra.module.ItemModule;
 
@@ -45,6 +48,17 @@ final class TetraSpearBridge {
 
         double attackDamage = modular.getAttributeValue(stack, Attributes.ATTACK_DAMAGE);
         double attackSpeed = modular.getAttributeValue(stack, Attributes.ATTACK_SPEED);
-        return TetraSpearStats.fit(attackDamage, attackSpeed);
+
+        // Tetra 的攻击距离（forge:attack_range，Forge 别名到 forge:entity_reach）会叠得很高：
+        // 长手柄 + 紫水晶插槽可轻松超过 2 格。只把 Tetra 自己贡献的 ADDITION 部分交给拟合，
+        // 由 TetraSpearStats 按配置比例计入。MULTIPLY_TOTAL 型 reach 修饰符不纳入（Tetra 当前不用）。
+        double tetraReachBonus = 0.0D;
+        for (var entry : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
+            if (entry.getKey() == ForgeMod.ENTITY_REACH.get()
+                    && entry.getValue().getOperation() == AttributeModifier.Operation.ADDITION) {
+                tetraReachBonus += entry.getValue().getAmount();
+            }
+        }
+        return TetraSpearStats.fit(attackDamage, attackSpeed, tetraReachBonus);
     }
 }
