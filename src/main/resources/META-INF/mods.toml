@@ -4,12 +4,12 @@ license="MIT License"
 
 [[mods]]
 modId="spearcore"
-version="3.2.0.1"
-displayName="Spear Core"
+version="3.2.0.2"
+displayName="Spear Core Forked"
 displayURL="https://center.mcmod.cn/863182/"
 logoFile="spear.png"
 credits="Lyingice's Spear Core"
-authors="Lyingice"
+authors="wdlpiaoyi,deepseek"
 
 # Start of user code block mod configuration
 # End of user code block mod configuration

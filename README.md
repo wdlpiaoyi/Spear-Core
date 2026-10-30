@@ -1,4 +1,4 @@
-# Spear Core · 矛核心
+# Spear Core Forked · 矛核心
 
 > 简体中文（默认） ｜ [English version](README.en.md)
 >
@@ -7,6 +7,10 @@
 > 适用版本：**Minecraft 1.20.1 · Forge**（客户端与服务端都要装）
 >
 > 本分支 = 1.20.1 + Forge；1.21.1 + NeoForge 是 `main` 分支，两边功能一致。
+>
+> 本仓库是 `github.com/wdlpiaoyi/Spear-Core` 的 fork（上游 `lyingice/Spear-Core`），由 wdlpiaoyi 与 deepseek 维护。
+>
+> 展示名改为 **Spear Core Forked**，但 `modId`、包名、注册命名空间仍然是 `spearcore`——以 modId 写死兼容的模组（如 Avaritia 长矛）继续可用。
 
 ---
 
@@ -177,6 +181,9 @@ enableCopperSpear = true
 
 # 安装 Punchy 时，让其矛蓄力动画按本模组各材质的阶段切换
 punchyStageBridge = true
+
+# 是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式
+resourcepackCompat = true
 ```
 
 前两个开关控制的是（**默认都开着**）：
@@ -185,6 +192,12 @@ punchyStageBridge = true
 - 怪物**会不会携带**这些矛。
 
 **关掉也不影响**合成、`/give` 和其他正常获取途径——物品一直在，只是不在创造栏里、怪物也不带。
+
+### 资源包兼容
+
+`resourcepackCompat` 控制 **1.21.9+ 格式的长矛材质包**：开启时（默认）会把 `resourcepacks/` 里含长矛贴图的包以 " [Spear Core 贴图兼容]" 的名字注册进资源包列表，在内存里把 `pack_format` 补成 15，并把 `minecraft:` 下的长矛贴图映射到 `spearcore:` 命名空间。**磁盘上的资源包文件不会被改动。**
+
+这项功能原先是独立的 **Spear Core Resourcepack Compat** 模组，现已并入本体：如果你装过它（`spearrpcompat` 的 jar），删掉那个 jar 即可，装载本模组后行为不变。
 
 ### 行为开关（`[behavior]`）
 
@@ -406,10 +419,14 @@ StartupEvents.registry('item', event => {
 ### 自己构建与验证
 
 ```bash
-./gradlew build              # 产物：build/libs/spearcore-1.20.1-forge-3.2.0.1.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.2.0.2.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```
 
 GameTest 的判定看日志：`All N required tests passed :)` 或 `N required tests failed :(`，
 退出码等于失败的必需测试数。测试结构模板在 `gameteststructures/`，Gradle 会拷进 `run/`。
+
+---
+
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)

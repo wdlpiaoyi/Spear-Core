@@ -8,4 +8,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'spearcore-1.20.1-forge'
+rootProject.name = 'spear-core-forked-1.20.1-forge'

@@ -27,6 +27,15 @@ public class SpearConfig {
             .comment("安装 Punchy 时，让其矛蓄力动画按本模组各材质的阶段(tick)切换；关闭则用 Punchy 自带的固定时间轴")
             .define("punchyStageBridge", true);
 
+    /**
+     * 资源包兼容层总开关：识别 1.21.9+ 格式（只有 min_format/max_format）的长矛材质包，
+     * 在内存里补成 1.20.1 可读格式，并把 minecraft: 的长矛贴图借给 spearcore:。
+     * 读取统一走 resourcepack/ResourcepackCompat.enabled()（配置未加载时回落 true）。
+     */
+    public static final ForgeConfigSpec.BooleanValue RESOURCEPACK_COMPAT = BUILDER
+            .comment("是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式")
+            .define("resourcepackCompat", true);
+
     // ========== 行为开关 ==========
     // 每个细节一个独立枚举，默认 JAVA（= 原版 Java 版行为）。
     // 可选值只列出"行为确实不同"的版本：与 Java 一致的版本不会作为选项中重复出现。

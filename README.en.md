@@ -1,4 +1,4 @@
-# Spear Core
+# Spear Core Forked
 
 > English ｜ [简体中文](README.md)
 >
@@ -7,6 +7,10 @@
 > Targets **Minecraft 1.20.1 · Forge** (client and server both).
 >
 > This branch = 1.20.1 + Forge; 1.21.1 + NeoForge lives on `main`, feature parity.
+>
+> This repository is a fork of `github.com/wdlpiaoyi/Spear-Core` (upstream `lyingice/Spear-Core`), maintained by wdlpiaoyi and deepseek.
+>
+> The display name is now **Spear Core Forked**, but the `modId`, package names and registry namespace stay `spearcore` — mods that hard-code compatibility by modId (such as the Avaritia spear) keep working.
 
 ---
 
@@ -178,6 +182,9 @@ enableCopperSpear = true
 
 # When Punchy is installed, drive its spear charge animation from this mod's per-material stages
 punchyStageBridge = true
+
+# Whether to recognise 1.21.9+ spear resource packs and patch them to pack_format 15 in memory
+resourcepackCompat = true
 ```
 
 The first two switches (both **on by default**) control:
@@ -186,6 +193,12 @@ The first two switches (both **on by default**) control:
 - whether mobs **spawn carrying** them.
 
 **Turning them off changes nothing else**: crafting, `/give` and every normal way of obtaining them still work. The items always exist — they are simply hidden from the creative tabs and never handed to mobs.
+
+### Resource pack compatibility
+
+`resourcepackCompat` controls support for **1.21.9+ spear resource packs**: when on (the default), every pack in `resourcepacks/` that contains spear textures is registered in the pack list as " [Spear Core 贴图兼容]", its `pack_format` is patched to 15 in memory, and its `minecraft:` spear textures are mapped onto the `spearcore:` namespace. **The pack files on disk are never modified.**
+
+This used to be the standalone **Spear Core Resourcepack Compat** mod and is now merged into this mod: if you installed its jar (`spearrpcompat`), delete that jar — behaviour is unchanged with this mod installed.
 
 ### Behaviour switches (`[behavior]`)
 
@@ -407,7 +420,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 ### Building and verifying
 
 ```bash
-./gradlew build              # output: build/libs/spearcore-1.20.1-forge-3.2.0.1.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.2.0.2.jar
 ./gradlew runServer          # headless boot; the startup check prints "已注册 7 把长矛"
 ./gradlew runGameTestServer  # automated tests judged by the game itself
 ```
@@ -415,3 +428,7 @@ These APIs do not line up between 1.21.1/NeoForge and 1.20.1/Forge (all already 
 Read the verdict from the log: `All N required tests passed :)` or `N required tests failed :(`;
 the exit code equals the number of failed required tests. The structure template lives in
 `gameteststructures/` and Gradle stages it into `run/`.
+
+---
+
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
