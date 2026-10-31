@@ -56,6 +56,17 @@ public class SpearConfig {
                     "只影响 Tetra 工具自己加的额外距离，0~1，默认 0.3。")
             .defineInRange("tetraExtraReachScale", 0.3, 0.0, 1.0);
 
+    /**
+     * Tetra 的武器攻击力普遍高于本模组同级材质，直接当蓄力基数会明显 overpowered。
+     * 这里对 Tetra 工具自身的 {@code ATTACK_DAMAGE}（ADDITION 部分）统一打折；
+     * 玩家基础攻击力、力量效果、附魔与其他模组来源都不受影响。
+     * 读取统一走 compat/tetra/TetraDamageScaling.damageScale()（配置未加载时回落 0.5）。
+     */
+    public static final ForgeConfigSpec.DoubleValue TETRA_DAMAGE_SCALE = BUILDER
+            .comment("Tetra 工具自身攻击力按多大比例计入长矛伤害（0=完全不计，1=原样计入）",
+                    "只影响 Tetra 工具自带的攻击力，0~1，默认 0.5。")
+            .defineInRange("tetraDamageScale", 0.5, 0.0, 1.0);
+
     // ========== 行为开关 ==========
     // 每个细节一个独立枚举，默认 JAVA（= 原版 Java 版行为）。
     // 可选值只列出"行为确实不同"的版本：与 Java 一致的版本不会作为选项中重复出现。

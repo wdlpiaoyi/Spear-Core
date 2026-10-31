@@ -1,5 +1,7 @@
 package net.minecraft.spearcore.compat.tetra.mixin;
 
+import com.google.common.collect.Multimap;
+import net.minecraft.spearcore.compat.tetra.TetraDamageScaling;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
@@ -7,7 +9,10 @@ import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
@@ -84,6 +89,23 @@ public abstract class ItemStackTetraMixin {
         if (spearLike() != null) {
             cir.setReturnValue((ItemStack) (Object) this);
         }
+    }
+
+    /**
+     * Tetra 武器攻击力打折：只缩放 {@code ATTACK_DAMAGE} 的 {@code ADDITION} 修饰符，
+     * tooltip 与伤害结算读同一份属性，因此面板与实际伤害一致。
+     */
+    @Inject(method = "getAttributeModifiers(Lnet/minecraft/world/entity/EquipmentSlot;)Lcom/google/common/collect/Multimap;", at = @At("RETURN"), cancellable = true)
+    private void spearcore$tetraAttackDamage(EquipmentSlot slot,
+                                             CallbackInfoReturnable<Multimap<Attribute, AttributeModifier>> cir) {
+        if (spearLike() == null) {
+            return;
+        }
+        double scale = TetraDamageScaling.damageScale();
+        if (scale >= 1.0D) {
+            return;
+        }
+        cir.setReturnValue(TetraDamageScaling.scaleAttackDamage(cir.getReturnValue(), scale));
     }
 
     /** 仅 Tetra 的 3D 单头工具走这里；本模组自己的贴图矛继续走 {@code SpearItem} 的原逻辑。 */

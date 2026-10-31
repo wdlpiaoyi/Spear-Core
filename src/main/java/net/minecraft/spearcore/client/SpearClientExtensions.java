@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class SpearClientExtensions implements IClientItemExtensions {
 
+    private static boolean tetraPathLogged;
+
     @Override
     /**
      * 应用玩家手持长矛时的第一人称视角变换
@@ -34,6 +36,10 @@ public class SpearClientExtensions implements IClientItemExtensions {
         SpearLike spear = SpearLikeSupport.of(itemInHand);
         if (spear == null) return false;
         boolean modular = spear.style() == SpearStyle.MODULAR_3D;
+        if (modular && !tetraPathLogged) {
+            tetraPathLogged = true;
+            net.minecraft.spearcore.SpearcoreMod.LOGGER.info("[spearcore] Tetra 第一人称长矛姿势已生效");
+        }
 
         // 根据手臂方向确定偏移方向（右臂为正，左臂为负）
         int dir = arm == HumanoidArm.RIGHT ? 1 : -1;
@@ -44,24 +50,17 @@ public class SpearClientExtensions implements IClientItemExtensions {
             float useTicks = itemInHand.getUseDuration() - (player.getUseItemRemainingTicks() - partialTick + 1.0F);
             if (useTicks < 0) useTicks = 0;
             // 3D 模型用独立的平滑蓄力曲线 + 蓄力锚点，不再套贴图长矛的分段曲线（会在时间边界跳变）。
-            applyItemArmTransform(poseStack, arm, modular ? equipProcess : 0.0F);
-            if (modular) {
-                TetraClientPose.applyCharge(poseStack, true, useTicks);
-            } else {
-                // 执行第一人称使用动画
-                SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, itemInHand);
-            }
+            applyItemArmTransform(poseStack, arm, 0.0F);
+            SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, itemInHand);
             return true;
         } else if (swingProcess > 0.0F) {
             applyItemArmTransform(poseStack, arm, 0.0F);
-            if (modular) TetraClientPose.firstPerson(poseStack);
             SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
             return true;
         }
         // 空闲时保留装备进度，正常的「掏出/收起」动画要能看见；3D 模型的蓄力分支也使用同一个
         // equipProcess，这样从空闲切到蓄力时不会有 0.6 格的位置跳变。
         applyItemArmTransform(poseStack, arm, equipProcess);
-        if (modular) TetraClientPose.firstPerson(poseStack);
         return true;
     }
 

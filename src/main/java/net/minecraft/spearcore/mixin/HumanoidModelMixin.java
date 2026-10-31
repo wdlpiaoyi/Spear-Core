@@ -8,7 +8,6 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.spearcore.client.animation.SpearAnimations;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
-import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,10 +40,6 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> {
         SpearLike offSpear = SpearLikeSupport.of(offHand);
         boolean mainIsSpear = mainSpear != null;
         boolean offIsSpear = offSpear != null;
-        // 3D 模型的手臂交给原版 use 姿势：长矛的手臂曲线只适合贴图矛。
-        boolean mainIsModular = mainSpear != null && mainSpear.style() == SpearStyle.MODULAR_3D;
-        boolean offIsModular = offSpear != null && offSpear.style() == SpearStyle.MODULAR_3D;
-
         if (!mainIsSpear && !offIsSpear) return;
 
         HumanoidArm mainArm = entity.getMainArm();
@@ -61,13 +56,13 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> {
         // 蓄力动画 — 手臂
         float useTicks = entity.getTicksUsingItem();
         if (useTicks > 0.0F) {
-            if (mainIsSpear && !mainIsModular) {
+            if (mainIsSpear) {
                 HumanoidArm armSide = mainArm;
                 ModelPart arm = getArm((HumanoidModel<T>) (Object) this, armSide);
                 SpearAnimations.thirdPersonHandUse(arm, head, armSide == HumanoidArm.RIGHT,
                         mainHand, (HumanoidModel<?>) (Object) this, entity);
             }
-            if (offIsSpear && !offIsModular) {
+            if (offIsSpear) {
                 HumanoidArm armSide = mainArm.getOpposite();
                 ModelPart arm = getArm((HumanoidModel<T>) (Object) this, armSide);
                 SpearAnimations.thirdPersonHandUse(arm, head, armSide == HumanoidArm.RIGHT,

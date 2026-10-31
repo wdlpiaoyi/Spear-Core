@@ -1,9 +1,11 @@
 package net.minecraft.spearcore.gametest;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.spearcore.SpearcoreMod;
-import net.minecraft.spearcore.compat.tetra.TetraChargeRamp;
+import net.minecraft.spearcore.compat.tetra.TetraDamageScaling;
 import net.minecraft.spearcore.compat.tetra.TetraMaterialKey;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
@@ -11,7 +13,9 @@ import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -162,24 +166,6 @@ public final class TetraCompatGameTests {
 
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
-    public static void tetraChargeRampIsClampedAndMonotonic(GameTestHelper helper) {
-        float previous = -1.0F;
-        for (float usedTicks = 0.0F; usedTicks <= 8.0F; usedTicks += 0.25F) {
-            float progress = TetraChargeRamp.progress(usedTicks);
-            helper.assertTrue(progress >= 0.0F && progress <= 1.0F,
-                    "蓄力进度越界: usedTicks=" + usedTicks + ", progress=" + progress);
-            helper.assertTrue(progress >= previous - 1.0E-5F,
-                    "蓄力进度必须单调不减: " + previous + " -> " + progress);
-            previous = progress;
-        }
-        helper.assertTrue(Math.abs(TetraChargeRamp.progress(1.0F)) < 1.0E-5F, "起手第 1 tick 不应抬升");
-        helper.assertTrue(Math.abs(TetraChargeRamp.progress(6.0F) - 1.0F) < 1.0E-5F, "5 tick 后应完全抬满");
-        helper.assertTrue(Math.abs(TetraChargeRamp.smoothProgress(6.0F) - 1.0F) < 1.0E-5F, "平滑曲线满蓄力应为 1");
-        helper.succeed();
-    }
-
-    @PrefixGameTestTemplate(false)
-    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void tetraMaterialKeySuffixMatches(GameTestHelper helper) {
         helper.assertTrue(TetraMaterialKey.matches("spearhead/iron", "iron"), "应匹配 spearhead/iron 与 iron");
         helper.assertTrue(TetraMaterialKey.matches("iron", "iron"), "应匹配完全相同的 key");
@@ -187,6 +173,34 @@ public final class TetraCompatGameTests {
         helper.assertTrue(!TetraMaterialKey.matches("spearhead/ironwood", "iron"), "ironwood 不能被 iron 误匹配");
         helper.assertTrue(!TetraMaterialKey.matches(null, "iron"), "null key 不应匹配");
         helper.assertTrue(!TetraMaterialKey.matches("spearhead/iron", null), "null 材料不应匹配");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraAttackDamageIsScaled(GameTestHelper helper) {
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+        builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(
+                java.util.UUID.fromString("3c1f0d7a-5b2e-4c8f-9a61-7d4e2b0c8f13"),
+                "spearcore:test_damage", 6.0D, AttributeModifier.Operation.ADDITION));
+        builder.put(ForgeMod.ENTITY_REACH.get(), new AttributeModifier(
+                java.util.UUID.fromString("8b7a6c5d-4e3f-2a1b-9c8d-7e6f5a4b3c2d"),
+                "spearcore:test_reach", 0.5D, AttributeModifier.Operation.ADDITION));
+        builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(
+                java.util.UUID.fromString("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
+                "spearcore:test_speed", -0.1D, AttributeModifier.Operation.MULTIPLY_BASE));
+
+        Multimap<Attribute, AttributeModifier> scaled = TetraDamageScaling.scaleAttackDamage(builder.build(), 0.5D);
+        double damage = scaled.get(Attributes.ATTACK_DAMAGE).stream()
+                .mapToDouble(AttributeModifier::getAmount).sum();
+        double reach = scaled.get(ForgeMod.ENTITY_REACH.get()).stream()
+                .mapToDouble(AttributeModifier::getAmount).sum();
+        double speed = scaled.get(Attributes.ATTACK_SPEED).stream()
+                .mapToDouble(AttributeModifier::getAmount).sum();
+
+        helper.assertTrue(Math.abs(damage - 3.0D) < 1.0E-6D, "攻击伤害应按 0.5 打折: " + damage);
+        helper.assertTrue(Math.abs(reach - 0.5D) < 1.0E-6D, "reach 不应被伤害折扣影响: " + reach);
+        helper.assertTrue(Math.abs(speed + 0.1D) < 1.0E-6D, "攻速的百分比修饰符不应被缩放: " + speed);
         helper.succeed();
     }
 

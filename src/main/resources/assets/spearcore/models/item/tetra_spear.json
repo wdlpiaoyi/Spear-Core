@@ -1,118 +1,22 @@
 {
-  "credit": "Spear Core Forked - Tetra spear model",
-  "texture_size": [64, 64],
+  "credit": "Spear Core Forked - Tetra spear (separate transforms: SC-style flat hand model + 16x16 icon)",
+  "loader": "forge:separate_transforms",
+  "gui_light": "front",
   "textures": {
-    "particle": "spearcore:item/tetra_spear",
-    "wood": "spearcore:item/tetra_spear",
-    "metal": "spearcore:item/tetra_spear"
+    "particle": "spearcore:item/tetra_spear_handle"
   },
-  "elements": [
-    {
-      "name": "shaft",
-      "from": [7.5, -4.0, 7.5],
-      "to": [8.5, 24.0, 8.5],
-      "shade": true,
-      "faces": {
-        "north": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "east": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "south": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "west": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "up": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "down": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0}
-      }
-    },
-    {
-      "name": "grip",
-      "from": [7.0, -2.0, 7.0],
-      "to": [9.0, 6.0, 9.0],
-      "shade": true,
-      "faces": {
-        "north": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "east": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "south": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "west": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "up": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0},
-        "down": {"uv": [0, 0, 8, 8], "texture": "#wood", "tintindex": 0}
-      }
-    },
-    {
-      "name": "collar",
-      "from": [6.7, 23.0, 6.7],
-      "to": [9.3, 25.5, 9.3],
-      "shade": true,
-      "faces": {
-        "north": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 0},
-        "east": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 0},
-        "south": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 0},
-        "west": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 0},
-        "up": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 0},
-        "down": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 0}
-      }
-    },
-    {
-      "name": "blade",
-      "from": [7.0, 25.5, 7.0],
-      "to": [9.0, 30.0, 9.0],
-      "shade": true,
-      "faces": {
-        "north": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "east": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "south": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "west": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "up": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "down": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1}
-      }
-    },
-    {
-      "name": "tip",
-      "from": [7.6, 30.0, 7.6],
-      "to": [8.4, 32.0, 8.4],
-      "shade": true,
-      "faces": {
-        "north": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "east": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "south": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "west": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "up": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1},
-        "down": {"uv": [8, 0, 16, 8], "texture": "#metal", "tintindex": 1}
-      }
-    }
-  ],
-  "display": {
-    "thirdperson_righthand": {
-      "rotation": [0, 0, 0],
-      "translation": [0, 0, 0],
-      "scale": [1.0, 1.0, 1.0]
-    },
-    "thirdperson_lefthand": {
-      "rotation": [0, 0, 0],
-      "translation": [0, 0, 0],
-      "scale": [1.0, 1.0, 1.0]
-    },
-    "firstperson_righthand": {
-      "rotation": [0, 0, 0],
-      "translation": [0, 0, 0],
-      "scale": [1.0, 1.0, 1.0]
-    },
-    "firstperson_lefthand": {
-      "rotation": [0, 0, 0],
-      "translation": [0, 0, 0],
-      "scale": [1.0, 1.0, 1.0]
-    },
+  "base": {
+    "parent": "spearcore:item/tetra_spear_in_hand"
+  },
+  "perspectives": {
     "gui": {
-      "rotation": [0, 0, 45],
-      "translation": [0, 0, 0],
-      "scale": [0.9, 0.9, 0.9]
-    },
-    "ground": {
-      "rotation": [0, 0, 45],
-      "translation": [0, 2, 0],
-      "scale": [0.5, 0.5, 0.5]
+      "parent": "spearcore:item/tetra_spear_icon"
     },
     "fixed": {
-      "rotation": [0, 0, 45],
-      "translation": [0, 0, 0],
-      "scale": [1.0, 1.0, 1.0]
+      "parent": "spearcore:item/tetra_spear_icon"
+    },
+    "ground": {
+      "parent": "spearcore:item/tetra_spear_icon"
     }
   }
 }
