@@ -145,7 +145,7 @@ tetraDamageScale = 0.5
 
 ## 兼容
 
-### Tetra
+### Tetra（WIP，仍在验证）
 
 同时安装「长手柄」+「矛头」的 Tetra 单头工具会像本模组长矛一样工作：左键戳刺、右键蓄力（不再是投掷），复用同一套姿态、判定与动画。
 
@@ -154,6 +154,7 @@ tetraDamageScale = 0.5
 - Tetra 的攻击距离延伸按 `tetraExtraReachScale` 计入。
 - 固定 Java 语义：不受 `jabCooldown` / `jabToChargeDelay` 控制。
 - 模型用本仓库自己的四张灰阶图（16×16 图标 + 32×32 手持），游戏内按材料 tint。
+- 该兼容仍在调整中；遇到姿势/数值问题请带上 Tetra 版本反馈。
 
 ### Avaritia Spear
 

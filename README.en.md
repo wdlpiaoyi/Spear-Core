@@ -145,7 +145,7 @@ There are 17 more per-behaviour switches under `[behavior]` (all default to `JAV
 
 ## Compatibility
 
-### Tetra
+### Tetra (WIP, still being validated)
 
 A Tetra single-headed tool with both **long handle** and **spearhead** behaves like this mod's spear: left-click jab, right-click charge (instead of throwing), reusing the same poses, hit detection and animations.
 
@@ -154,6 +154,7 @@ A Tetra single-headed tool with both **long handle** and **spearhead** behaves l
 - Tetra's extra reach is scaled by `tetraExtraReachScale`.
 - Fixed Java semantics: not affected by `jabCooldown` / `jabToChargeDelay`.
 - The model uses four grayscale textures from this repository (16x16 icons + 32x32 in-hand), tinted by material in game.
+- This compatibility is still being tuned; report pose/stat issues together with your Tetra version.
 
 ### Avaritia Spear
 
