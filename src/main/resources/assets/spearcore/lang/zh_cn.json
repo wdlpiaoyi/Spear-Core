@@ -13,5 +13,6 @@
   "death.attack.spear.item": "%1$s 被 %2$s 用 %3$s 刺穿了",
   "death.attack.spear.player": "%1$s 被 %2$s 刺穿了",
   "attribute.spearcore.spear_stab_multiplier": "长矛戳击伤害",
-  "attribute.spearcore.spear_charge_multiplier": "长矛冲刺伤害"
+  "attribute.spearcore.spear_charge_multiplier": "长矛冲刺伤害",
+  "item.spearcore.enchantment_probe": "附魔探针（开发用）"
 }

@@ -152,6 +152,10 @@ tetraDamageScale = 0.5
 - 只支持 **Tetra 1.20.1-6.17.0 及以上**。
 - 数值由 Tetra 材料算出的攻击力 / 攻速拟合，高值区间放缓；Tetra 工具攻击力先按 `tetraDamageScale` 打折。
 - Tetra 的攻击距离延伸按 `tetraExtraReachScale` 计入。
+- 附魔台可刷本模组支持的 8 种原版附魔与突进（突进对 Tetra 长矛同样生效）。附魔书走铁砧仍被 Tetra 自身禁用（`isBookEnchantable=false`）。
+- 命中时的原版附魔效果会正常触发：火焰附加点燃、节肢杀手 / 冰霜附加等 `doPostHurt` 类效果走原版 `EnchantmentHelper` 钩子。
+- 模组添加的武器类附魔（如 Enigmatic Legacy 的 Slayer）也可附在长矛上：用本模组内置的隐藏探针剑判断「能不能附在标准武器上」，不依赖整合包是否保留钻石剑。玩家持矛的伤害按原版 `player_attack` 类型结算（死亡消息仍是长矛文案），所以 Slayer 这类按原版玩家攻击给伤害的附魔会正常生效；原版非白名单附魔（如横扫之刃）仍不放行。
+- 同一 tick 里先打一段伤害的模组（如 fantasy_ending 的 Void Collapsing）不会再吞掉长矛本体的伤害。
 - 固定 Java 语义：不受 `jabCooldown` / `jabToChargeDelay` 控制。
 - 模型用本仓库自己的四张灰阶图（16×16 图标 + 32×32 手持），游戏内按材料 tint。
 - 该兼容仍在调整中；遇到姿势/数值问题请带上 Tetra 版本反馈。
@@ -192,7 +196,7 @@ JEI、KubeJS、Punchy、Tetra、Avaritia Spear 都已适配；遇到其它冲突
 - 仓库约定与自检：**[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
 ./gradlew runServer          # 无头启动，自检会打印已注册的长矛数量
 ./gradlew runGameTestServer  # 自动化测试，看日志里的 "All N required tests passed :)"
 ```

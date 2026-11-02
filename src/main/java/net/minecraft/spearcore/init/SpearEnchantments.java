@@ -1,8 +1,12 @@
 package net.minecraft.spearcore.init;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.item.SpearLike;
+import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -10,7 +14,9 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 突进附魔。
@@ -56,6 +62,50 @@ public class SpearEnchantments {
         return SUPPORTED_VANILLA.contains(enchantment);
     }
 
+    /**
+     * 模组附魔的代理缓存：按附魔对象缓存，避免附魔台每次查询都触发一遍模组逻辑。
+     *
+     * <p>附魔台的附魔结果是并发计算的，缓存必须线程安全；探针物品未注册时不缓存，
+     * 避免注册期把错误结果永久钉住。</p>
+     */
+    private static final Map<Enchantment, Boolean> MODDED_WEAPON_CACHE = new ConcurrentHashMap<>();
+    private static boolean proxyFailureLogged;
+
+    /**
+     * 长矛是否允许该附魔：原版白名单，或者「模组添加、且能附在标准武器上」的附魔。
+     *
+     * <p>原版非白名单附魔（例如横扫之刃）仍然不放行，避免改变原版行为；模组附魔用
+     * {@link #ENCHANTMENT_PROBE} 这把隐藏探针剑判断是否属于「武器类」。</p>
+     */
+    public static boolean supportsSpearEnchantment(Enchantment enchantment) {
+        return supportsVanilla(enchantment) || isModdedWeaponEnchantment(enchantment);
+    }
+
+    /** 用本模组自带的探针剑判断附魔是否适用于标准武器（不依赖整合包是否保留钻石剑）。 */
+    public static boolean isWeaponCompatible(Enchantment enchantment) {
+        try {
+            return enchantment.canApplyAtEnchantingTable(new ItemStack(SpearCoreItems.ENCHANTMENT_PROBE.get()));
+        } catch (Throwable throwable) {
+            if (!proxyFailureLogged) {
+                proxyFailureLogged = true;
+                SpearcoreMod.LOGGER.warn("[spearcore] 模组附魔探针判定失败，按不适用处理", throwable);
+            }
+            return false;
+        }
+    }
+
+    private static boolean isModdedWeaponEnchantment(Enchantment enchantment) {
+        ResourceLocation id = ForgeRegistries.ENCHANTMENTS.getKey(enchantment);
+        if (id == null || "minecraft".equals(id.getNamespace())) {
+            return false;
+        }
+        if (!SpearCoreItems.ENCHANTMENT_PROBE.isPresent()) {
+            // 注册未完成时先不判、不缓存；等探针可用后再走正常逻辑。
+            return false;
+        }
+        return MODDED_WEAPON_CACHE.computeIfAbsent(enchantment, SpearEnchantments::isWeaponCompatible);
+    }
+
     public static final DeferredRegister<Enchantment> REGISTRY =
             DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, SpearcoreMod.MODID);
 
@@ -64,6 +114,13 @@ public class SpearEnchantments {
     public static class LungeEnchantment extends Enchantment {
         public LungeEnchantment() {
             super(Rarity.RARE, SPEAR_CATEGORY, new EquipmentSlot[]{EquipmentSlot.MAINHAND});
+        }
+
+        @Override
+        public boolean canApplyAtEnchantingTable(ItemStack stack) {
+            SpearLike spear = SpearLikeSupport.of(stack);
+            return super.canApplyAtEnchantingTable(stack)
+                    || (spear != null && spear.style() == SpearStyle.MODULAR_3D);
         }
 
         @Override

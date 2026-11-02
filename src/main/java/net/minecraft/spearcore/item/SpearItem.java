@@ -45,6 +45,7 @@ import java.util.function.Predicate;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.spearcore.init.SpearEnchantments;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.util.SpearRules;
 
 /**
@@ -358,11 +359,16 @@ public abstract class SpearItem extends Item implements SpearLike {
 
     // ========== Lunge ==========
 
+    /** 突进是否对这把武器生效：本模组矛与 Tetra 长矛都走 {@link SpearLikeSupport}。 */
+    public static boolean isLungeApplicable(ItemStack stack) {
+        return SpearLikeSupport.of(stack) != null;
+    }
+
     public static void jerotesLungeForwardMaybe(LivingEntity user) {
-        if (!(user.getMainHandItem().getItem() instanceof SpearItem)) {
+        ItemStack stack = user.getMainHandItem();
+        if (!isLungeApplicable(stack)) {
             return;
         }
-        ItemStack stack = user.getMainHandItem();
         int lungeLevel = EnchantmentHelper.getItemEnchantmentLevel(SpearEnchantments.LUNGE.get(), stack);
 
         if (lungeLevel <= 0) {
@@ -418,7 +424,7 @@ public abstract class SpearItem extends Item implements SpearLike {
      */
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-        return SpearEnchantments.supportsVanilla(enchantment)
+        return SpearEnchantments.supportsSpearEnchantment(enchantment)
                 || super.canApplyAtEnchantingTable(stack, enchantment);
     }
 

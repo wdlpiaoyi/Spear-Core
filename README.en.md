@@ -152,6 +152,10 @@ A Tetra single-headed tool with both **long handle** and **spearhead** behaves l
 - Requires **Tetra 1.20.1-6.17.0 or newer**.
 - Stats are fitted from Tetra's material attack damage / speed with a soft cap; Tetra weapon damage is first scaled by `tetraDamageScale`.
 - Tetra's extra reach is scaled by `tetraExtraReachScale`.
+- Vanilla enchantments supported by this mod and Lunge work on Tetra spears too; anvil book enchanting is still blocked by Tetra itself (`isBookEnchantable=false`).
+- On-hit enchantment effects fire as in vanilla: Fire Aspect ignites, and `doPostHurt` effects such as Bane of Arthropods / Frost Aspect run through `EnchantmentHelper`.
+- Weapon enchantments added by other mods (e.g. Enigmatic Legacy's Slayer) also work on spears: the mod uses its own hidden probe sword to decide whether an enchantment applies to a standard weapon, so it does not depend on diamond swords being present. Player spear hits use the vanilla `player_attack` damage type (the spear death message is preserved), so bonuses gated on a real player attack are applied; non-whitelisted vanilla enchantments (e.g. Sweeping Edge) stay excluded.
+- Mods that deal a pre-hit chunk of damage in the same tick (e.g. fantasy_ending's Void Collapsing) no longer swallow the spear's own damage.
 - Fixed Java semantics: not affected by `jabCooldown` / `jabToChargeDelay`.
 - The model uses four grayscale textures from this repository (16x16 icons + 32x32 in-hand), tinted by material in game.
 - This compatibility is still being tuned; report pose/stat issues together with your Tetra version.
@@ -192,7 +196,7 @@ JEI, KubeJS, Punchy, Tetra and Avaritia Spear are supported. For other conflicts
 - Repository conventions and self-checks: **[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
 ./gradlew runServer          # headless launch; startup self-check prints the registered spears
 ./gradlew runGameTestServer  # automated tests; look for "All N required tests passed :)"
 ```

@@ -10,14 +10,28 @@ import net.minecraft.spearcore.compat.tetra.TetraMaterialKey;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
 import net.minecraft.spearcore.init.SpearCombat;
+import net.minecraft.spearcore.init.SpearCoreItems;
+import net.minecraft.spearcore.init.SpearEnchantments;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
+import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.item.SpearStyle;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.spearcore.init.SpearDamageTypes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.RegisterGameTestsEvent;
@@ -201,6 +215,137 @@ public final class TetraCompatGameTests {
         helper.assertTrue(Math.abs(damage - 3.0D) < 1.0E-6D, "攻击伤害应按 0.5 打折: " + damage);
         helper.assertTrue(Math.abs(reach - 0.5D) < 1.0E-6D, "reach 不应被伤害折扣影响: " + reach);
         helper.assertTrue(Math.abs(speed + 0.1D) < 1.0E-6D, "攻速的百分比修饰符不应被缩放: " + speed);
+        helper.succeed();
+    }
+
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void lungeAppliesToSpearLikeStacks(GameTestHelper helper) {
+        Enchantment lunge = SpearEnchantments.LUNGE.get();
+        helper.assertTrue(lunge.canApplyAtEnchantingTable(new ItemStack(SpearCoreItems.IRON_SPEAR.get())),
+                "突进应能附在本模组的内建长矛上");
+        helper.assertTrue(!lunge.canApplyAtEnchantingTable(new ItemStack(Items.STICK)),
+                "突进不应能附在木棍上");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraWhitelistMatchesVanillaSpearWhitelist(GameTestHelper helper) {
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.SHARPNESS), "应支持锋利");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.KNOCKBACK), "应支持击退");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.SMITE), "应支持亡灵杀手");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.BANE_OF_ARTHROPODS), "应支持节肢杀手");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.FIRE_ASPECT), "应支持火焰附加");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.MOB_LOOTING), "应支持抢夺");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.UNBREAKING), "应支持耐久");
+        helper.assertTrue(SpearEnchantments.supportsVanilla(Enchantments.MENDING), "应支持经验修补");
+        helper.assertTrue(!SpearEnchantments.supportsVanilla(Enchantments.ALL_DAMAGE_PROTECTION), "不应支持保护");
+
+        helper.assertTrue(!Enchantments.SHARPNESS.canApplyAtEnchantingTable(new ItemStack(Items.STICK)),
+                "木棍不应能附锋利（白名单只作用于矛）");
+        helper.succeed();
+    }
+
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void lungeGateMatchesSpearLikeStacks(GameTestHelper helper) {
+        helper.assertTrue(SpearItem.isLungeApplicable(new ItemStack(SpearCoreItems.IRON_SPEAR.get())),
+                "内建长矛应通过突进门禁");
+        helper.assertTrue(!SpearItem.isLungeApplicable(new ItemStack(Items.STICK)),
+                "木棍不应通过突进门禁");
+        helper.succeed();
+    }
+
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void weaponProxyDetectsSwordCompatibleEnchantments(GameTestHelper helper) {
+        helper.assertTrue(SpearEnchantments.isWeaponCompatible(Enchantments.SWEEPING_EDGE),
+                "横扫之刃属于剑类武器附魔，探针应判定为适用");
+        helper.assertTrue(!SpearEnchantments.isWeaponCompatible(Enchantments.ALL_DAMAGE_PROTECTION),
+                "保护不是武器附魔，探针不应判定为适用");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void minecraftNamespaceEnchantsStayOnWhitelist(GameTestHelper helper) {
+        helper.assertTrue(!SpearEnchantments.supportsSpearEnchantment(Enchantments.SWEEPING_EDGE),
+                "原版非白名单附魔不应被模组放行");
+        helper.assertTrue(SpearEnchantments.supportsSpearEnchantment(Enchantments.SHARPNESS),
+                "锋利在白名单内");
+        helper.assertTrue(!SpearEnchantments.supportsSpearEnchantment(Enchantments.ALL_DAMAGE_PROTECTION),
+                "保护不在白名单内");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void enchantmentProbeIsHiddenAndNotCraftable(GameTestHelper helper) {
+        var probe = SpearCoreItems.ENCHANTMENT_PROBE.get();
+        helper.assertTrue(probe instanceof SwordItem, "探针必须是剑，才能通过原版 WEAPON 类别判定");
+        boolean craftable = helper.getLevel().getRecipeManager().getRecipes().stream()
+                .anyMatch(recipe -> recipe.getResultItem(helper.getLevel().registryAccess()).is(probe));
+        helper.assertTrue(!craftable, "探针不应有任何配方，避免被玩家正常获取");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void fireAspectIgnitesStabTarget(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer();
+        ItemStack spear = new ItemStack(SpearCoreItems.IRON_SPEAR.get());
+        spear.enchant(Enchantments.FIRE_ASPECT, 1);
+        player.setItemInHand(InteractionHand.MAIN_HAND, spear);
+
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 2, 1);
+        SpearCombat.applyOnHitEnchantments(player, zombie);
+        helper.assertTrue(zombie.getRemainingFireTicks() > 0, "火焰附加命中后应点燃目标");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void baneSlowsArthropodTarget(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer();
+        ItemStack spear = new ItemStack(SpearCoreItems.IRON_SPEAR.get());
+        spear.enchant(Enchantments.BANE_OF_ARTHROPODS, 2);
+        player.setItemInHand(InteractionHand.MAIN_HAND, spear);
+
+        Spider spider = helper.spawn(EntityType.SPIDER, 1, 2, 1);
+        SpearCombat.applyOnHitEnchantments(player, spider);
+        helper.assertTrue(spider.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
+                "节肢杀手命中节肢生物后应施加缓慢（走 doPostHurtEffects）");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void playerSpearDamageUsesPlayerAttackType(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer();
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 2, 1);
+
+        helper.assertTrue(SpearDamageTypes.spear(helper.getLevel(), player).is(DamageTypes.PLAYER_ATTACK),
+                "玩家持矛必须使用 minecraft:player_attack 类型，模组的玩家攻击钩子才会进入");
+        helper.assertTrue(SpearDamageTypes.spear(helper.getLevel(), zombie).is(SpearDamageTypes.SPEAR),
+                "怪物持矛仍应使用 spearcore:spear 类型");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void sameAttackerHurtImmunityIsCleared(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer();
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 2, 1);
+        zombie.hurt(helper.getLevel().damageSources().playerAttack(player), 1.0F);
+        helper.assertTrue(zombie.invulnerableTime > 0, "前置伤害应留下受伤免疫");
+
+        SpearCombat.clearSameAttackerHurtImmunity(player, zombie);
+        helper.assertTrue(zombie.invulnerableTime == 0,
+                "同一攻击者的受伤免疫应被清掉，长矛本体伤害才能落地");
         helper.succeed();
     }
 

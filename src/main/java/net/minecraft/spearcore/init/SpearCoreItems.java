@@ -2,6 +2,7 @@ package net.minecraft.spearcore.init;
 
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.item.BaseSpearItem;
+import net.minecraft.spearcore.item.EnchantmentProbeItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -18,4 +19,7 @@ public class SpearCoreItems {
     public static final RegistryObject<Item> DIAMOND_SPEAR = REGISTRY.register("diamond_spear", BaseSpearItem.DiamondSpearItem::new);
     public static final RegistryObject<Item> NETHERITE_SPEAR = REGISTRY.register("netherite_spear", BaseSpearItem.NetheriteSpearItem::new);
     public static final RegistryObject<Item> COPPER_SPEAR = REGISTRY.register("copper_spear", BaseSpearItem.CopperSpearItem::new);
+
+    /** 内部附魔判定用的隐藏探针剑，不获取、不展示。 */
+    public static final RegistryObject<Item> ENCHANTMENT_PROBE = REGISTRY.register("enchantment_probe", EnchantmentProbeItem::new);
 }

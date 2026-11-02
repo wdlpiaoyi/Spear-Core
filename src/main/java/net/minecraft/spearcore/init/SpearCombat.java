@@ -245,8 +245,14 @@ public final class SpearCombat {
             float finalDamage = damage;
             if (target instanceof LivingEntity livingTarget) {
                 finalDamage += EnchantmentHelper.getDamageBonus(stack, livingTarget.getMobType());
+                // 同一 tick 里别的模组（如 fantasy_ending）可能已经先打了一段，
+                // 会留下受伤免疫；不清掉的话长矛本体这次的伤害会被吞。
+                clearSameAttackerHurtImmunity(attacker, livingTarget);
             }
             if (target.hurt(spearSource, finalDamage)) {
+                if (target instanceof LivingEntity livingTarget) {
+                    applyOnHitEnchantments(attacker, livingTarget);
+                }
                 // 与蓄力路径一致，命中后把效果转发给 hurtEnemy 钩子
                 if (target instanceof LivingEntity livingTarget && attacker instanceof Player player) {
                     stack.hurtEnemy(livingTarget, player);
@@ -316,6 +322,40 @@ public final class SpearCombat {
         }
     }
 
+    /**
+     * 命中后统一补上原版「命中时」附魔效果。
+     *
+     * <p>原版 {@code Player.attack} 在 {@code hurt} 成功后会处理火焰附加、攻击者武器上的
+     * {@code doPostAttack}（节肢杀手减速、霜冻附加等）以及目标护甲上的 {@code doPostHurt}
+     * （荆棘等）。长矛走的是自定义攻击流程，必须自己补这几步，否则附魔能上、效果永远不触发。</p>
+     *
+     * <p>注意两个 helper 的语义不同：{@code doPostDamageEffects(attacker, target)} 遍历
+     * <b>攻击者</b>的物品并调用 {@code doPostAttack}；{@code doPostHurtEffects(target, attacker)}
+     * 遍历<b>目标</b>的物品（护甲）并调用 {@code doPostHurt}。只调其中一个会漏掉另一侧。</p>
+     */
+    public static void applyOnHitEnchantments(LivingEntity attacker, LivingEntity target) {
+        int fireAspect = EnchantmentHelper.getFireAspect(attacker);
+        if (fireAspect > 0) {
+            target.setSecondsOnFire(fireAspect * 4);
+        }
+        EnchantmentHelper.doPostDamageEffects(attacker, target);
+        EnchantmentHelper.doPostHurtEffects(target, attacker);
+    }
+
+    /**
+     * 清掉同一攻击者在同一 tick 里留下的受伤免疫。
+     *
+     * <p>有些模组（例如 fantasy_ending 的 Void Collapsing）会在原版 {@code Player.attack} 开头
+     * 的事件里先对目标打一段伤害；本模组长矛随后再打本体伤害时，会被这段伤害留下的
+     * {@code invulnerableTime} 折减甚至整段吞掉。这里只在「目标当前免疫、且上次伤害来自同一个攻击者」
+     * 时清零，让两次伤害正确相加，不影响其他玩家/其他来源的攻击。</p>
+     */
+    public static void clearSameAttackerHurtImmunity(LivingEntity attacker, LivingEntity target) {
+        if (target.invulnerableTime > 0 && target.getLastHurtByMob() == attacker) {
+            target.invulnerableTime = 0;
+        }
+    }
+
     // ========== stabAttack（J库核心） ==========
 
     private static boolean stabAttack(EquipmentSlot slot, Entity target, float damage, boolean canDamage,
@@ -337,8 +377,12 @@ public final class SpearCombat {
             // 1.20.1 的 API 是 getDamageBonus(ItemStack, MobType)。
             if (target instanceof LivingEntity livingTarget) {
                 finalDamage += EnchantmentHelper.getDamageBonus(stack, livingTarget.getMobType());
+                clearSameAttackerHurtImmunity(attacker, livingTarget);
             }
             damaged = target.hurt(damageSource, finalDamage);
+            if (damaged && target instanceof LivingEntity livingTarget) {
+                applyOnHitEnchantments(attacker, livingTarget);
+            }
             hitSomething |= damaged;
         }
 
