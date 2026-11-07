@@ -8,11 +8,14 @@ import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Tetra 工具的长矛数值层。
+ * 模块化长矛（Tetra）的识别与数值层。
  *
  * <p>本类不 import 任何 Tetra 类型：先确认 Tetra 已加载、{@code tetraCompat} 开启，然后才进
  * {@link TetraSpearBridge} 读 Tetra API；桥接里任何意外都只记一次日志并当作「不是长矛」，
  * 绝不让兼容层把游戏搞崩。</p>
+ *
+ * <p>判定依据只有一个：物品栈的 Tetra archetype 是不是 {@link #SPEAR_ARCHETYPE_KEY}。Tetra 自带的
+ * 单头工具（矛头 + 长手柄）不在兼容范围内，它们按普通 Tetra 工具工作。</p>
  */
 public final class TetraSpearProfile {
 
@@ -70,22 +73,5 @@ public final class TetraSpearProfile {
      */
     public static boolean isModularSpearArchetype(@Nullable String archetypeKey) {
         return SPEAR_ARCHETYPE_KEY.equals(archetypeKey);
-    }
-
-    /**
-     * Tetra 的模块 key 是「模块资源路径」（{@code ResourceLocation.getPath()}），不是模块 JSON 里
-     * {@code improvements} 的写法：单头工具的矛头模块在运行时是 {@code single/spearhead}。
-     *
-     * <p>这里同时接受 {@code spearhead} 与 {@code <命名空间>/spearhead}，方便附属模组新增同语义模块。</p>
-     */
-    public static boolean isSpearheadModuleKey(String key) {
-        return key != null && (key.equals("spearhead") || key.endsWith("/spearhead"));
-    }
-
-    /**
-     * 长手柄模块的运行时 key 是 {@code single/long_handle}；匹配规则同 {@link #isSpearheadModuleKey(String)}。
-     */
-    public static boolean isLongHandleModuleKey(String key) {
-        return key != null && (key.equals("long_handle") || key.endsWith("/long_handle"));
     }
 }

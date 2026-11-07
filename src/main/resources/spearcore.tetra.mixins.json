@@ -11,7 +11,6 @@
     "ModularItemTetraEnchantMixin"
   ],
   "client": [
-    "ItemRendererTetraModelMixin",
     "ItemRenderPropertiesTetraMixin"
   ],
   "injectors": {

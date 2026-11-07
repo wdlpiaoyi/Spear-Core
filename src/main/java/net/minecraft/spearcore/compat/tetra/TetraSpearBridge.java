@@ -7,46 +7,37 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.ForgeMod;
 import se.mickelus.tetra.items.modular.IModularItem;
-import se.mickelus.tetra.module.ItemModule;
+import se.mickelus.tetra.items.modular.impl.dynamic.DynamicModularItem;
 
 /**
- * Tetra 运行时桥接：模块检测 + 属性读取。
+ * Tetra 运行时桥接：识别本模组的模块化长矛 + 读取属性。
  *
  * <p>只有 {@link TetraSpearProfile} 确认 Tetra 已加载、配置开启后才会调用这里，因此未安装 Tetra 时
  * 这个类不会被加载，也就不会出现 ClassNotFound。方法内任何意外都由调用方兜底成「不是长矛」。</p>
+ *
+ * <p>判定只看 archetype：Tetra 自带的单头工具（矛头 + 长手柄）不再被当成长矛。本模组的模块化矛是
+ * 一个独立的 {@code DynamicModularItem} 栈，archetype 为 {@code modular_spear}，由数据包里的
+ * replacement 把七把贴图长矛转换得到。</p>
  */
 final class TetraSpearBridge {
-
-    /** 单头工具的槽位：矛头 + 手柄。 */
-    private static final String HEAD_SLOT = "single/head";
-    private static final String HANDLE_SLOT = "single/handle";
 
     private TetraSpearBridge() {
     }
 
     static SpearLike of(ItemStack stack) {
-        if (!(stack.getItem() instanceof IModularItem modular)) {
+        if (!(stack.getItem() instanceof DynamicModularItem)) {
             return null;
         }
-        ItemModule head = modular.getModuleFromSlot(stack, HEAD_SLOT);
-        ItemModule handle = modular.getModuleFromSlot(stack, HANDLE_SLOT);
-        if (head == null || handle == null) {
-            return null;
-        }
-        String headKey = head.getKey();
-        String handleKey = handle.getKey();
-        if (headKey == null || handleKey == null) {
-            return null;
-        }
-        if (!TetraSpearProfile.isSpearheadModuleKey(headKey)
-                || !TetraSpearProfile.isLongHandleModuleKey(handleKey)) {
+        // Tetra 把 archetype 存成 Stack NBT 里的纯 path，读取时固定拼 tetra 命名空间。
+        if (!TetraSpearProfile.isModularSpearArchetype(DynamicModularItem.getArchetypeKey(stack))) {
             return null;
         }
 
+        IModularItem modular = (IModularItem) stack.getItem();
         double attackDamage = modular.getAttributeValue(stack, Attributes.ATTACK_DAMAGE);
         double attackSpeed = modular.getAttributeValue(stack, Attributes.ATTACK_SPEED);
 
-        // Tetra 的攻击距离（forge:attack_range，Forge 别名到 forge:entity_reach）会叠得很高：
+        // Tetra 的额外攻击距离（forge:entity_reach，Forge 内部名 ForgeMod.ENTITY_REACH）会叠得很高：
         // 长手柄 + 紫水晶插槽可轻松超过 2 格。优先取 Tetra 自己合并后的 reach 总量（与属性面板一致），
         // 取不到（例如修饰符只存在于 NBT / 别的路径）再退回遍历 ItemStack 修饰符。
         // 交由 TetraSpearStats 按配置比例计入；玩家其他来源的 reach 不受影响。
