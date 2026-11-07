@@ -483,20 +483,25 @@ public final class TetraCompatGameTests {
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearHoneSchematicsAreDataDefined(GameTestHelper helper) {
         // 打磨配方：Tetra 的 hone 面板只列 hone=true 且 slots 命中当前物品的 schematic，
-        // 所以矛头（spear/head）必须自带一套，不能指望 Tetra 剑/单头武器那份还会出现。
-        // 改进 key 复用 Tetra 自带的两种打磨（矛头的 spearhead_hone/damage、共用头部的 head_hone/speed），
-        // 因为 modules/spear/head.json 的 improvements 已经把这两个目录列进去了；
-        // 翻译也复用 Tetra 的 localizationKey，省得本模组再写十份语言文件。
+        // 所以矛头（spear/head）与矛杆（spear/handle）必须各自自带一套，不能指望 Tetra 的那份还会出现。
+        // 改进 key 与翻译都复用 Tetra 自带的（矛头：spearhead_hone/damage、head_hone/durability、
+        // head_hone/speed；矛杆：handle_hone/speed），对应目录必须写在模块的 improvements 里。
+        // requirement 里**不能**出现 tetra:module：那个需求比对的是模块 key（不是槽位），
+        // 换成 spear/shuo_head / spear/three_point_blade 之后整条打磨线会静默消失（3.4.0 修过的坑）。
         String[][] hones = {
-                {"damage", "spearhead_hone/damage", "sword/shared_blade/hone_damage_"},
-                {"speed", "head_hone/speed", "double/shared_head/hone_speed_"},
+                // 槽位, 改进 key, 文件名前缀, localizationKey 前缀
+                {"spear/head", "spearhead_hone/damage", "head/hone_damage_", "sword/shared_blade/hone_damage_"},
+                {"spear/head", "head_hone/durability", "head/hone_durability_", "double/shared_head/hone_durability_"},
+                {"spear/head", "head_hone/speed", "head/hone_speed_", "double/shared_head/hone_speed_"},
+                {"spear/handle", "handle_hone/speed", "handle/hone_speed_", "single/handle/hone_speed_"},
         };
         for (String[] hone : hones) {
-            String kind = hone[0];
+            String slot = hone[0];
             String improvementKey = hone[1];
-            String localizationPrefix = hone[2];
+            String filePrefix = hone[2];
+            String localizationPrefix = hone[3];
             for (int level = 1; level <= 5; level++) {
-                String file = "schematics/spear/head/hone_" + kind + "_" + level + ".json";
+                String file = "schematics/spear/" + filePrefix + level + ".json";
                 JsonElement root = spearcore$readJson(helper, "tetra", file);
                 if (root == null) {
                     return;
@@ -509,8 +514,22 @@ public final class TetraCompatGameTests {
                                     .equals(json.get("localizationKey").getAsString()),
                             file + " 必须复用 Tetra 的 localizationKey，才会跟着 Tetra 的翻译走");
                     JsonArray slots = json.getAsJsonArray("slots");
-                    helper.assertTrue(slots != null && slots.size() == 1 && "spear/head".equals(slots.get(0).getAsString()),
-                            file + " 必须只作用于矛头槽位 spear/head");
+                    helper.assertTrue(slots != null && slots.size() == 1 && slot.equals(slots.get(0).getAsString()),
+                            file + " 必须只作用于槽位 " + slot);
+                    // 级别锁：1 级要求「还没有这条改进」，2~5 级要求上一级已经打磨过。
+                    String requirement = json.get("requirement").toString();
+                    helper.assertFalse(requirement.contains("tetra:module"),
+                            file + " 的 requirement 不能按模块 key 过滤，否则换到新矛头后整条打磨线会消失");
+                    if (level == 1) {
+                        helper.assertTrue(requirement.contains("tetra:not")
+                                        && requirement.contains(improvementKey),
+                                file + " 的 requirement 应该是「还没有 " + improvementKey + "」");
+                    } else {
+                        helper.assertTrue(requirement.contains("tetra:improvement")
+                                        && requirement.contains(improvementKey)
+                                        && requirement.contains("\"level\":" + (level - 1)),
+                                file + " 的 requirement 应该是 " + improvementKey + " 的 " + (level - 1) + " 级");
+                    }
                     JsonArray outcomes = json.getAsJsonArray("outcomes");
                     helper.assertTrue(outcomes != null && !outcomes.isEmpty(), file + " 必须有 outcomes");
                     JsonObject improvements = outcomes.get(0).getAsJsonObject().getAsJsonObject("improvements");
@@ -524,19 +543,29 @@ public final class TetraCompatGameTests {
                 }
             }
         }
-        // 上面复用的两个改进 key 必须真的被矛头模块接受，否则打磨面板照样是空的。
-        JsonElement moduleRoot = spearcore$readJson(helper, "tetra", "modules/spear/head.json");
-        if (moduleRoot == null) {
+        // 上面复用的改进 key 必须真的被对应模块接受，否则打磨面板照样是空的。
+        JsonElement headModuleRoot = spearcore$readJson(helper, "tetra", "modules/spear/head.json");
+        if (headModuleRoot == null) {
             return;
         }
-        Set<String> accepted = new HashSet<>();
-        for (JsonElement element : moduleRoot.getAsJsonObject().getAsJsonArray("improvements")) {
-            accepted.add(element.getAsString());
+        Set<String> headAccepted = new HashSet<>();
+        for (JsonElement element : headModuleRoot.getAsJsonObject().getAsJsonArray("improvements")) {
+            headAccepted.add(element.getAsString());
         }
-        helper.assertTrue(accepted.contains("tetra:single/spearhead/"),
+        helper.assertTrue(headAccepted.contains("tetra:single/spearhead/"),
                 "矛头必须接受 tetra:single/spearhead/ 下的改进（含 spearhead_hone/damage）");
-        helper.assertTrue(accepted.contains("tetra:single/shared_head/"),
-                "矛头必须接受 tetra:single/shared_head/ 下的改进（含 head_hone/speed）");
+        helper.assertTrue(headAccepted.contains("tetra:single/shared_head/"),
+                "矛头必须接受 tetra:single/shared_head/ 下的改进（含 head_hone/durability、head_hone/speed）");
+        JsonElement handleModuleRoot = spearcore$readJson(helper, "tetra", "modules/spear/handle.json");
+        if (handleModuleRoot == null) {
+            return;
+        }
+        Set<String> handleAccepted = new HashSet<>();
+        for (JsonElement element : handleModuleRoot.getAsJsonObject().getAsJsonArray("improvements")) {
+            handleAccepted.add(element.getAsString());
+        }
+        helper.assertTrue(handleAccepted.contains("tetra:single/shared_handle/"),
+                "矛杆必须接受 tetra:single/shared_handle/ 下的改进（含 handle_hone/speed）");
         helper.succeed();
     }
 
@@ -695,6 +724,35 @@ public final class TetraCompatGameTests {
                                 part + " 的 outcome 变体前缀不符: " + variant);
                     }
                 }
+                // 模块变体的 materials 必须与配方 outcome 的 materials 完全一致：
+                // Tetra 只按材料前缀找 outcome，对不上就是「配方看得到、却换不上部件」。
+                JsonElement moduleRoot = spearcore$readJson(helper, "tetra", "modules/spear/" + part + ".json");
+                if (moduleRoot == null) {
+                    return;
+                }
+                Set<String> moduleMaterials = new HashSet<>();
+                for (JsonElement element : moduleRoot.getAsJsonObject().getAsJsonArray("variants")) {
+                    JsonObject variant = element.getAsJsonObject();
+                    // 特殊变体（例如绑定槽的 forged_bolt）用 material 物品而不是材料前缀，不参与材料对比。
+                    if (!variant.has("materials")) {
+                        continue;
+                    }
+                    for (JsonElement material : variant.getAsJsonArray("materials")) {
+                        moduleMaterials.add(material.getAsString());
+                    }
+                }
+                Set<String> schematicMaterials = new HashSet<>();
+                for (JsonElement element : outcomes) {
+                    JsonObject outcome = element.getAsJsonObject();
+                    if (outcome.has("materials")) {
+                        for (JsonElement material : outcome.getAsJsonArray("materials")) {
+                            schematicMaterials.add(material.getAsString());
+                        }
+                    }
+                }
+                helper.assertTrue(moduleMaterials.equals(schematicMaterials),
+                        part + " 的模块 materials " + moduleMaterials + " 与配方 materials " + schematicMaterials
+                                + " 不一致（Tetra 会静默换不上部件）");
             } catch (RuntimeException exception) {
                 helper.fail("schematic 数据格式不符: " + exception);
                 return;

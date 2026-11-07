@@ -113,10 +113,11 @@ StartupEvents.registry('item', event => {
 | `data/tetra/modules/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个**卷轴解锁**的替换部件：槊头（`spear/head`，变体 `spear_shuo_head/`）、积竹木柲（`spear/handle`，变体 `spear_composite_shaft/`）、三尖两刃刀（`spear/head`，变体 `spear_three_point/`） |
 | `data/tetra/schematics/spear/{head,handle,binding,butt,socket}.json` | 五个基础换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic；socket 与 binding 同为 `spear/binding`，互相替换） |
 | `data/tetra/schematics/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个卷轴解锁的换部件配方，`requirement` 是 `{"type": "tetra:locked", "key": "tetra:spear/<part>"}`；三尖两刃刀另标 `"rarity": "hone"` |
-| `data/tetra/schematics/spear/head/hone_{damage,speed}_{1..5}.json` | 矛头打磨配方（`hone: true`；改进复用 Tetra 的 `spearhead_hone/damage` 与 `head_hone/speed`，翻译复用 Tetra 的 `localizationKey`） |
+| `data/tetra/schematics/spear/head/hone_{damage,durability,speed}_{1..5}.json` | 矛头打磨配方（`hone: true`；改进复用 Tetra 的 `spearhead_hone/damage`、`head_hone/durability`、`head_hone/speed`，翻译复用 Tetra 的 `localizationKey`；requirement 只按改进等级锁，**不要**按模块 key 过滤，否则换上槊头/三尖两刃刀后整条线消失） |
+| `data/tetra/schematics/spear/handle/hone_speed_{1..5}.json` | 矛杆速度打磨配方（改进 `handle_hone/speed`，翻译复用 Tetra 的 `single/handle/hone_speed_N`） |
 | `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（矛头/枪尾按 oak…netherite，矛杆 `spear_handle/stick`，绑定 `spear_binding/string`） |
 
-槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。卷轴解锁的部件还要两组：`tetra.unlock.tetra.spear/<part>.description`（摆在工作台旁/上时的解锁提示）与 `item.tetra.scroll.spear/<part>.{prefix,name}`（卷轴物品自身的显示名；`prefix` 照 Tetra 原版卷轴写「原理图」/「Schematic」，于是显示成「原理图：槊头」）。打磨配方是唯一的例外：它们把 `localizationKey` 指向 Tetra 自带的 `sword/shared_blade/hone_damage_N` 与 `double/shared_head/hone_speed_N`，直接沿用 Tetra 的「打磨：伤害/速度」翻译。
+槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。卷轴解锁的部件还要两组：`tetra.unlock.tetra.spear/<part>.description`（摆在工作台旁/上时的解锁提示）与 `item.tetra.scroll.spear/<part>.{prefix,name}`（卷轴物品自身的显示名；`prefix` 照 Tetra 原版卷轴写「原理图」/「Schematic」，于是显示成「原理图：槊头」）。打磨配方是唯一的例外：它们把 `localizationKey` 指向 Tetra 自带的 `sword/shared_blade/hone_damage_N`、`double/shared_head/hone_durability_N`、`double/shared_head/hone_speed_N` 与 `single/handle/hone_speed_N`，直接沿用 Tetra 的「打磨：伤害/耐久/速度」翻译。
 
 其它冒险模组的 **Tetra 联动**分两类：
 
@@ -127,7 +128,7 @@ StartupEvents.registry('item', event => {
 
 （Goety 2.5.60.6 的 jar 内没有 `data/tetra`，它没有 Tetra 联动数据；GoetyRevelation 2.3.6 有 Tetra 卷轴配方（`data/goety_revelation/recipes/schematics_aeglos.json`，用 `tetra:scroll` ingredient + `tetra:scroll_rolled` 的 NBT 产物），但它引用的 `tetra:sword/longinus`、`tetra:sword/aeglos` schematic 并不在 jar 里。）
 
-打磨进度由 archetype 的 `honeable` / `honeBase` / `honeIntegrityMultiplier` 控制：本模组取 Tetra `config/tetra.toml` 里双手重武器档的 **140 / 75**（剑是 110 / 65），意思是「基础击杀数 140 + 刚性成本 × 75」次使用后可以打磨矛头一次；打磨只能在伤害或速度里选一条线，每条 5 级。
+打磨进度由 archetype 的 `honeable` / `honeBase` / `honeIntegrityMultiplier` 控制：本模组取 Tetra `config/tetra.toml` 里双手重武器档的 **140 / 75**（剑是 110 / 65），意思是「基础击杀数 140 + 刚性成本 × 75」次使用后可以打磨一次；矛头只能在伤害 / 耐久 / 速度里选一条线（每条 5 级），矛杆另有速度线（5 级）。
 
 - 判定与数值：`compat/tetra/TetraSpearProfile`（守卫 + 判定）→ `TetraSpearBridge`（读 `DynamicModularItem` 属性）→ `TetraSpearStats.fit`（拟合）。
 - 客户端（贴图模型 + 材料 tint）：

@@ -12,20 +12,11 @@
         "textureY": 240
     },
     "requirement": {
-        "type": "tetra:and",
-        "requirements": [
-            {
-                "type": "tetra:module",
-                "module": "spear/head"
-            },
-            {
-                "type": "tetra:not",
-                "requirement": {
-                    "type": "tetra:improvement",
-                    "improvement": "head_hone/speed"
-                }
-            }
-        ]
+        "type": "tetra:not",
+        "requirement": {
+            "type": "tetra:improvement",
+            "improvement": "head_hone/speed"
+        }
     },
     "outcomes": [
         {
