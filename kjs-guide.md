@@ -128,7 +128,7 @@ kubejs/
 | 方法 | 作用 |
 |---|---|
 | `.sounds(使用音, 命中音, 挥击音)` | 三个音效，可以用 KubeJS 自己注册的音效 |
-| `.materialName('名字')` | 只是个标记，方便你自己记是哪把矛，不影响手感 |
+| `.materialName('名字')` | 材质名：决定击落骑手的**速度阈值**（木 14 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9，未知按铁 11 格/秒）。写你自己造的材质时用 `custom` 之类的名字即可，阈值按铁矛算 |
 
 ---
 
@@ -379,7 +379,7 @@ Anything you leave out uses the **iron spear** values. Tweak only what you care 
 | Method | Effect |
 |---|---|
 | `.sounds(useSound, hitSound, attackSound)` | Three sound events; may be ones you registered with KubeJS |
-| `.materialName('name')` | Just a label to remind you which spear this is; no gameplay effect |
+| `.materialName('name')` | Material name: it selects the **speed threshold** for pulling a rider off (wood 14 / stone 13 / copper 12 / iron 11 / diamond 10 / netherite 9 blocks per second; unknown falls back to iron 11). For your own materials just use a label such as `custom` |
 
 ---
 
