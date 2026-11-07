@@ -8,6 +8,7 @@ import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.compat.tetra.TetraDamageScaling;
 import net.minecraft.spearcore.compat.tetra.TetraMaterialKey;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
+import net.minecraft.spearcore.compat.tetra.TetraSpearScrolls;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearCoreItems;
@@ -44,6 +45,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import net.minecraft.nbt.CompoundTag;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.BufferedReader;
@@ -389,7 +391,8 @@ public final class TetraCompatGameTests {
         // 这里不能用 TetraSpearNaming.NAMED_KEY 引用常量：GameTest 服务端没有 Tetra，加载那个类会 NoClassDefFoundError。
         String namedKey = "item.spearcore.modular_spear.named";
         String fallbackKey = "item.spearcore.modular_spear";
-        for (String language : new String[]{"en_us", "zh_cn", "ja_jp"}) {
+        // ja_jp 是上游日本贡献者提供的翻译，新 key 只写中英两份，所以这里不校验日文。
+        for (String language : new String[]{"en_us", "zh_cn"}) {
             JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
             if (root == null) {
                 return;
@@ -609,20 +612,17 @@ public final class TetraCompatGameTests {
         // 四个槽位各挂本模组自己的模块（data/tetra/modules/spear/*），不再借用 Tetra 剑的模块。
         // 镶座（socket）与绑定共用 spear/binding 槽：Tetra 剑也是把 socket 装在 guard 槽上的。
         // GameTest 服务端不加载 Tetra，这里只校验数据形状，注册结果要靠进游戏验收。
-        Map<String, String> partToSlot = Map.of(
-                "head", "spear/head", "handle", "spear/handle",
-                "binding", "spear/binding", "butt", "spear/butt",
-                "socket", "spear/binding");
-        Map<String, String> variantPrefix = Map.of(
-                "head", "spear_head/", "handle", "spear_handle/",
-                "binding", "spear_binding/", "butt", "spear_butt/",
-                "socket", "spear_socket/");
-        Map<String, String[]> requiredMaterialPrefixes = Map.of(
-                "head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"},
-                "butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"},
-                "handle", new String[]{"tetra:rod/"},
-                "binding", new String[]{"tetra:fibre/", "tetra:fabric/"},
-                "socket", new String[]{"tetra:socket/"});
+        Map<String, String> partToSlot = spearcore$partToSlot();
+        Map<String, String> variantPrefix = spearcore$variantPrefix();
+        Map<String, String[]> requiredMaterialPrefixes = Map.ofEntries(
+                Map.entry("head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"}),
+                Map.entry("butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"}),
+                Map.entry("handle", new String[]{"tetra:rod/"}),
+                Map.entry("binding", new String[]{"tetra:fibre/", "tetra:fabric/"}),
+                Map.entry("socket", new String[]{"tetra:socket/"}),
+                Map.entry("shuo_head", new String[]{"tetra:metal/"}),
+                Map.entry("composite_shaft", new String[]{"tetra:wood/"}),
+                Map.entry("three_point_blade", new String[]{"tetra:metal/", "tetra:gem/"}));
         for (Map.Entry<String, String> entry : partToSlot.entrySet()) {
             String part = entry.getKey();
             String slot = entry.getValue();
@@ -667,10 +667,8 @@ public final class TetraCompatGameTests {
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearPartSchematicsAreDataDefined(GameTestHelper helper) {
         // 换部件的配方：工作台只会显示 slots 命中当前物品的 schematic，槽名换成 spear/* 后必须自带。
-        Map<String, String> slotByPart = Map.of(
-                "head", "spear/head", "handle", "spear/handle",
-                "binding", "spear/binding", "butt", "spear/butt",
-                "socket", "spear/binding");
+        Map<String, String> slotByPart = spearcore$partToSlot();
+        Map<String, String> variantPrefix = spearcore$variantPrefix();
         for (Map.Entry<String, String> entry : slotByPart.entrySet()) {
             String part = entry.getKey();
             String slot = entry.getValue();
@@ -693,7 +691,7 @@ public final class TetraCompatGameTests {
                             part + " 的 outcome 必须说明材料来源");
                     if (outcome.has("moduleVariant")) {
                         String variant = outcome.get("moduleVariant").getAsString();
-                        helper.assertTrue(variant.startsWith("spear_" + part + "/"),
+                        helper.assertTrue(variant.startsWith(variantPrefix.get(part)),
                                 part + " 的 outcome 变体前缀不符: " + variant);
                     }
                 }
@@ -718,8 +716,27 @@ public final class TetraCompatGameTests {
                 "tetra.module.spear/socket.name", "tetra.module.spear/socket.material_name",
                 "tetra/schematic/spear/head.name", "tetra/schematic/spear/handle.name",
                 "tetra/schematic/spear/binding.name", "tetra/schematic/spear/butt.name",
-                "tetra/schematic/spear/socket.name", "tetra/schematic/spear/socket.slot1"};
-        for (String language : new String[]{"en_us", "zh_cn", "ja_jp"}) {
+                "tetra/schematic/spear/socket.name", "tetra/schematic/spear/socket.slot1",
+                // 卷轴解锁的三件新部件：模块名、配方名、解锁提示、卷轴显示名
+                "tetra.module.spear/shuo_head.name", "tetra.module.spear/shuo_head.material_name",
+                "tetra.module.spear/composite_shaft.name",
+                "tetra.module.spear/composite_shaft.material_name",
+                "tetra.module.spear/three_point_blade.name",
+                "tetra.module.spear/three_point_blade.material_name",
+                "tetra/schematic/spear/shuo_head.name", "tetra/schematic/spear/shuo_head.slot1",
+                "tetra/schematic/spear/composite_shaft.name", "tetra/schematic/spear/composite_shaft.slot1",
+                "tetra/schematic/spear/three_point_blade.name",
+                "tetra/schematic/spear/three_point_blade.slot1",
+                "tetra.unlock.tetra.spear/shuo_head.description",
+                "tetra.unlock.tetra.spear/composite_shaft.description",
+                "tetra.unlock.tetra.spear/three_point_blade.description",
+                "item.tetra.scroll.spear/shuo_head.name", "item.tetra.scroll.spear/shuo_head.prefix",
+                "item.tetra.scroll.spear/composite_shaft.name",
+                "item.tetra.scroll.spear/composite_shaft.prefix",
+                "item.tetra.scroll.spear/three_point_blade.name",
+                "item.tetra.scroll.spear/three_point_blade.prefix"};
+        // ja_jp 是上游日本贡献者提供的翻译，不随新功能补（见 AGENTS.md），只校验中英两份。
+        for (String language : new String[]{"en_us", "zh_cn"}) {
             JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
             if (root == null) {
                 return;
@@ -730,6 +747,84 @@ public final class TetraCompatGameTests {
             }
         }
         helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearScrollsUnlockTheirSchematics(GameTestHelper helper) {
+        // 卷轴 = tetra:scroll_rolled + BlockEntityTag.data[0]；工作台会把附近卷轴声明的 schematics
+        // 塞进 CraftingContext.unlocks，配方里 {"type":"tetra:locked","key":...} 才通过。
+        // 两边各写一遍 key，很容易对不上，所以这里交叉校验，顺带校验 NBT 结构（ribbon 必须是 16 进制字符串）。
+        int intricateCount = 0;
+        for (TetraSpearScrolls.Definition definition : TetraSpearScrolls.ALL) {
+            helper.assertTrue(definition.schematics().length == 1,
+                    definition.key() + " 卷轴应只解锁一份 schematic");
+            String schematicId = definition.schematics()[0];
+            helper.assertTrue(schematicId.startsWith("tetra:spear/"),
+                    definition.key() + " 卷轴解锁的 schematic 应在 tetra:spear/ 下，实际: " + schematicId);
+            JsonElement root = spearcore$readJson(helper, "tetra",
+                    "schematics/" + schematicId.substring("tetra:".length()) + ".json");
+            if (root == null) {
+                return;
+            }
+            JsonObject requirement = root.getAsJsonObject().getAsJsonObject("requirement");
+            helper.assertTrue(requirement != null && requirement.has("type")
+                            && "tetra:locked".equals(requirement.get("type").getAsString()),
+                    schematicId + " 必须用 tetra:locked 需求，否则卷轴不起作用");
+            helper.assertTrue(requirement != null && requirement.has("key")
+                            && schematicId.equals(requirement.get("key").getAsString()),
+                    schematicId + " 的 locked key 必须与卷轴声明一致");
+            if (definition.intricate()) {
+                intricateCount++;
+            }
+
+            CompoundTag tag = TetraSpearScrolls.buildTag(definition);
+            CompoundTag scroll = tag.getCompound("BlockEntityTag").getList("data", 10).getCompound(0);
+            helper.assertTrue(definition.key().equals(scroll.getString("key")), "卷轴 NBT 的 key 不符");
+            // 原理图卷轴不该带 details（那是右键打开长卷的画面 id，只有 GoetyRevelation 那类联动才用）
+            helper.assertFalse(scroll.contains("details"), definition.key() + " 卷轴不应写 details");
+            helper.assertTrue(definition.intricate() == scroll.getBoolean("intricate"), "卷轴 NBT 的 intricate 不符");
+            helper.assertTrue(definition.material() == scroll.getInt("material"), "卷轴 NBT 的 material 不符");
+            helper.assertTrue(definition.ribbon().equals(scroll.getString("ribbon")),
+                    "卷轴 NBT 的 ribbon 必须写成字符串（Tetra 按 16 进制解析）");
+            try {
+                Long.parseLong(scroll.getString("ribbon"), 16);
+            } catch (NumberFormatException exception) {
+                helper.fail(definition.key() + " 的 ribbon 不是合法的 16 进制颜色: " + scroll.getString("ribbon"));
+                return;
+            }
+            helper.assertTrue(scroll.getList("glyphs", 3).size() == definition.glyphs().length,
+                    "卷轴 NBT 的 glyphs 数量不符");
+            boolean declared = false;
+            for (int i = 0; i < scroll.getList("schematics", 8).size(); i++) {
+                declared |= schematicId.equals(scroll.getList("schematics", 8).getString(i));
+            }
+            helper.assertTrue(declared, "卷轴 NBT 没有声明 schematic " + schematicId);
+        }
+        // 三尖两刃刀是「深奥的记录」：必须直接摆在加工台上，其余两件摆在附近即可。
+        helper.assertTrue(intricateCount == 1 && TetraSpearScrolls.THREE_POINT_BLADE.intricate(),
+                "只有三尖两刃刀卷轴应为复杂原理图（intricate）");
+        helper.succeed();
+    }
+
+    /** 部件 → 槽位：镶座与绑定共用 spear/binding。 */
+    private static Map<String, String> spearcore$partToSlot() {
+        return Map.of(
+                "head", "spear/head", "handle", "spear/handle",
+                "binding", "spear/binding", "butt", "spear/butt",
+                "socket", "spear/binding",
+                "shuo_head", "spear/head", "composite_shaft", "spear/handle",
+                "three_point_blade", "spear/head");
+    }
+
+    /** 部件 → 变体 key 前缀（三尖两刃刀的模块 key 是 spear/three_point，变体前缀也就跟着短）。 */
+    private static Map<String, String> spearcore$variantPrefix() {
+        return Map.of(
+                "head", "spear_head/", "handle", "spear_handle/",
+                "binding", "spear_binding/", "butt", "spear_butt/",
+                "socket", "spear_socket/",
+                "shuo_head", "spear_shuo_head/", "composite_shaft", "spear_composite_shaft/",
+                "three_point_blade", "spear_three_point/");
     }
 
     /**

@@ -1,0 +1,36 @@
+{
+    "slots": [ "spear/head" ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "rarity": "hone",
+    "glyph": {
+        "textureX": 208,
+        "textureY": 32
+    },
+    "requirement": {
+        "type": "tetra:locked",
+        "key": "tetra:spear/three_point_blade"
+    },
+    "translation": {
+        "primaryAttributes": {
+            "generic.attack_damage": 8
+        },
+        "secondaryAttributes": {
+            "generic.attack_speed": -1,
+            "generic.attack_damage": 2
+        },
+        "tertiaryAttributes": {
+            "forge:entity_reach": 1
+        },
+        "durability": 4,
+        "integrity": -4,
+        "magicCapacity": 4
+    },
+    "outcomes": [
+        {
+            "materials": [ "tetra:metal/", "tetra:gem/", "tetra:bone/" ],
+            "moduleKey": "spear/three_point_blade",
+            "moduleVariant": "spear_three_point/"
+        }
+    ]
+}

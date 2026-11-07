@@ -109,19 +109,23 @@ StartupEvents.registry('item', event => {
 | 文件 | 作用 |
 |---|---|
 | `data/tetra/archetypes/modular_spear.json` | 四个槽位：`spear/head`、`spear/handle`（major + required）、`spear/binding`、`spear/butt` |
-| `data/tetra/modules/spear/{head,handle,binding,butt,socket}.json` | 五个矛部件模块（变体前缀 `spear_head/` / `spear_handle/` / `spear_binding/` / `spear_butt/` / `spear_socket/`；`models` 复用 Tetra 自带模块模型）。`spear/socket` 与绑定共用 `spear/binding` 槽，只吃 `tetra:socket/*` 材料 |
-| `data/tetra/schematics/spear/{head,handle,binding,butt,socket}.json` | 五个换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic；socket 与 binding 同为 `spear/binding`，互相替换） |
+| `data/tetra/modules/spear/{head,handle,binding,butt,socket}.json` | 五个基础矛部件模块（变体前缀 `spear_head/` / `spear_handle/` / `spear_binding/` / `spear_butt/` / `spear_socket/`；`models` 复用 Tetra 自带模块模型）。`spear/socket` 与绑定共用 `spear/binding` 槽，只吃 `tetra:socket/*` 材料 |
+| `data/tetra/modules/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个**卷轴解锁**的替换部件：槊头（`spear/head`，变体 `spear_shuo_head/`）、积竹木柲（`spear/handle`，变体 `spear_composite_shaft/`）、三尖两刃刀（`spear/head`，变体 `spear_three_point/`） |
+| `data/tetra/schematics/spear/{head,handle,binding,butt,socket}.json` | 五个基础换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic；socket 与 binding 同为 `spear/binding`，互相替换） |
+| `data/tetra/schematics/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个卷轴解锁的换部件配方，`requirement` 是 `{"type": "tetra:locked", "key": "tetra:spear/<part>"}`；三尖两刃刀另标 `"rarity": "hone"` |
 | `data/tetra/schematics/spear/head/hone_{damage,speed}_{1..5}.json` | 矛头打磨配方（`hone: true`；改进复用 Tetra 的 `spearhead_hone/damage` 与 `head_hone/speed`，翻译复用 Tetra 的 `localizationKey`） |
 | `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（矛头/枪尾按 oak…netherite，矛杆 `spear_handle/stick`，绑定 `spear_binding/string`） |
 
-槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。打磨配方是唯一的例外：它们把 `localizationKey` 指向 Tetra 自带的 `sword/shared_blade/hone_damage_N` 与 `double/shared_head/hone_speed_N`，直接沿用 Tetra 的「打磨：伤害/速度」翻译。
+槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。卷轴解锁的部件还要两组：`tetra.unlock.tetra.spear/<part>.description`（摆在工作台旁/上时的解锁提示）与 `item.tetra.scroll.spear/<part>.{prefix,name}`（卷轴物品自身的显示名；`prefix` 照 Tetra 原版卷轴写「原理图」/「Schematic」，于是显示成「原理图：槊头」）。打磨配方是唯一的例外：它们把 `localizationKey` 指向 Tetra 自带的 `sword/shared_blade/hone_damage_N` 与 `double/shared_head/hone_speed_N`，直接沿用 Tetra 的「打磨：伤害/速度」翻译。
 
 其它冒险模组的 **Tetra 联动**分两类：
 
 - **材料联动**（静态扫描 `Niubiosis` 整合包的 jar：art_of_forging、tetracelium、irons_spellbooks、malum、rainbowcompound、Gobber2 加的都是这一类；该实例只用来读数据，功能验证在 `1.20.1-forge` 实例）只要材料落在本模组模块的 `materials` 前缀里就能直接当矛部件用，材质自带的 `improvements` 也会跟着生效。前缀覆盖面与 Tetra 自带的 spearhead / long_handle / binding 一致：矛头/枪尾 wood/stone/metal/gem/bone，矛杆 wood/metal/bone/rod，绑定 fibre/skin/fabric。`socket/*` 材料由本模组的 `spear/socket` 模块承接（装进 `spear/binding` 槽、替换绑定），材料自带的 `attributes` 会并入长矛，所以 `blood_rune_socket` / `fang_charm` / `creat_netherstarite` 都能装；Tetra 的 perk（`perk_socket_N`）没做，perk 类效果仍拿不到。`item_effects/`、`crafting_effects/`、`synergies/` 三种机制对 `tetra:dynamic_handheld` 都不生效（synergy 需要物品类自己拉取）。
 - **配方 / 模块联动**（工作台配方写死 `sword/*` 模块）不会自动生效，需要用数据包补两层，不用改 Java：① 把对方改进目录写进 `data/tetra/modules/spear/head.json` 的 `improvements`（同路径 + `replace: true` 覆盖本模组那份，`MergingDataStore` 按路径合并）；② 在本模组槽位上补一份 schematic（`slots: ["spear/head"]`），`outcomes.improvements` 授予对方的改进 key。
 
-（Goety 2.5.60.6 的 jar 内没有 `data/tetra`，它没有 Tetra 联动数据。）
+**卷轴不写在数据包里，而是 Java 拼出来的 NBT**：`compat/tetra/TetraSpearScrolls` 定义三条卷轴（`SHUO_HEAD` / `COMPOSITE_SHAFT` / `THREE_POINT_BLADE`），卷轴本体是 Tetra 的 `tetra:scroll_rolled` 方块物品 + `BlockEntityTag.data[0]`（字段 `key` / `schematics` / `intricate` / `material` / `ribbon` / `glyphs`；不写 `details`，那是右键打开长卷的画面 id）。`ribbon` 必须是 **16 进制字符串**（Tetra 用 `Long.parseLong(s, 16)` 解析）。`TetraSpearScrollsTab` 在 MOD 总线把这三条塞进 `tetra:default` 创造栏，**暂时没有获取方式**。工作台会收集附近方块（`ISchematicProviderBlock`）的 schematic 去解锁 `tetra:locked` 配方；`intricate = true` 的「复杂原理图」（三尖两刃刀）必须正对工作台上方一格，普通卷轴摆旁边即可。
+
+（Goety 2.5.60.6 的 jar 内没有 `data/tetra`，它没有 Tetra 联动数据；GoetyRevelation 2.3.6 有 Tetra 卷轴配方（`data/goety_revelation/recipes/schematics_aeglos.json`，用 `tetra:scroll` ingredient + `tetra:scroll_rolled` 的 NBT 产物），但它引用的 `tetra:sword/longinus`、`tetra:sword/aeglos` schematic 并不在 jar 里。）
 
 打磨进度由 archetype 的 `honeable` / `honeBase` / `honeIntegrityMultiplier` 控制：本模组取 Tetra `config/tetra.toml` 里双手重武器档的 **140 / 75**（剑是 110 / 65），意思是「基础击杀数 140 + 刚性成本 × 75」次使用后可以打磨矛头一次；打磨只能在伤害或速度里选一条线，每条 5 级。
 

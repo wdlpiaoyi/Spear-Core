@@ -1,0 +1,32 @@
+{
+    "slots": [ "spear/head" ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "glyph": {
+        "textureX": 208,
+        "textureY": 32
+    },
+    "requirement": {
+        "type": "tetra:locked",
+        "key": "tetra:spear/shuo_head"
+    },
+    "translation": {
+        "primaryAttributes": {
+            "generic.attack_damage": 6
+        },
+        "secondaryAttributes": {
+            "generic.attack_speed": -1,
+            "generic.attack_damage": 1
+        },
+        "durability": 3,
+        "integrity": -3,
+        "magicCapacity": 3
+    },
+    "outcomes": [
+        {
+            "materials": [ "tetra:metal/", "tetra:stone/", "tetra:bone/" ],
+            "moduleKey": "spear/shuo_head",
+            "moduleVariant": "spear_shuo_head/"
+        }
+    ]
+}

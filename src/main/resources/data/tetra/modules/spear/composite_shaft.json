@@ -1,0 +1,41 @@
+{
+    "type": "tetra:basic_major_module",
+    "slots": [ "spear/handle" ],
+    "renderLayer": "lower",
+    "improvements": [
+        "tetra:single/shared_handle/",
+        "tetra:single/shared/",
+        "tetra:shared/"
+    ],
+    "variants": [
+        {
+            "materials": [ "tetra:wood/", "tetra:rod/", "tetra:bone/" ],
+            "key": "spear_composite_shaft/",
+            "attributes": {
+                "generic.attack_speed": -0.95,
+                "forge:entity_reach": 0.6
+            },
+            "aspects": {
+                "block_breaker": 1,
+                "breakable": 3
+            },
+            "durability": 10,
+            "extract": {
+                "primaryAttributes": {
+                    "forge:entity_reach": 0.12
+                },
+                "secondaryAttributes": {
+                    "generic.attack_speed": -0.15
+                },
+                "durability": 0.4,
+                "integrity": 1.2,
+                "magicCapacity": 1,
+                "glyph": {
+                    "textureX": 16
+                },
+                "availableTextures": [ "default", "metal", "bone", "bright" ],
+                "models": [ { "location": "tetra:item/module/single/handle/long/" } ]
+            }
+        }
+    ]
+}
