@@ -117,7 +117,8 @@ StartupEvents.registry('item', event => {
   - `compat/tetra/mixin/ItemRendererTetraModelMixin`（`ItemRenderer#getModel` HEAD，`require=0`）只对 `SpearStyle.MODULAR_3D` 的栈替换模型。
   - `client/TetraSpearColorsEvent` → `client/TetraColorRegistration` 给所有 `IModularItem` 注册物品色；`compat/tetra/TetraSpearColors` 读 Tetra 材料色（`glyph.tint` 优先，其次材质 `tints.texture`，按 `variant.key` 的最后一段匹配），tint 0 = 杆（`sword/hilt`）、tint 1 = 矛头（`sword/blade`）。
   - `ItemRenderPropertiesTetraMixin` 给 `DynamicModularItem` 挂 `SpearClientExtensions`（第一/第三人称姿态）。
-- 物品名：`ItemStackTetraMixin.spearcore$modularSpearName` 注入 `ItemStack#getHoverName` HEAD，返回 `item.spearcore.modular_spear`；铁砧改过名的不覆盖。**不要**去 mixin Tetra 的 `ModularItem#getName`（发行版是 SRG 名 `m_7626_`）。
+- 物品名：`ItemStackTetraMixin.spearcore$modularSpearName` 注入 `ItemStack#getHoverName` HEAD，交给 `compat/tetra/TetraSpearNaming` 拼「材料 + 矛」：矛头材料 key 取自 `sword/blade` 的 variant key 末段，名字用 `item.spearcore.modular_spear.named`（`%s矛` / `%s Spear` / `%sの槍`），材料名前缀用 Tetra 的 `tetra.material.<材料>.prefix`。铁砧改过名的不覆盖，材料读不到时回退成裸 `item.spearcore.modular_spear`。**不要**去 mixin Tetra 的 `ModularItem#getName`（发行版是 SRG 名 `m_7626_`），也不要调 `IModularItem#getItemName`（它走客户端 `I18n`，服务端会抛错）。
+- 工作台姿态：Tetra 用 `BakedModel#isGui3d()` 决定平面物品要不要绕 X 轴转 90° 平躺。`forge:separate_transforms` 默认 `gui3d = true`（`BlockGeometryBakingContext` 字段初值），所以 `client/TetraSpearModel` 用 `BakedModelWrapper` 把 `isGui3d()` 固定成 `false`；删掉它矛就会立在工作台上。
 - 工作台布局：archetype 的 `x`/`y` 是 `GuiModuleOffsets` 的像素偏移，照 Tetra 默认布局写——2 major `(4,0)`/`(4,18)`、2 minor `(-18,5)`/`(-18,18)`；写大数会让模块框散开。
 - GameTest 服务端不加载 Tetra，只能覆盖纯函数与数据文件；真正的手感必须在装了 Tetra 的实例里手工验。
 - 对应版本：Tetra **1.20.1-6.17.0**（`compileOnly 'curse.maven:tetra-289712:8570756'`）。

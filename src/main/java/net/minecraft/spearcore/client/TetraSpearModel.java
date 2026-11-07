@@ -5,6 +5,7 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
+import net.minecraftforge.client.model.BakedModelWrapper;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -16,6 +17,19 @@ import net.minecraftforge.fml.common.Mod;
  * 杆/矛头分别走 tint 0/1，从而保留 Tetra 的按材料换色。</p>
  *
  * <p>模型只在客户端烘焙，替换发生在 {@code ItemRendererTetraModelMixin}。</p>
+ *
+ * <p>烘焙结果外面包一层 {@link BakedModelWrapper}，把 {@code isGui3d()} 固定成 {@code false}：
+ * {@code forge:separate_transforms} 的几何上下文默认 {@code gui3d = true}（Forge 的
+ * {@code BlockGeometryBakingContext} 里字段初值就是 {@code true}，JSON 里也没有能改它的键），而 Tetra 的
+ * {@code WorkbenchTESR} 正是用 {@code BakedModel#isGui3d()} 决定工作台上怎么摆物品：</p>
+ *
+ * <ul>
+ *   <li>{@code true}：只平移 {@code (0.5, 1.125, 0.5)} 再缩放 0.5，不旋转 —— 平面贴图会竖直地「立」在工作台上；</li>
+ *   <li>{@code false}：平移 {@code (0.5, 1.0125, 0.5)} 后绕 X 轴转 90° 再缩放 0.5 —— 平面贴图正好平躺。</li>
+ * </ul>
+ *
+ * <p>我们的模型整套都是平面 {@code item/generated} 贴图，本来就该报 {@code isGui3d = false}
+ * （贴图长矛的 {@code item/generated} 也是这个值），所以这里不是特例 hack，而是把烘焙器给的错误默认值纠正掉。</p>
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class TetraSpearModel {
@@ -35,11 +49,22 @@ public final class TetraSpearModel {
 
     @SubscribeEvent
     public static void onBakingCompleted(ModelEvent.BakingCompleted event) {
-        model = event.getModels().get(LOCATION);
+        BakedModel baked = event.getModels().get(LOCATION);
+        model = baked == null ? null : flattenGui3d(baked);
     }
 
     /** 烘焙完成前为 null，调用方需回退到原模型。 */
     public static BakedModel get() {
         return model;
+    }
+
+    /** 平面贴图模型必须报 {@code isGui3d = false}，否则 Tetra 工作台会把矛竖起来放。 */
+    private static BakedModel flattenGui3d(BakedModel baked) {
+        return new BakedModelWrapper<BakedModel>(baked) {
+            @Override
+            public boolean isGui3d() {
+                return false;
+            }
+        };
     }
 }

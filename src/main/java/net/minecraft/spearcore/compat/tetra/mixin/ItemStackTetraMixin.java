@@ -3,6 +3,7 @@ package net.minecraft.spearcore.compat.tetra.mixin;
 import com.google.common.collect.Multimap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.spearcore.compat.tetra.TetraDamageScaling;
+import net.minecraft.spearcore.compat.tetra.TetraSpearNaming;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
@@ -132,14 +133,16 @@ public abstract class ItemStackTetraMixin {
     }
 
     /**
-     * 模块化长矛的显示名统一叫「矛」。
+     * 模块化长矛的显示名按 Tetra 规则拼「材料 + 矛」。
      *
-     * <p>Tetra 的动态物品名来自 {@code IModularItem#getItemName}：它会按 tier 取最高级模块的名字，
-     * 于是显示成「下界合金剑刃」。不能去 mixin Tetra 的 {@code ModularItem#getName}——发行版里那是
+     * <p>Tetra 的动态物品名来自 {@code IModularItem#getItemName}：它会取 major 模块的
+     * {@code item_name}（本模组借用的剑刃模块是「剑」），于是显示成「下界合金剑」。本模组自己拼：
+     * 矛头材料的前缀（{@code tetra.material.<材料>.prefix}，铁 / 下界合金 / 木）+「矛」，见
+     * {@link TetraSpearNaming}。不能去 mixin Tetra 的 {@code ModularItem#getName}——发行版里那是
      * SRG 名（{@code m_7626_}），refmap 只覆盖 MC 类，注入不可靠。{@link ItemStack#getHoverName}
      * 是 MC 方法，物品栏 tooltip、工作台里的物品名最终都会走到这里。</p>
      *
-     * <p>铁砧改过名的栈保留玩家自定义名字，不覆盖。</p>
+     * <p>铁砧改过名的栈保留玩家自定义名字；矛头材料读不到时回退成不带材料的「矛」。</p>
      */
     @Inject(method = "getHoverName", at = @At("HEAD"), cancellable = true)
     private void spearcore$modularSpearName(CallbackInfoReturnable<Component> cir) {
@@ -147,7 +150,8 @@ public abstract class ItemStackTetraMixin {
         if (self.hasCustomHoverName() || spearLike() == null) {
             return;
         }
-        cir.setReturnValue(Component.translatable("item.spearcore.modular_spear"));
+        Component named = TetraSpearNaming.hoverName(self);
+        cir.setReturnValue(named != null ? named : Component.translatable("item.spearcore.modular_spear"));
     }
 
     /** 仅本模组的 Tetra 模块化长矛走这里；贴图长矛继续走 {@code SpearItem} 的原逻辑。 */

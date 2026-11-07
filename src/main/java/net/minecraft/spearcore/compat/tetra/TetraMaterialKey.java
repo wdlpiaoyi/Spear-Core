@@ -24,4 +24,24 @@ public final class TetraMaterialKey {
         }
         return variantKey.endsWith("/" + materialKey);
     }
+
+    /**
+     * 取 variant key 里的材料段：{@code basic_blade/iron} → {@code iron}。
+     *
+     * <p>模块化长矛的显示名要用它拼「材料 + 矛」；无法拆分（null、空串、以 {@code /} 结尾）时返回
+     * {@code null}，调用方回退成不带材料的名。</p>
+     */
+    public static String materialOf(String variantKey) {
+        if (variantKey == null || variantKey.isEmpty()) {
+            return null;
+        }
+        int slash = variantKey.lastIndexOf('/');
+        if (slash < 0) {
+            return variantKey;
+        }
+        if (slash == variantKey.length() - 1) {
+            return null;
+        }
+        return variantKey.substring(slash + 1);
+    }
 }

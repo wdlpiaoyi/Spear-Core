@@ -367,6 +367,50 @@ public final class TetraCompatGameTests {
 
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraMaterialKeyExtractsMaterial(GameTestHelper helper) {
+        // 模块化长矛的名字要用矛头材料拼「材料 + 矛」，材料段就是 variant key 的最后一个 / 之后的部分。
+        helper.assertTrue("iron".equals(TetraMaterialKey.materialOf("basic_blade/iron")),
+                "basic_blade/iron 的材料段应是 iron");
+        helper.assertTrue("iron".equals(TetraMaterialKey.materialOf("iron")),
+                "没有前缀的 key 本身就是材料 key");
+        helper.assertTrue("netherite".equals(TetraMaterialKey.materialOf("addon/tools/basic_blade/netherite")),
+                "多级前缀应取最后一段");
+        helper.assertTrue(TetraMaterialKey.materialOf("basic_blade/") == null,
+                "以 / 结尾的 key 没有材料段，应返回 null");
+        helper.assertTrue(TetraMaterialKey.materialOf(null) == null, "null key 应返回 null");
+        helper.assertTrue(TetraMaterialKey.materialOf("") == null, "空 key 应返回 null");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearNameKeysTranslated(GameTestHelper helper) {
+        // 名字 = 「材料前缀 + 矛」，lang key 与回退名必须在三种语言里都有；占位符丢了会显示成裸 %s。
+        // 这里不能用 TetraSpearNaming.NAMED_KEY 引用常量：GameTest 服务端没有 Tetra，加载那个类会 NoClassDefFoundError。
+        String namedKey = "item.spearcore.modular_spear.named";
+        String fallbackKey = "item.spearcore.modular_spear";
+        for (String language : new String[]{"en_us", "zh_cn", "ja_jp"}) {
+            JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
+            if (root == null) {
+                return;
+            }
+            try {
+                JsonObject json = root.getAsJsonObject();
+                helper.assertTrue(json.has(fallbackKey), language + " 缺少模块化长矛的回退名 " + fallbackKey);
+                helper.assertTrue(json.has(namedKey), language + " 缺少模块化长矛的带材料名 " + namedKey);
+                String named = json.get(namedKey).getAsString();
+                helper.assertTrue(named.contains("%s"),
+                        language + " 的带材料名必须留一个材料占位符，实际: " + named);
+            } catch (RuntimeException exception) {
+                helper.fail(language + " 语言文件格式不符: " + exception);
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearArchetypeDataIsValid(GameTestHelper helper) {
         JsonElement root = spearcore$readJson(helper, "tetra", "archetypes/modular_spear.json");
         if (root == null) {

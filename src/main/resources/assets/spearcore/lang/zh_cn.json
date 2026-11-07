@@ -7,6 +7,7 @@
   "item.spearcore.diamond_spear": "钻石矛",
   "item.spearcore.netherite_spear": "下界合金矛",
   "item.spearcore.modular_spear": "矛",
+  "item.spearcore.modular_spear.named": "%s矛",
   "item.spearcore.spear.desc": "可蓄力戳刺，移动越快伤害越高。",
   "enchantment.spearcore.lunge": "突进",
   "enchantment.spearcore.lunge.description": "戳刺攻击时将攻击者向前推进。",
