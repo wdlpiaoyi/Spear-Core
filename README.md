@@ -153,7 +153,7 @@ tetraDamageScale = 0.5
 本模组**不再把 Tetra 自带的单头工具（矛头 + 长手柄）当成长矛**。取而代之的是一个**新的模块化长矛**：把本模组的贴图长矛放进 Tetra 的工作台，会被替换成 `tetra:dynamic_handheld` 模块化物品（archetype `modular_spear`），此后左键戳刺、右键蓄力（不再是投掷），复用同一套长矛姿态、判定与动画。
 
 - 只支持 **Tetra 1.20.1-6.17.0 及以上**。
-- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。转换时矛头与枪尾按 oak / stone / copper / iron / gold / diamond / netherite 取材质，矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件。
+- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。转换时矛头与枪尾按 oak / stone / copper / iron / gold / diamond / netherite 取材质，矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件；绑定槽也能换成**镶座**（装 `tetra:socket/*` 的宝石类材料，宝石属性/效果会并入长矛，与绑定二选一）。
 - 数值由 Tetra 算出的攻击力 / 攻速拟合，高值区间放缓；Tetra 物品自身的攻击力先按 `tetraDamageScale` 打折。
 - 矛头可以打磨：用久了之后在 Tetra 的打磨面板里二选一——**伤害 I~V** 或 **速度 I~V**（复用 Tetra 自带的两套打磨改进，翻译与图标沿用 Tetra）。
 - Tetra 提供的攻击距离延伸（`forge:entity_reach`）按 `tetraExtraReachScale` 计入。

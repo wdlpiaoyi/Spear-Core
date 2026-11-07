@@ -45,5 +45,11 @@
   "tetra/schematic/spear/binding.slot1": "結束の材料",
   "tetra/schematic/spear/butt.name": "石突",
   "tetra/schematic/spear/butt.description": "柄の末端に重りを取り付ける、または交換する。",
-  "tetra/schematic/spear/butt.slot1": "石突の材料"
+  "tetra/schematic/spear/butt.slot1": "石突の材料",
+  "tetra.module.spear/socket.name": "ソケット",
+  "tetra.module.spear/socket.description": "穂先と柄の接合部にはめ込んだ宝石。宝石の属性と効果が槍に付与される。",
+  "tetra.module.spear/socket.material_name": "ソケット [%s]",
+  "tetra/schematic/spear/socket.name": "宝石の镶嵌",
+  "tetra/schematic/spear/socket.description": "穂先と柄の接合部に宝石をはめ込む。宝石ごとに異なる属性と効果を得られる。",
+  "tetra/schematic/spear/socket.slot1": "宝石"
 }

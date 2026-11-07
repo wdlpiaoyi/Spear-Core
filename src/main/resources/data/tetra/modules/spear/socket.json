@@ -1,0 +1,21 @@
+{
+    "type": "tetra:basic_module",
+    "slots": [ "spear/binding" ],
+    "renderLayer": "higher",
+    "variants": [
+        {
+            "materials": [ "tetra:socket/" ],
+            "key": "spear_socket/",
+            "extract": {
+                "durability": 1,
+                "integrity": -1,
+                "glyph": {
+                    "textureX": 80,
+                    "textureY": 112
+                },
+                "availableTextures": [ "pristine", "default" ],
+                "models": [ { "location": "tetra:item/module/sword/guard/socket/" } ]
+            }
+        }
+    ]
+}

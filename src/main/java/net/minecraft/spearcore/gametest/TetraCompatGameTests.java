@@ -607,21 +607,25 @@ public final class TetraCompatGameTests {
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearModulesAreDataDefined(GameTestHelper helper) {
         // 四个槽位各挂本模组自己的模块（data/tetra/modules/spear/*），不再借用 Tetra 剑的模块。
+        // 镶座（socket）与绑定共用 spear/binding 槽：Tetra 剑也是把 socket 装在 guard 槽上的。
         // GameTest 服务端不加载 Tetra，这里只校验数据形状，注册结果要靠进游戏验收。
-        Map<String, String> slotsToPart = Map.of(
-                "spear/head", "head", "spear/handle", "handle",
-                "spear/binding", "binding", "spear/butt", "butt");
+        Map<String, String> partToSlot = Map.of(
+                "head", "spear/head", "handle", "spear/handle",
+                "binding", "spear/binding", "butt", "spear/butt",
+                "socket", "spear/binding");
         Map<String, String> variantPrefix = Map.of(
-                "spear/head", "spear_head/", "spear/handle", "spear_handle/",
-                "spear/binding", "spear_binding/", "spear/butt", "spear_butt/");
+                "head", "spear_head/", "handle", "spear_handle/",
+                "binding", "spear_binding/", "butt", "spear_butt/",
+                "socket", "spear_socket/");
         Map<String, String[]> requiredMaterialPrefixes = Map.of(
                 "head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"},
                 "butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"},
                 "handle", new String[]{"tetra:rod/"},
-                "binding", new String[]{"tetra:fibre/", "tetra:fabric/"});
-        for (Map.Entry<String, String> entry : slotsToPart.entrySet()) {
-            String slot = entry.getKey();
-            String part = entry.getValue();
+                "binding", new String[]{"tetra:fibre/", "tetra:fabric/"},
+                "socket", new String[]{"tetra:socket/"});
+        for (Map.Entry<String, String> entry : partToSlot.entrySet()) {
+            String part = entry.getKey();
+            String slot = entry.getValue();
             JsonElement root = spearcore$readJson(helper, "tetra", "modules/spear/" + part + ".json");
             if (root == null) {
                 return;
@@ -637,8 +641,8 @@ public final class TetraCompatGameTests {
                 for (JsonElement element : variants) {
                     JsonObject variant = element.getAsJsonObject();
                     String key = variant.get("key").getAsString();
-                    helper.assertTrue(key.startsWith(variantPrefix.get(slot)),
-                            part + " 的变体 key 必须以 " + variantPrefix.get(slot) + " 开头，实际: " + key);
+                    helper.assertTrue(key.startsWith(variantPrefix.get(part)),
+                            part + " 的变体 key 必须以 " + variantPrefix.get(part) + " 开头，实际: " + key);
                     // models 可以写在 extract 里（跟随抽取），也可以直接写在变体上（Tetra 的 bolt 变体就是这么写的）。
                     JsonObject extract = variant.getAsJsonObject("extract");
                     helper.assertTrue(variant.has("models") || (extract != null && extract.has("models")),
@@ -665,7 +669,8 @@ public final class TetraCompatGameTests {
         // 换部件的配方：工作台只会显示 slots 命中当前物品的 schematic，槽名换成 spear/* 后必须自带。
         Map<String, String> slotByPart = Map.of(
                 "head", "spear/head", "handle", "spear/handle",
-                "binding", "spear/binding", "butt", "spear/butt");
+                "binding", "spear/binding", "butt", "spear/butt",
+                "socket", "spear/binding");
         for (Map.Entry<String, String> entry : slotByPart.entrySet()) {
             String part = entry.getKey();
             String slot = entry.getValue();
@@ -710,8 +715,10 @@ public final class TetraCompatGameTests {
                 "tetra.slot.spear/binding", "tetra.slot.spear/butt",
                 "tetra.module.spear/head.name", "tetra.module.spear/handle.name",
                 "tetra.module.spear/binding.name", "tetra.module.spear/butt.name",
+                "tetra.module.spear/socket.name", "tetra.module.spear/socket.material_name",
                 "tetra/schematic/spear/head.name", "tetra/schematic/spear/handle.name",
-                "tetra/schematic/spear/binding.name", "tetra/schematic/spear/butt.name"};
+                "tetra/schematic/spear/binding.name", "tetra/schematic/spear/butt.name",
+                "tetra/schematic/spear/socket.name", "tetra/schematic/spear/socket.slot1"};
         for (String language : new String[]{"en_us", "zh_cn", "ja_jp"}) {
             JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
             if (root == null) {

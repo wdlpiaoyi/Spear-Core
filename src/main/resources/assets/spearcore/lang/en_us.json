@@ -45,5 +45,11 @@
   "tetra/schematic/spear/binding.slot1": "Binding material",
   "tetra/schematic/spear/butt.name": "Counterweight",
   "tetra/schematic/spear/butt.description": "Add or replace the counterweight at the butt end.",
-  "tetra/schematic/spear/butt.slot1": "Counterweight material"
+  "tetra/schematic/spear/butt.slot1": "Counterweight material",
+  "tetra.module.spear/socket.name": "Socket",
+  "tetra.module.spear/socket.description": "A gem fitted where the spearhead meets the shaft. The gem's own attributes and effects are carried by the spear.",
+  "tetra.module.spear/socket.material_name": "Socket [%s]",
+  "tetra/schematic/spear/socket.name": "Socket",
+  "tetra/schematic/spear/socket.description": "Socket a gem into the spear, providing different attributes and effects depending on the gem.",
+  "tetra/schematic/spear/socket.slot1": "Gem"
 }

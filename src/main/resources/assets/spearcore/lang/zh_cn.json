@@ -45,5 +45,11 @@
   "tetra/schematic/spear/binding.slot1": "绑定材料",
   "tetra/schematic/spear/butt.name": "枪尾配重",
   "tetra/schematic/spear/butt.description": "在矛尾加装或更换配重。",
-  "tetra/schematic/spear/butt.slot1": "配重材料"
+  "tetra/schematic/spear/butt.slot1": "配重材料",
+  "tetra.module.spear/socket.name": "镶座",
+  "tetra.module.spear/socket.description": "镶在矛头与矛杆结合处的宝石，宝石自身的属性与效果会附加到长矛上。",
+  "tetra.module.spear/socket.material_name": "镶座 [%s]",
+  "tetra/schematic/spear/socket.name": "镶嵌宝石",
+  "tetra/schematic/spear/socket.description": "把宝石镶在矛头与矛杆的结合处，不同宝石提供不同的属性与效果。",
+  "tetra/schematic/spear/socket.slot1": "宝石"
 }

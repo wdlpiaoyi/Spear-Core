@@ -1,0 +1,17 @@
+{
+    "slots": [ "spear/binding" ],
+    "materialSlotCount": 1,
+    "displayType": "minor",
+    "glyph": {
+        "textureX": 80,
+        "textureY": 112
+    },
+    "outcomes": [
+        {
+            "materials": [ "tetra:socket/" ],
+            "moduleKey": "spear/socket",
+            "moduleVariant": "spear_socket/",
+            "experienceFactor": 1
+        }
+    ]
+}
