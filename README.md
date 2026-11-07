@@ -28,6 +28,7 @@
 - **Tetra 兼容**：同时装「长手柄 + 矛头」的单头工具会按本模组长矛工作。
 - **材质包兼容**：自动识别 1.21.9+ 格式的长矛资源包并在内存里改写为 1.20.1 可读。
 - **Avaritia Spear 兼容**：保留上游公开方法签名，`avaritia_spear` 1.4.0 可直接使用。
+- **多部件实体**：末影龙等 Forge 多部件生物按部件结算（打头伤害更高），同一次出手对同一只生物只结算一次。
 
 ## 安装
 
@@ -196,7 +197,7 @@ JEI、KubeJS、Punchy、Tetra、Avaritia Spear 都已适配；遇到其它冲突
 - 仓库约定与自检：**[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
 ./gradlew runServer          # 无头启动，自检会打印已注册的长矛数量
 ./gradlew runGameTestServer  # 自动化测试，看日志里的 "All N required tests passed :)"
 ```

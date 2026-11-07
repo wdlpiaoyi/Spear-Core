@@ -44,6 +44,7 @@
 - `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`、`resourcepackCompat`、`tetraCompat`、`tetraExtraReachScale`、`tetraDamageScale`）+ `[behavior]` 段的 17 个行为开关。
 - `util/SpearRules.java`：17 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
 - 约定：每个开关的默认值是 `JAVA`（= 原版 Java 行为）；**某版本取值和 Java 一样时，不要为它提供重复选项**（例如「戳刺速度加成」只有 `JAVA`/`MODDED` 两个值）。新增开关时同步改：`SpearConfig`（带中文注释）+ `SpearRules` + `README.md`（中文）与 `README.en.md`（英文）+ `kjs-guide.md`。
+- 多部件实体（末影龙等 `PartEntity`）的射线命中：`SpearCombat.resolveLivingTarget` 先解析回母 `LivingEntity`，附魔加伤 / 同 tick 免疫清理 / 命中效果 / 击退 / 仇恨 / 重复命中记忆都作用在母实体上；伤害仍落在具体部件（保留原版龙头满伤、其他部件打折）。`getHitEntitiesAlong` 返回前用 `SpearCombat.dedupeByRoot` 去重，同一次出手对同一母实体只保留最近部件；蓄力路径不要再写 `instanceof LivingEntity` 过滤。测试：`multipartTargetsResolveToLivingParent` / `multipartHitsCollapseToNearestPart`。
 - 击落骑手的速度阈值**固定为 Java 数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9），见 `SpearStats.dismountSpeedFor`，不要再加开关。
 - 两条**不提供开关**的原版行为，别被旧说法带偏：蓄力（举矛）时**本来就能疾跑且不减速**（原版 `use_effects` 的 `speed_multiplier` 为 1.0、`can_sprint` 为 true）；命中目标时**攻击者自己会被减速**（`hitSlowDown` 的 `JAVA` 档才是原版手感）。
 - 版本事实（改动对应开关前先确认）：Java 版蓄力伤害**不吃**力量/虚弱（原版 bug MC-302778，`chargeStrength` 的 `JAVA` 档就是复刻它）；基岩版戳刺后有一段后摇才能再蓄力（MCPE-233837，对应 `jabToChargeDelay` 的 `BEDROCK`）。

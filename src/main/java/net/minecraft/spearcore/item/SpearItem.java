@@ -289,7 +289,8 @@ public abstract class SpearItem extends Item implements SpearLike {
         results.sort((a, b) -> Double.compare(
                 a.getLocation().distanceToSqr(start),
                 b.getLocation().distanceToSqr(start)));
-        return results;
+        // 多部件实体（末影龙等）沿射线会扫到多个部件；同一次出手只保留最近的一个。
+        return SpearCombat.dedupeByRoot(results);
     }
 
     /**
