@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -33,6 +34,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(ItemStack.class)
 public abstract class ItemStackTetraMixin {
+
+    /**
+     * 属性查询的重入闸门。
+     *
+     * <p>TetraSpearBridge 取不到 {@code ENTITY_REACH} 时会回退去扫
+     * {@code ItemStack#getAttributeModifiers(MAINHAND)} 的修饰符，而本类的打折逻辑正好注入在
+     * 同一个方法的 RETURN：没有这个闸门就会无限递归直到 StackOverflowError，异常被兼容层
+     * 的 {@code catch (Throwable)} 吞掉后，模块化长矛会直接失去蓄力/戳刺等全部行为。</p>
+     */
+    @Unique
+    private static final ThreadLocal<Boolean> spearcore$resolvingAttributes =
+            ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     /**
      * 右键起手蓄力。
@@ -98,14 +111,23 @@ public abstract class ItemStackTetraMixin {
     @Inject(method = "getAttributeModifiers(Lnet/minecraft/world/entity/EquipmentSlot;)Lcom/google/common/collect/Multimap;", at = @At("RETURN"), cancellable = true)
     private void spearcore$tetraAttackDamage(EquipmentSlot slot,
                                              CallbackInfoReturnable<Multimap<Attribute, AttributeModifier>> cir) {
-        if (spearLike() == null) {
+        if (spearcore$resolvingAttributes.get()) {
+            // 重入：这次是兼容层自己在扫修饰符，跳过，避免自递归。
             return;
         }
-        double scale = TetraDamageScaling.damageScale();
-        if (scale >= 1.0D) {
-            return;
+        spearcore$resolvingAttributes.set(Boolean.TRUE);
+        try {
+            if (spearLike() == null) {
+                return;
+            }
+            double scale = TetraDamageScaling.damageScale();
+            if (scale >= 1.0D) {
+                return;
+            }
+            cir.setReturnValue(TetraDamageScaling.scaleAttackDamage(cir.getReturnValue(), scale));
+        } finally {
+            spearcore$resolvingAttributes.set(Boolean.FALSE);
         }
-        cir.setReturnValue(TetraDamageScaling.scaleAttackDamage(cir.getReturnValue(), scale));
     }
 
     /** 仅本模组的 Tetra 模块化长矛走这里；贴图长矛继续走 {@code SpearItem} 的原逻辑。 */
