@@ -391,7 +391,7 @@ public final class TetraCompatGameTests {
         // 这里不能用 TetraSpearNaming.NAMED_KEY 引用常量：GameTest 服务端没有 Tetra，加载那个类会 NoClassDefFoundError。
         String namedKey = "item.spearcore.modular_spear.named";
         String fallbackKey = "item.spearcore.modular_spear";
-        // ja_jp 是上游日本贡献者提供的翻译，新 key 只写中英两份，所以这里不校验日文。
+        // 只维护中英两份语言文件（ja_jp 已删除，日文回退英文），所以这里不校验日文。
         for (String language : new String[]{"en_us", "zh_cn"}) {
             JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
             if (root == null) {
@@ -735,7 +735,7 @@ public final class TetraCompatGameTests {
                 "item.tetra.scroll.spear/composite_shaft.prefix",
                 "item.tetra.scroll.spear/three_point_blade.name",
                 "item.tetra.scroll.spear/three_point_blade.prefix"};
-        // ja_jp 是上游日本贡献者提供的翻译，不随新功能补（见 AGENTS.md），只校验中英两份。
+        // 只维护中英两份语言文件（ja_jp 已删除、日文回退英文，见 AGENTS.md），只校验中英。
         for (String language : new String[]{"en_us", "zh_cn"}) {
             JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
             if (root == null) {

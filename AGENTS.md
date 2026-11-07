@@ -64,7 +64,7 @@
   - `#minecraft:swords`（近战武器归类，顺带自动进入 `#minecraft:tools` 与 `#forge:tools`）；
   - `#minecraft:piglin_loved`（仅金矛）。
 - `SpearGameTests.spearsCarryItemTags` 会验证上面这些 tag，tag 文件路径写错会直接测试失败。
-- 新增物品要同时补齐：注册、配方（`data/spearcore/recipes/`）、模型（`assets/.../models/item/`）、贴图、语言文件 `en_us` / `zh_cn`。**`ja_jp` 是上游日本贡献者提供的翻译，不随新功能补**（新 key 只写中英两份，不要新增日文条目）。
+- 新增物品要同时补齐：注册、配方（`data/spearcore/recipes/`）、模型（`assets/.../models/item/`）、贴图、语言文件 `en_us` / `zh_cn`。**只维护中英两份**：`ja_jp` 是上游日本贡献者在 3.3.x 时期提供的翻译，早已跟不上新 key、也没有人维护（新 key 只在日文里缺失，玩家看到的是中英混杂的原始 key），3.4.0 起从本 fork 删除，日文回退英文；不要重新引入这份文件。
 
 ### 资源包兼容层（1.21.9+ 长矛材质包）
 
