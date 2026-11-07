@@ -108,18 +108,22 @@ StartupEvents.registry('item', event => {
 
 | 文件 | 作用 |
 |---|---|
-| `data/tetra/archetypes/modular_spear.json` | 四个槽位：`sword/blade`、`sword/hilt`（major + required）、`sword/guard`、`sword/pommel` |
-| `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（材质 oak/stone/copper/iron/gold/diamond/netherite） |
+| `data/tetra/archetypes/modular_spear.json` | 四个槽位：`spear/head`、`spear/handle`（major + required）、`spear/binding`、`spear/butt` |
+| `data/tetra/modules/spear/{head,handle,binding,butt}.json` | 四个矛部件模块（变体前缀 `spear_head/` / `spear_handle/` / `spear_binding/` / `spear_butt/`；`models` 复用 Tetra 自带模块模型） |
+| `data/tetra/schematics/spear/{head,handle,binding,butt}.json` | 四个换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic） |
+| `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（矛头/枪尾按 oak…netherite，矛杆 `spear_handle/stick`，绑定 `spear_binding/string`） |
+
+槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。
 
 - 判定与数值：`compat/tetra/TetraSpearProfile`（守卫 + 判定）→ `TetraSpearBridge`（读 `DynamicModularItem` 属性）→ `TetraSpearStats.fit`（拟合）。
 - 客户端（贴图模型 + 材料 tint）：
   - `client/TetraSpearModel` 注册 `spearcore:tetra_spear#inventory`（`forge:separate_transforms`：base = 手持 32×32 贴图，gui/fixed/ground = 16×16 图标）。
   - `compat/tetra/mixin/ItemRendererTetraModelMixin`（`ItemRenderer#getModel` HEAD，`require=0`）只对 `SpearStyle.MODULAR_3D` 的栈替换模型。
-  - `client/TetraSpearColorsEvent` → `client/TetraColorRegistration` 给所有 `IModularItem` 注册物品色；`compat/tetra/TetraSpearColors` 读 Tetra 材料色（`glyph.tint` 优先，其次材质 `tints.texture`，按 `variant.key` 的最后一段匹配），tint 0 = 杆（`sword/hilt`）、tint 1 = 矛头（`sword/blade`）。
+  - `client/TetraSpearColorsEvent` → `client/TetraColorRegistration` 给所有 `IModularItem` 注册物品色；`compat/tetra/TetraSpearColors` 读 Tetra 材料色（`glyph.tint` 优先，其次材质 `tints.texture`，按 `variant.key` 的最后一段匹配），tint 0 = 杆（`spear/handle`）、tint 1 = 矛头（`spear/head`）。
   - `ItemRenderPropertiesTetraMixin` 给 `DynamicModularItem` 挂 `SpearClientExtensions`（第一/第三人称姿态）。
-- 物品名：`ItemStackTetraMixin.spearcore$modularSpearName` 注入 `ItemStack#getHoverName` HEAD，交给 `compat/tetra/TetraSpearNaming` 拼「材料 + 矛」：矛头材料 key 取自 `sword/blade` 的 variant key 末段，名字用 `item.spearcore.modular_spear.named`（`%s矛` / `%s Spear` / `%sの槍`），材料名前缀用 Tetra 的 `tetra.material.<材料>.prefix`。铁砧改过名的不覆盖，材料读不到时回退成裸 `item.spearcore.modular_spear`。**不要**去 mixin Tetra 的 `ModularItem#getName`（发行版是 SRG 名 `m_7626_`），也不要调 `IModularItem#getItemName`（它走客户端 `I18n`，服务端会抛错）。
+- 物品名：`ItemStackTetraMixin.spearcore$modularSpearName` 注入 `ItemStack#getHoverName` HEAD，交给 `compat/tetra/TetraSpearNaming` 拼「材料 + 矛」：矛头材料 key 取自 `spear/head` 的 variant key 末段，名字用 `item.spearcore.modular_spear.named`（`%s矛` / `%s Spear` / `%sの槍`），材料名前缀用 Tetra 的 `tetra.material.<材料>.prefix`。铁砧改过名的不覆盖，材料读不到时回退成裸 `item.spearcore.modular_spear`。**不要**去 mixin Tetra 的 `ModularItem#getName`（发行版是 SRG 名 `m_7626_`），也不要调 `IModularItem#getItemName`（它走客户端 `I18n`，服务端会抛错）。
 - 工作台姿态：Tetra 用 `BakedModel#isGui3d()` 决定平面物品要不要绕 X 轴转 90° 平躺。`forge:separate_transforms` 默认 `gui3d = true`（`BlockGeometryBakingContext` 字段初值），所以 `client/TetraSpearModel` 用 `BakedModelWrapper` 把 `isGui3d()` 固定成 `false`；删掉它矛就会立在工作台上。
-- 工作台布局：archetype 的 `x`/`y` 是 `GuiModuleOffsets` 的像素偏移，照 Tetra 默认布局写——2 major `(4,0)`/`(4,18)`、2 minor `(-18,5)`/`(-18,18)`；写大数会让模块框散开。
+- 工作台布局：archetype 的 `x`/`y` 是 `GuiModuleOffsets` 的像素偏移，照 Tetra 默认布局写——2 major `(4,0)`/`(4,18)`、2 minor `(-18,0)`/`(-18,18)`（↗矛头、↘矛杆、↖绑定、↙枪尾）；写大数会让模块框散开。
 - GameTest 服务端不加载 Tetra，只能覆盖纯函数与数据文件；真正的手感必须在装了 Tetra 的实例里手工验。
 - 对应版本：Tetra **1.20.1-6.17.0**（`compileOnly 'curse.maven:tetra-289712:8570756'`）。
 

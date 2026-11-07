@@ -15,8 +15,8 @@ import se.mickelus.tetra.module.data.VariantData;
  * <p>Tetra 的材料色写在 {@code variants[i].glyph.tint} 或材质 JSON 的 {@code tints.texture} 里，
  * 自绘贴图模型需要拿它给杆/矛头着色，才能保留「按材料换色」。</p>
  *
- * <p>槽位来自 archetype：{@code sword/blade} 当矛头（tint 1），{@code sword/hilt} 当杆与箍（tint 0）。
- * {@code sword/*} 只是占位命名——这四个模块是 Tetra 剑的模块，本模组并没有把物品做成剑。</p>
+ * <p>槽位来自 archetype：{@code spear/head} 当矛头（tint 1），{@code spear/handle} 当杆与箍（tint 0）。
+ * 这两个槽位挂的是本模组自己的模块（{@code data/tetra/modules/spear/*}），不是 Tetra 剑的模块。</p>
  *
  * <p>本类只在确认 Tetra 已加载后才会被加载（调用方先做 {@code ModList.isLoaded("tetra")}
  * 守卫），并且所有查询都包在 {@code try/catch} 里：KubeJS/CrT 改过的材料数据出现半成品时，
@@ -25,8 +25,8 @@ import se.mickelus.tetra.module.data.VariantData;
 public final class TetraSpearColors {
 
     public static final int FALLBACK = 0xFFFFFFFF;
-    public static final String HEAD_SLOT = "sword/blade";
-    public static final String HANDLE_SLOT = "sword/hilt";
+    public static final String HEAD_SLOT = "spear/head";
+    public static final String HANDLE_SLOT = "spear/handle";
 
     private static final Map<String, Integer> MATERIAL_CACHE = new HashMap<>();
     private static boolean loggedFailure;

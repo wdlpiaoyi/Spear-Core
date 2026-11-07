@@ -4,10 +4,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/oak" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/oak" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/oak" ]
+            "spear/head":    [ "spear/head", "spear_head/oak" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/oak" ]
         }
     },
     {
@@ -15,10 +15,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/stone" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/stone" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/stone" ]
+            "spear/head":    [ "spear/head", "spear_head/stone" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/stone" ]
         }
     },
     {
@@ -26,10 +26,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/copper" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/copper" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/copper" ]
+            "spear/head":    [ "spear/head", "spear_head/copper" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/copper" ]
         }
     },
     {
@@ -37,10 +37,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/iron" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/iron" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/iron" ]
+            "spear/head":    [ "spear/head", "spear_head/iron" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/iron" ]
         }
     },
     {
@@ -48,10 +48,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/gold" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/gold" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/gold" ]
+            "spear/head":    [ "spear/head", "spear_head/gold" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/gold" ]
         }
     },
     {
@@ -59,10 +59,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/diamond" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/diamond" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/diamond" ]
+            "spear/head":    [ "spear/head", "spear_head/diamond" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/diamond" ]
         }
     },
     {
@@ -70,10 +70,10 @@
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "sword/blade":  [ "sword/basic_blade", "basic_blade/netherite" ],
-            "sword/hilt":   [ "sword/basic_hilt", "basic_hilt/stick" ],
-            "sword/guard":  [ "sword/makeshift_guard", "makeshift_guard/netherite" ],
-            "sword/pommel": [ "sword/decorative_pommel", "decorative_pommel/netherite" ]
+            "spear/head":    [ "spear/head", "spear_head/netherite" ],
+            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
+            "spear/binding": [ "spear/binding", "spear_binding/string" ],
+            "spear/butt":    [ "spear/butt", "spear_butt/netherite" ]
         }
     }
 ]

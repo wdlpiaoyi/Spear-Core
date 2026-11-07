@@ -153,7 +153,7 @@ There are 17 more per-behaviour switches under `[behavior]` (all default to `JAV
 This mod **no longer turns Tetra's own single-headed tools (spearhead + long handle) into spears**. Instead it adds a **new modular spear**: drop one of this mod's spears into a Tetra workbench and it is replaced by a `tetra:dynamic_handheld` modular item (archetype `modular_spear`); from then on it left-click jabs and right-click charges (instead of throwing), reusing the same poses, hit detection and animations.
 
 - Requires **Tetra 1.20.1-6.17.0 or newer**.
-- Its four slots use **sword parts for now**: blade `sword/blade`, hilt `sword/hilt`, guard `sword/guard` and pommel `sword/pommel`; the seven materials map to oak / stone / copper / iron / gold / diamond / netherite, and you can swap parts at the workbench later.
+- Its four slots are **this mod's own spear parts**: spearhead `spear/head` (↗), shaft `spear/handle` (↘), binding `spear/binding` (↖) and counterweight `spear/butt` (↙). The conversion takes the spearhead and counterweight material from oak / stone / copper / iron / gold / diamond / netherite, uses a wooden stick for the shaft and string for the binding; afterwards you can swap any part with materials at the workbench.
 - Stats are fitted from Tetra's attack damage / speed with a soft cap; the Tetra item's own damage is first scaled by `tetraDamageScale`.
 - Tetra's extra reach (`forge:entity_reach`) is scaled by `tetraExtraReachScale`.
 - Vanilla enchantments supported by this mod and Lunge work on the modular spear too; anvil book enchanting is still blocked by Tetra itself (`isBookEnchantable=false`).
@@ -162,7 +162,7 @@ This mod **no longer turns Tetra's own single-headed tools (spearhead + long han
 - Mods that deal a pre-hit chunk of damage in the same tick (e.g. fantasy_ending's Void Collapsing) no longer swallow the spear's own damage.
 - Fixed Java semantics: not affected by `jabCooldown` / `jabToChargeDelay`.
 - The look is this mod's own texture-based spear model (reusing the four `tetra_spear*` textures) with handle and head tinted from Tetra materials; the item name follows Tetra's naming rule — material + "Spear" (e.g. Iron Spear, Netherite Spear) — and it lies flat on the Tetra workbench.
-- The four workbench slots currently borrow Tetra's sword modules (blade / hilt / guard / pommel) as placeholders. **The item is not a sword**: combat, enchantments and damage are all spear behaviour.
+- The slots carry this mod's own spear modules (`data/tetra/modules/spear/*`) instead of Tetra's sword modules, and **the item is not a sword**: combat, enchantments and damage are all spear behaviour.
 - Turning `tetraCompat` off keeps the workbench replacement (that is datapack behaviour) but the converted item falls back to a plain Tetra tool.
 - This compatibility is still being tuned; report pose/stat issues together with your Tetra version.
 

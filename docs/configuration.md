@@ -51,7 +51,7 @@ tetraDamageScale = 0.5
 本模组**不再劫持 Tetra 自带的单头工具**。取而代之的是一个**独立的模块化长矛**：
 
 - 把本模组七把贴图长矛中的任意一把放进 Tetra 工作台，数据包里的 replacement 会把它替换成 `tetra:dynamic_handheld`，并写入 archetype `modular_spear` 与四个模块槽位。
-- 四个槽位暂用**剑的部件**：刀身 `sword/blade`、手柄 `sword/hilt`、护手 `sword/guard`、配重 `sword/pommel`；七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），之后可以在工作台里换部件。
+- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件（换部件的配方在 `data/tetra/schematics/spear/*`）。
 - 只有 archetype 是 `modular_spear` 的物品才会被当成长矛（`TetraSpearProfile.isModularSpearArchetype`）。Tetra 自带的单头工具、普通模块工具一律按普通工具工作。
 - `tetraCompat` 只控制「长矛化」：关掉后工作台替换照样发生（那是数据包行为），但转换出来的物品回到普通 Tetra 工具。
 
@@ -64,8 +64,8 @@ tetraDamageScale = 0.5
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
 - 模块化长矛固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种模块组合都是不同实例。
 - 指向方块 / 挥空时播放长矛攻击音效；创造模式左键不破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
-- 外观固定是 `assets/spearcore/models/item/tetra_spear.json`（复用贴图长矛的四张贴图），杆与矛头分别按 Tetra 材料 tint（`TetraSpearColors`，tint 0 = `sword/hilt`、tint 1 = `sword/blade`）；放在 Tetra 工作台上是平躺的（模型声明 `isGui3d = false`）。物品名按 Tetra 的命名规则拼「材料 + 矛」：矛头材料来自 `sword/blade` 当前部件，材料前缀用 Tetra 自己的 `tetra.material.<材料>.prefix`，所以铁矛头显示「铁矛」、下界合金矛头显示「下界合金矛」；材料读不到时回退成「矛」。
-- 四个槽位暂时借用 Tetra 剑的模块（`sword/blade`、`sword/hilt`、`sword/guard`、`sword/pommel`）占位，物品本身不是剑。工作台里的槽位坐标写在 `data/tetra/archetypes/modular_spear.json`，是 `GuiModuleOffsets` 的像素偏移。
+- 外观固定是 `assets/spearcore/models/item/tetra_spear.json`（复用贴图长矛的四张贴图），杆与矛头分别按 Tetra 材料 tint（`TetraSpearColors`，tint 0 = `spear/handle`、tint 1 = `spear/head`）；放在 Tetra 工作台上是平躺的（模型声明 `isGui3d = false`）。物品名按 Tetra 的命名规则拼「材料 + 矛」：矛头材料来自 `spear/head` 当前部件，材料前缀用 Tetra 自己的 `tetra.material.<材料>.prefix`，所以铁矛头显示「铁矛」、下界合金矛头显示「下界合金矛」；材料读不到时回退成「矛」。
+- 槽位挂的是本模组自带的矛模块（`data/tetra/modules/spear/{head,handle,binding,butt}.json`），不再借用 Tetra 剑的模块，物品本身不是剑。工作台里的槽位坐标写在 `data/tetra/archetypes/modular_spear.json`，是 `GuiModuleOffsets` 的像素偏移。
 
 ### 模组兼容（Avaritia Spear）
 

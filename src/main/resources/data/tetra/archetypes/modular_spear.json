@@ -4,9 +4,9 @@
     "honeBase": 0,
     "honeIntegrityMultiplier": 1,
     "slots": [
-        { "key": "sword/blade",  "major": true,  "required": true,  "x": 4,   "y": 0 },
-        { "key": "sword/hilt",   "major": true,  "required": true,  "x": 4,   "y": 18 },
-        { "key": "sword/guard",  "major": false, "required": false, "x": -18, "y": 5 },
-        { "key": "sword/pommel", "major": false, "required": false, "x": -18, "y": 18 }
+        { "key": "spear/head",    "major": true,  "required": true,  "x": 4,   "y": 0 },
+        { "key": "spear/handle",  "major": true,  "required": true,  "x": 4,   "y": 18 },
+        { "key": "spear/binding", "major": false, "required": false, "x": -18, "y": 0 },
+        { "key": "spear/butt",    "major": false, "required": false, "x": -18, "y": 18 }
     ]
 }

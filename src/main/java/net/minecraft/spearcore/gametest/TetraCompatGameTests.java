@@ -426,25 +426,31 @@ public final class TetraCompatGameTests {
             JsonArray slots = json.getAsJsonArray("slots");
             helper.assertTrue(slots != null && slots.size() == 4, "模块化长矛应有 4 个槽位");
             Set<String> keys = new HashSet<>();
-            boolean bladeMajor = false;
-            boolean hiltMajor = false;
+            boolean headMajor = false;
+            boolean handleMajor = false;
+            boolean headRequired = false;
+            boolean handleRequired = false;
             // 工作台里的模块框位置来自 GuiModuleOffsets(ArchetypeSlotDefinition[])：x/y 会被原样当成像素偏移。
-            // 只允许 Tetra 默认布局量级（2 major 用 (4,0)/(4,18)，2 minor 用 (-18,5)/(-18,18)），
+            // 只允许 Tetra 默认布局量级（2 major 用 (4,0)/(4,18)，2 minor 用 (-18,0)/(-18,18)），
             // 写成 0/40/80 这种大数会让模块框散到物品外面。
+            // 方位按设计稿：↗矛头、↘矛杆、↖绑定/涂层、↙枪尾（配重）。
             Map<String, Integer> expectedX = Map.of(
-                    "sword/blade", 4, "sword/hilt", 4, "sword/guard", -18, "sword/pommel", -18);
+                    "spear/head", 4, "spear/handle", 4, "spear/binding", -18, "spear/butt", -18);
             Map<String, Integer> expectedY = Map.of(
-                    "sword/blade", 0, "sword/hilt", 18, "sword/guard", 5, "sword/pommel", 18);
+                    "spear/head", 0, "spear/handle", 18, "spear/binding", 0, "spear/butt", 18);
             for (JsonElement element : slots) {
                 JsonObject slot = element.getAsJsonObject();
                 String key = slot.get("key").getAsString();
                 keys.add(key);
                 boolean major = slot.has("major") && slot.get("major").getAsBoolean();
-                if ("sword/blade".equals(key)) {
-                    bladeMajor = major;
+                boolean required = slot.has("required") && slot.get("required").getAsBoolean();
+                if ("spear/head".equals(key)) {
+                    headMajor = major;
+                    headRequired = required;
                 }
-                if ("sword/hilt".equals(key)) {
-                    hiltMajor = major;
+                if ("spear/handle".equals(key)) {
+                    handleMajor = major;
+                    handleRequired = required;
                 }
                 int x = slot.has("x") ? slot.get("x").getAsInt() : 0;
                 int y = slot.has("y") ? slot.get("y").getAsInt() : 0;
@@ -453,9 +459,10 @@ public final class TetraCompatGameTests {
                 helper.assertTrue(expectedY.getOrDefault(key, y) == y,
                         "槽位 " + key + " 的 y 应与 Tetra 默认布局一致，实际: " + y);
             }
-            helper.assertTrue(keys.equals(Set.of("sword/blade", "sword/hilt", "sword/guard", "sword/pommel")),
-                    "槽位必须是剑的四个槽: " + keys);
-            helper.assertTrue(bladeMajor && hiltMajor, "刀身与手柄必须是 major 槽位");
+            helper.assertTrue(keys.equals(Set.of("spear/head", "spear/handle", "spear/binding", "spear/butt")),
+                    "槽位必须是矛的四个槽: " + keys);
+            helper.assertTrue(headMajor && handleMajor, "矛头与矛杆必须是 major 槽位");
+            helper.assertTrue(headRequired && handleRequired, "矛头与矛杆必须是 required 槽位");
         } catch (RuntimeException exception) {
             helper.fail("archetype 数据格式不符: " + exception);
         }
@@ -491,8 +498,13 @@ public final class TetraCompatGameTests {
 
                 JsonObject modules = entry.getAsJsonObject("modules");
                 helper.assertTrue(modules != null, "替换规则必须带 modules");
-                for (String slot : new String[]{"sword/blade", "sword/hilt", "sword/guard", "sword/pommel"}) {
+                for (String slot : new String[]{"spear/head", "spear/handle", "spear/binding", "spear/butt"}) {
                     helper.assertTrue(modules.has(slot), "缺少槽位模块: " + slot);
+                    JsonArray pair = modules.getAsJsonArray(slot);
+                    helper.assertTrue(pair != null && pair.size() == 2,
+                            "每个槽位必须写 [模块 key, 变体 key]: " + slot);
+                    helper.assertTrue(slot.equals(pair.get(0).getAsString()),
+                            "槽位必须挂本模组同名的矛模块: " + slot + " -> " + pair.get(0).getAsString());
                 }
 
                 JsonArray items = entry.getAsJsonObject("predicate").getAsJsonArray("items");
@@ -504,22 +516,143 @@ public final class TetraCompatGameTests {
 
                 String material = expectedMaterials.get(itemId);
                 helper.assertTrue(material != null, "替换规则里出现未知物品: " + itemId);
-                helper.assertTrue(("basic_blade/" + material)
-                                .equals(modules.getAsJsonArray("sword/blade").get(1).getAsString()),
-                        "刀身材质映射不符: " + itemId);
-                helper.assertTrue(("makeshift_guard/" + material)
-                                .equals(modules.getAsJsonArray("sword/guard").get(1).getAsString()),
-                        "护手材质映射不符: " + itemId);
-                helper.assertTrue(("decorative_pommel/" + material)
-                                .equals(modules.getAsJsonArray("sword/pommel").get(1).getAsString()),
-                        "配重材质映射不符: " + itemId);
-                helper.assertTrue("basic_hilt/stick".equals(modules.getAsJsonArray("sword/hilt").get(1).getAsString()),
-                        "手柄固定用 basic_hilt/stick");
+                helper.assertTrue(("spear_head/" + material)
+                                .equals(modules.getAsJsonArray("spear/head").get(1).getAsString()),
+                        "矛头材质映射不符: " + itemId);
+                helper.assertTrue(("spear_butt/" + material)
+                                .equals(modules.getAsJsonArray("spear/butt").get(1).getAsString()),
+                        "枪尾材质映射不符: " + itemId);
+                helper.assertTrue("spear_handle/stick".equals(modules.getAsJsonArray("spear/handle").get(1).getAsString()),
+                        "矛杆固定用 spear_handle/stick");
+                helper.assertTrue("spear_binding/string".equals(modules.getAsJsonArray("spear/binding").get(1).getAsString()),
+                        "绑定固定用 spear_binding/string");
             }
             helper.assertTrue(covered.equals(expectedMaterials.keySet()),
                     "替换规则必须覆盖七把矛，实际覆盖: " + covered);
         } catch (RuntimeException exception) {
             helper.fail("替换数据格式不符: " + exception);
+        }
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearModulesAreDataDefined(GameTestHelper helper) {
+        // 四个槽位各挂本模组自己的模块（data/tetra/modules/spear/*），不再借用 Tetra 剑的模块。
+        // GameTest 服务端不加载 Tetra，这里只校验数据形状，注册结果要靠进游戏验收。
+        Map<String, String> slotsToPart = Map.of(
+                "spear/head", "head", "spear/handle", "handle",
+                "spear/binding", "binding", "spear/butt", "butt");
+        Map<String, String> variantPrefix = Map.of(
+                "spear/head", "spear_head/", "spear/handle", "spear_handle/",
+                "spear/binding", "spear_binding/", "spear/butt", "spear_butt/");
+        Map<String, String[]> requiredMaterialPrefixes = Map.of(
+                "head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"},
+                "butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"},
+                "handle", new String[]{"tetra:rod/"},
+                "binding", new String[]{"tetra:fibre/"});
+        for (Map.Entry<String, String> entry : slotsToPart.entrySet()) {
+            String slot = entry.getKey();
+            String part = entry.getValue();
+            JsonElement root = spearcore$readJson(helper, "tetra", "modules/spear/" + part + ".json");
+            if (root == null) {
+                return;
+            }
+            try {
+                JsonObject json = root.getAsJsonObject();
+                JsonArray slots = json.getAsJsonArray("slots");
+                helper.assertTrue(slots != null && slots.size() == 1 && slot.equals(slots.get(0).getAsString()),
+                        part + " 模块应只占用槽位 " + slot);
+                JsonArray variants = json.getAsJsonArray("variants");
+                helper.assertTrue(variants != null && !variants.isEmpty(), part + " 模块必须有变体");
+                Set<String> prefixes = new HashSet<>();
+                for (JsonElement element : variants) {
+                    JsonObject variant = element.getAsJsonObject();
+                    String key = variant.get("key").getAsString();
+                    helper.assertTrue(key.startsWith(variantPrefix.get(slot)),
+                            part + " 的变体 key 必须以 " + variantPrefix.get(slot) + " 开头，实际: " + key);
+                    // models 可以写在 extract 里（跟随抽取），也可以直接写在变体上（Tetra 的 bolt 变体就是这么写的）。
+                    JsonObject extract = variant.getAsJsonObject("extract");
+                    helper.assertTrue(variant.has("models") || (extract != null && extract.has("models")),
+                            part + " 的变体必须给出 models，否则工作台预览没有模型");
+                }
+                for (JsonElement element : variants.get(0).getAsJsonObject().getAsJsonArray("materials")) {
+                    prefixes.add(element.getAsString());
+                }
+                for (String prefix : requiredMaterialPrefixes.get(part)) {
+                    helper.assertTrue(prefixes.contains(prefix),
+                            part + " 模块的 materials 缺少前缀 " + prefix + "，七把矛的材料必须都能生成变体");
+                }
+            } catch (RuntimeException exception) {
+                helper.fail("模块数据格式不符: " + exception);
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearPartSchematicsAreDataDefined(GameTestHelper helper) {
+        // 换部件的配方：工作台只会显示 slots 命中当前物品的 schematic，槽名换成 spear/* 后必须自带。
+        Map<String, String> slotByPart = Map.of(
+                "head", "spear/head", "handle", "spear/handle",
+                "binding", "spear/binding", "butt", "spear/butt");
+        for (Map.Entry<String, String> entry : slotByPart.entrySet()) {
+            String part = entry.getKey();
+            String slot = entry.getValue();
+            JsonElement root = spearcore$readJson(helper, "tetra", "schematics/spear/" + part + ".json");
+            if (root == null) {
+                return;
+            }
+            try {
+                JsonObject json = root.getAsJsonObject();
+                JsonArray slots = json.getAsJsonArray("slots");
+                helper.assertTrue(slots != null && slots.size() == 1 && slot.equals(slots.get(0).getAsString()),
+                        part + " 的 schematic 应只作用于槽位 " + slot);
+                JsonArray outcomes = json.getAsJsonArray("outcomes");
+                helper.assertTrue(outcomes != null && !outcomes.isEmpty(), part + " 的 schematic 必须有 outcomes");
+                for (JsonElement element : outcomes) {
+                    JsonObject outcome = element.getAsJsonObject();
+                    helper.assertTrue(("spear/" + part).equals(outcome.get("moduleKey").getAsString()),
+                            part + " 的 outcome 必须给本模组模块 spear/" + part);
+                    helper.assertTrue(outcome.has("materials") || outcome.has("material"),
+                            part + " 的 outcome 必须说明材料来源");
+                    if (outcome.has("moduleVariant")) {
+                        String variant = outcome.get("moduleVariant").getAsString();
+                        helper.assertTrue(variant.startsWith("spear_" + part + "/"),
+                                part + " 的 outcome 变体前缀不符: " + variant);
+                    }
+                }
+            } catch (RuntimeException exception) {
+                helper.fail("schematic 数据格式不符: " + exception);
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearPartKeysTranslated(GameTestHelper helper) {
+        // 槽位名、模块名、换部件配方名都走 Tetra 的 I18n key（注意配方用的是 tetra/schematic/ 斜杠前缀），
+        // 缺一个就会在工具提示里直接显示原始 key。
+        String[] keys = {
+                "tetra.slot.spear/head", "tetra.slot.spear/handle",
+                "tetra.slot.spear/binding", "tetra.slot.spear/butt",
+                "tetra.module.spear/head.name", "tetra.module.spear/handle.name",
+                "tetra.module.spear/binding.name", "tetra.module.spear/butt.name",
+                "tetra/schematic/spear/head.name", "tetra/schematic/spear/handle.name",
+                "tetra/schematic/spear/binding.name", "tetra/schematic/spear/butt.name"};
+        for (String language : new String[]{"en_us", "zh_cn", "ja_jp"}) {
+            JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
+            if (root == null) {
+                return;
+            }
+            JsonObject json = root.getAsJsonObject();
+            for (String key : keys) {
+                helper.assertTrue(json.has(key), language + " 缺少 Tetra 部件翻译 " + key);
+            }
         }
         helper.succeed();
     }

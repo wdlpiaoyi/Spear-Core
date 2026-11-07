@@ -1,0 +1,24 @@
+{
+    "type": "tetra:basic_module",
+    "slots": [ "spear/butt" ],
+    "variants": [
+        {
+            "materials": [ "tetra:wood/", "tetra:bone/", "tetra:stone/", "tetra:metal/" ],
+            "key": "spear_butt/",
+            "durability": 15,
+            "integrity": -1,
+            "extract": {
+                "secondaryEffects": {
+                    "counterweight": 2
+                },
+                "durability": 0.12,
+                "glyph": {
+                    "textureX": 32,
+                    "textureY": 112
+                },
+                "availableTextures": [ "default" ],
+                "models": [ { "location": "tetra:item/module/sword/pommel/counterweight/" } ]
+            }
+        }
+    ]
+}

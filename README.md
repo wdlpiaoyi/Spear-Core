@@ -153,7 +153,7 @@ tetraDamageScale = 0.5
 本模组**不再把 Tetra 自带的单头工具（矛头 + 长手柄）当成长矛**。取而代之的是一个**新的模块化长矛**：把本模组的贴图长矛放进 Tetra 的工作台，会被替换成 `tetra:dynamic_handheld` 模块化物品（archetype `modular_spear`），此后左键戳刺、右键蓄力（不再是投掷），复用同一套长矛姿态、判定与动画。
 
 - 只支持 **Tetra 1.20.1-6.17.0 及以上**。
-- 四个槽位暂用**剑的部件**：刀身 `sword/blade`、手柄 `sword/hilt`、护手 `sword/guard`、配重 `sword/pommel`；七种材质分别映射到 oak / stone / copper / iron / gold / diamond / netherite，之后可以在工作台里换部件。
+- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。转换时矛头与枪尾按 oak / stone / copper / iron / gold / diamond / netherite 取材质，矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件。
 - 数值由 Tetra 算出的攻击力 / 攻速拟合，高值区间放缓；Tetra 物品自身的攻击力先按 `tetraDamageScale` 打折。
 - Tetra 提供的攻击距离延伸（`forge:entity_reach`）按 `tetraExtraReachScale` 计入。
 - 附魔台可刷本模组支持的 8 种原版附魔与突进（突进对模块化长矛同样生效）。附魔书走铁砧仍被 Tetra 自身禁用（`isBookEnchantable=false`）。
@@ -162,7 +162,7 @@ tetraDamageScale = 0.5
 - 同一 tick 里先打一段伤害的模组（如 fantasy_ending 的 Void Collapsing）不会再吞掉长矛本体的伤害。
 - 固定 Java 语义：不受 `jabCooldown` / `jabToChargeDelay` 控制。
 - 外观固定用本模组自己的贴图长矛模型（复用 `tetra_spear*` 四张贴图），杆与矛头按 Tetra 材料着色；物品名按 Tetra 的命名规则拼「材料 + 矛」（铁矛头 = 「铁矛」、下界合金矛头 = 「下界合金矛」），放在工作台上平躺。
-- 工作台里的四个槽位暂时借用 Tetra 剑的模块（剑刃 / 剑柄 / 护手 / 剑柄圆头）占位，**物品本身不是剑**：玩法、附魔与伤害仍按长矛处理。
+- 槽位挂的是本模组自带的矛模块（`data/tetra/modules/spear/*`），不再借用 Tetra 剑的模块，**物品本身也不是剑**：玩法、附魔与伤害仍按长矛处理。
 - 关掉 `tetraCompat` 后工作台替换照样发生（那是数据包行为），但转换出来的模块化物品回到普通 Tetra 工具。
 - 该兼容仍在调整中；遇到姿势/数值问题请带上 Tetra 版本反馈。
 

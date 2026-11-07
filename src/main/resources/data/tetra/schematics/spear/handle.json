@@ -1,0 +1,30 @@
+{
+    "slots": [ "spear/handle" ],
+    "materialSlotCount": 1,
+    "translation": {
+        "primaryAttributes": {
+            "forge:entity_reach": 1
+        },
+        "secondaryAttributes": {
+            "generic.attack_speed": -2
+        },
+        "tertiaryAttributes": {
+            "forge:entity_reach": 2
+        },
+        "durability": 1,
+        "integrity": 3,
+        "magicCapacity": 3
+    },
+    "displayType": "major",
+    "glyph": {
+        "textureX": 112,
+        "textureY": 32
+    },
+    "outcomes": [
+        {
+            "materials": [ "tetra:wood/", "tetra:metal/", "tetra:bone/", "tetra:rod/" ],
+            "moduleKey": "spear/handle",
+            "moduleVariant": "spear_handle/"
+        }
+    ]
+}

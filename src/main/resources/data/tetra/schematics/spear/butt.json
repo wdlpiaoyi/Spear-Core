@@ -1,0 +1,20 @@
+{
+    "slots": [ "spear/butt" ],
+    "materialSlotCount": 1,
+    "displayType": "minor",
+    "glyph": {
+        "textureX": 32,
+        "textureY": 112
+    },
+    "translation": {
+        "durability": 1,
+        "integrity": 1
+    },
+    "outcomes": [
+        {
+            "materials": [ "tetra:wood/", "tetra:bone/", "tetra:stone/", "tetra:metal/" ],
+            "moduleKey": "spear/butt",
+            "moduleVariant": "spear_butt/"
+        }
+    ]
+}
