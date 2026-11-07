@@ -40,7 +40,7 @@ public final class TetraMixinPlugin implements IMixinConfigPlugin {
         boolean present = tetraPresent();
         if (present && !spearcore$loggedActive) {
             spearcore$loggedActive = true;
-            SpearcoreMod.LOGGER.info("[spearcore] Tetra 兼容已启用：长手柄 + 矛头的单头工具按本模组长矛工作");
+            SpearcoreMod.LOGGER.info("[spearcore] Tetra 兼容已启用：archetype 为 modular_spear 的模块化长矛按本模组长矛工作");
         }
         return present;
     }

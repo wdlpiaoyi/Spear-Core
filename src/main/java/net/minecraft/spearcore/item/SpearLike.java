@@ -11,8 +11,8 @@ import java.util.Optional;
 /**
  * 「像长矛一样工作」的物品协议。
  *
- * <p>本模组自己的长矛由 {@link SpearItem} 实现；Tetra 单头工具（长手柄 + 矛头）由
- * {@code TetraSpearProfile} 在运行时按材料数值现算一份实现。战斗逻辑统一放在
+ * <p>本模组自己的长矛由 {@link SpearItem} 实现；Tetra 的模块化长矛（archetype modular_spear）由
+ * {@code TetraSpearProfile} 在运行时按 Tetra 属性现算一份实现。战斗逻辑统一放在
  * {@link SpearCombat}，两边共用同一套戳刺 / 蓄力流程。</p>
  */
 public interface SpearLike {

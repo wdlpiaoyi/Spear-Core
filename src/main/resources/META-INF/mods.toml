@@ -4,7 +4,7 @@ license="MIT License"
 
 [[mods]]
 modId="spearcore"
-version="3.3.3"
+version="3.4.0"
 displayName="Spear Core Forked"
 displayURL="https://github.com/wdlpiaoyi/Spear-Core"
 logoFile="spear.png"
@@ -14,7 +14,7 @@ description='''Spear Core Forked — 基于 Lyingice 的 Spear Core 的 1.20.1 F
 
 保留原 modId、net.minecraft.spearcore 包与 spearcore: 注册命名空间，以兼容 Avaritia Spear 等按 modId / 公开方法写死联动的模组。
 
-包含：Tetra 单头工具（长手柄 + 矛头）长矛化、1.21.9+ 长矛材质包内存兼容、Avaritia Spear 兼容缝。'''
+包含：Tetra 模块化长矛（archetype modular_spear，由工作台替换得到）、1.21.9+ 长矛材质包内存兼容、Avaritia Spear 兼容缝。'''
 
 # Start of user code block mod configuration
 # End of user code block mod configuration

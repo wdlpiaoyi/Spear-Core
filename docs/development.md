@@ -98,6 +98,24 @@ StartupEvents.registry('item', event => {
 
 **对应版本**：KubeJS **2001.6.5-build.26+forge**（1.20.1 Forge）。
 
+## Tetra（已支持，自定义 archetype）
+
+本模组不再让 Tetra 自带的工具变成矛，而是新增一个**模块化长矛**：数据包把七把贴图长矛在工作台里替换成
+`tetra:dynamic_handheld`，并在 NBT 里写 `archetype=modular_spear`；判定只看这个 archetype
+（`compat/tetra/TetraSpearProfile.isModularSpearArchetype`）。
+
+数据文件（**必须放 `data/tetra/`**，Tetra 的 DataStore 只收 `tetra` 命名空间）：
+
+| 文件 | 作用 |
+|---|---|
+| `data/tetra/archetypes/modular_spear.json` | 四个槽位：`sword/blade`、`sword/hilt`（major + required）、`sword/guard`、`sword/pommel` |
+| `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（材质 oak/stone/copper/iron/gold/diamond/netherite） |
+
+- 判定与数值：`compat/tetra/TetraSpearProfile`（守卫 + 判定）→ `TetraSpearBridge`（读 `DynamicModularItem` 属性）→ `TetraSpearStats.fit`（拟合）。
+- 客户端：`ItemRenderPropertiesTetraMixin` 给 `DynamicModularItem` 挂 `SpearClientExtensions`；**模型与 tint 全部交给 Tetra**，本仓库不再替换渲染。
+- GameTest 服务端不加载 Tetra，只能覆盖纯函数与数据文件；真正的手感必须在装了 Tetra 的实例里手工验。
+- 对应版本：Tetra **1.20.1-6.17.0**（`compileOnly 'curse.maven:tetra-289712:8570756'`）。
+
 ## Punchy（已支持）
 
 装了 Punchy 时，矛的蓄力动画会**跟着本模组各材质的时间轴走** ——
@@ -132,7 +150,7 @@ StartupEvents.registry('item', event => {
 
 ```bash
 export JAVA_HOME=/path/to/jdk-17    # 换成你自己机器上的 JDK 17 目录（Windows 也可以写 C:/... 风格）
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.4.0.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```

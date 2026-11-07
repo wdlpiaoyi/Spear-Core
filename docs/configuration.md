@@ -22,13 +22,14 @@ punchyStageBridge = true
 # 是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式
 resourcepackCompat = true
 
-# 是否让 Tetra 单头工具（长手柄 + 矛头）按本模组长矛工作
+# 是否让本模组的 Tetra 模块化长矛（archetype modular_spear）按本模组长矛工作
+# 关掉不影响工作台替换，只是转换出来的物品回到普通 Tetra 工具
 tetraCompat = true
 
 # Tetra 提供的攻击距离延伸按比例计入本模组长矛射程（0=完全不计，1=原样计入，默认 0.3）
 tetraExtraReachScale = 0.3
 
-# Tetra 工具自身攻击力按比例计入长矛伤害（0=完全不计，1=原样计入，默认 0.5）
+# Tetra 物品自身攻击力按比例计入长矛伤害（0=完全不计，1=原样计入，默认 0.5）
 tetraDamageScale = 0.5
 ```
 
@@ -45,21 +46,25 @@ tetraDamageScale = 0.5
 
 这项功能原先是独立的 **Spear Core Resourcepack Compat** 模组，现已并入本体：如果你装过它（`spearrpcompat` 的 jar），删掉那个 jar 即可，装载本模组后行为不变。
 
-### Tetra 兼容
+### Tetra 兼容（模块化长矛）
 
-`tetraCompat` 控制 Tetra 单头工具的长矛化：同时装了**长手柄**（`single/handle` → `long_handle/`）和**矛头**（`single/head` → `spearhead/`）的单头工具，会像本模组的长矛一样工作——左键戳刺、右键蓄力（不再是 Tetra 的投掷），并复用同一套长矛姿态与命中判定。
+本模组**不再劫持 Tetra 自带的单头工具**。取而代之的是一个**独立的模块化长矛**：
 
-- 数值由 Tetra 按材料算出的攻击力 / 攻击速度**拟合**，不复刻本模组各材质的固定数值（也不复刻金矛那类反常数值）；高数值区间会放缓，避免 overpowered。Tetra 新增的模组材料 / 附属材料同样适用。
-- Tetra 自己提供的攻击距离延伸（长手柄、紫水晶插槽等的 `forge:attack_range`）只按 `tetraExtraReachScale`（0~1，默认 0.3）计入长矛射程；其他模组 / 整合包给的 reach 不受影响。
-- Tetra 工具自带的攻击力会先按 `tetraDamageScale`（0~1，默认 0.5）打折，再参与长矛伤害计算；玩家基础攻击力、力量效果附魔与其他来源不受影响，物品 tooltip 显示的就是打折后的数值。
+- 把本模组七把贴图长矛中的任意一把放进 Tetra 工作台，数据包里的 replacement 会把它替换成 `tetra:dynamic_handheld`，并写入 archetype `modular_spear` 与四个模块槽位。
+- 四个槽位暂用**剑的部件**：刀身 `sword/blade`、手柄 `sword/hilt`、护手 `sword/guard`、配重 `sword/pommel`；七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），之后可以在工作台里换部件。
+- 只有 archetype 是 `modular_spear` 的物品才会被当成长矛（`TetraSpearProfile.isModularSpearArchetype`）。Tetra 自带的单头工具、普通模块工具一律按普通工具工作。
+- `tetraCompat` 只控制「长矛化」：关掉后工作台替换照样发生（那是数据包行为），但转换出来的物品回到普通 Tetra 工具。
+
+长矛化之后的行为：
+
+- 左键戳刺、右键蓄力（不再是 Tetra 的投掷），复用同一套长矛姿态、命中判定与动画。
+- 数值由 Tetra 算出的攻击力 / 攻击速度**拟合**，不复刻本模组各材质的固定数值；高数值区间会放缓，避免 overpowered。
+- Tetra 物品自身提供的攻击距离延伸（`forge:entity_reach`，即 `ForgeMod.ENTITY_REACH`）只按 `tetraExtraReachScale`（0~1，默认 0.3）计入长矛射程；其他模组 / 整合包给的 reach 不受影响。
+- Tetra 物品自带的攻击力先按 `tetraDamageScale`（0~1，默认 0.5）打折，再参与长矛伤害计算；玩家基础攻击力、力量效果、附魔与其他来源不受影响。
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
-- Tetra 工具固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种材料组合都是不同实例，无法按物品共享冷却。
-- 只改玩家手持的单头工具；怪物 AI、副手戳刺等 Tetra 原有行为不变。
-- 模型由「Tetra 模块贴图」组成：手柄/矛头各一套 16×16 物品栏图标和 32×32 手持贴图（共 4 张灰阶图，游戏内按材料色 tint）。手持与 GUI 都走 `item/generated` 的 layer0/layer1 两层平面（与本模组长矛同一条渲染路径），两层像素互不重叠，按 layer 顺序叠放，不需要厚度或 Z 偏移。模型由 `forge:separate_transforms` 在手持 / GUI 之间切换，display 直接复用本模组长矛。
-- 手柄/矛头的 16×16 物品栏图标和 32×32 手持贴图是本仓库自己的灰阶美术，游戏内按材料色 tint。
-- 蓄力姿态用独立的平滑抬升曲线（不再套贴图长矛的分段曲线），避免举矛过程中跳变 / 指向偏移；正常的「掏出 / 收起」动画保留。
-- 第一人称与第三人称的持握、蓄力、戳刺、手臂动画完全复用贴图长矛的实现（`SpearAnimations`），模型 display 也直接抄贴图长矛，因此手感与指向一致。
-- 指向方块/挥空时也会播放长矛攻击音效；创造模式下按原版剑的语义处理：左键不会破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
+- 模块化长矛固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种模块组合都是不同实例。
+- 指向方块 / 挥空时播放长矛攻击音效；创造模式左键不破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
+- 模型与材料 tint 交给 Tetra 自己拼装（`dynamic_handheld` 的模块模型）；本仓库不再替换 Tetra 的渲染，也不再维护 Tetra 专用贴图。仓库里旧的 `tetra_spear*` 模型与四张灰阶贴图只作为以后的素材保留，当前没有任何代码引用。
 
 ### 模组兼容（Avaritia Spear）
 

@@ -37,23 +37,24 @@ public class SpearConfig {
             .define("resourcepackCompat", true);
 
     /**
-     * Tetra 兼容层总开关：单头工具同时装了「长手柄 + 矛头」时，让它按本模组长矛的方式工作
-     * （左键戳刺、右键蓄力、复用长矛姿态）。数值由 Tetra 材料属性拟合，不复刻本模组各材质的固定数值。
-     * 读取统一走 compat/tetra/TetraSpearProfile。
+     * Tetra 兼容层总开关：本模组的模块化长矛（archetype modular_spear）是否按长矛工作
+     * （左键戳刺、右键蓄力、复用长矛姿态）。数值由 Tetra 属性拟合，不复刻本模组各材质的固定数值。
+     * 只影响「长矛化」，不影响数据包里的工作台替换；读取统一走 compat/tetra/TetraSpearProfile。
      */
     public static final ForgeConfigSpec.BooleanValue TETRA_COMPAT = BUILDER
-            .comment("是否让 Tetra 单头工具（长手柄 + 矛头）按本模组长矛的方式工作",
-                    "仅支持 Tetra 1.20.1-6.17.0 及以上；Tetra 工具固定按 Java 语义，不挂戳刺冷却与后摇。")
+            .comment("是否让本模组的 Tetra 模块化长矛按本模组长矛的方式工作",
+                    "只影响 archetype 为 modular_spear 的模块化物品；Tetra 自带工具始终按普通工具工作。",
+                    "关掉后工作台替换照样发生，只是转换出来的物品回到普通 Tetra 工具。")
             .define("tetraCompat", true);
 
     /**
-     * Tetra 的攻击距离延伸（长手柄、紫水晶插槽等）远大于本模组，直接全额计入会让长矛变成远程武器。
+     * Tetra 的攻击距离延伸（部件、插槽等）远大于本模组，直接全额计入会让长矛变成远程武器。
      * 这里只缩放 Tetra 自己贡献的那段 {@code forge:entity_reach}，其他模组/整合包给的 reach 不受影响。
      * 读取统一走 compat/tetra/TetraSpearStats.reachScale()（配置未加载时回落 0.3）。
      */
     public static final ForgeConfigSpec.DoubleValue TETRA_EXTRA_REACH_SCALE = BUILDER
             .comment("Tetra 提供的攻击距离延伸按多大比例计入本模组长矛射程（0=完全不计，1=原样计入）",
-                    "只影响 Tetra 工具自己加的额外距离，0~1，默认 0.3。")
+                    "只影响 Tetra 物品（forge:entity_reach）自己加的额外距离，0~1，默认 0.3。")
             .defineInRange("tetraExtraReachScale", 0.3, 0.0, 1.0);
 
     /**

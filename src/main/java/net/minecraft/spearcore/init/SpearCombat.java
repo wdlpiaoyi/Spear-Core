@@ -44,7 +44,7 @@ import java.util.WeakHashMap;
  * 长矛的战斗流程（戳刺 / 蓄力）。
  *
  * <p>原先这些逻辑写在 {@link SpearItem} 的实例方法里，只有本模组自己的长矛能用。
- * 为了让 Tetra 的单头工具（长手柄 + 矛头）复用同一套手感，这里改成静态实现，
+ * 为了让 Tetra 的模块化长矛（archetype modular_spear）复用同一套手感，这里改成静态实现，
  * 通过 {@link SpearLike} 读取数值 —— 两边走的是同一份代码，而不是复制出来的近似版本。</p>
  */
 public final class SpearCombat {
@@ -182,7 +182,7 @@ public final class SpearCombat {
     // ========== 起手蓄力 ==========
 
     /**
-     * 右键起手蓄力。本模组贴图矛与 Tetra 单头工具共用同一份判定，避免两边手感漂移。
+     * 右键起手蓄力。本模组贴图矛与 Tetra 模块化长矛共用同一份判定，避免两边手感漂移。
      *
      * <p>Tetra 的 {@code use()} 只有在它自己算出 {@code getUseDuration > 0} 时才会
      * {@code startUsingItem}；矛头 JSON 的 {@code aspects.throwable} 并不保证产生

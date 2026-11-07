@@ -25,7 +25,7 @@
 - **突进附魔**：`spearcore:lunge`，最高 3 级，戳刺时把自己向前推一段，代价是耐久与饱食度。
 - **怪物也会用矛**：僵尸、猪灵等按配置概率携带长矛，并且真的会冲锋。
 - **动作与音效**：第一 / 第三人称持矛、蓄力、戳刺、手臂动画与命中反馈。
-- **Tetra 兼容**：同时装「长手柄 + 矛头」的单头工具会按本模组长矛工作。
+- **Tetra 兼容**：把本模组的贴图长矛放进 Tetra 工作台，会转成四槽位的模块化长矛。
 - **材质包兼容**：自动识别 1.21.9+ 格式的长矛资源包并在内存里改写为 1.20.1 可读。
 - **Avaritia Spear 兼容**：保留上游公开方法签名，`avaritia_spear` 1.4.0 可直接使用。
 - **多部件实体**：末影龙等 Forge 多部件生物按部件结算（打头伤害更高），同一次出手对同一只生物只结算一次。
@@ -132,13 +132,13 @@ punchyStageBridge = true
 # 是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式
 resourcepackCompat = true
 
-# 是否让 Tetra 单头工具（长手柄 + 矛头）按本模组长矛工作
+# 是否让本模组的 Tetra 模块化长矛按本模组长矛工作（不影响工作台替换）
 tetraCompat = true
 
 # Tetra 额外攻击距离按比例计入长矛射程（0=不计，1=原样，默认 0.3）
 tetraExtraReachScale = 0.3
 
-# Tetra 工具自身攻击力按比例计入长矛伤害（0=不计，1=原样，默认 0.5）
+# Tetra 物品自身攻击力按比例计入长矛伤害（0=不计，1=原样，默认 0.5）
 tetraDamageScale = 0.5
 ```
 
@@ -150,17 +150,19 @@ tetraDamageScale = 0.5
 
 ### Tetra（WIP，仍在验证）
 
-同时安装「长手柄」+「矛头」的 Tetra 单头工具会像本模组长矛一样工作：左键戳刺、右键蓄力（不再是投掷），复用同一套姿态、判定与动画。
+本模组**不再把 Tetra 自带的单头工具（矛头 + 长手柄）当成长矛**。取而代之的是一个**新的模块化长矛**：把本模组的贴图长矛放进 Tetra 的工作台，会被替换成 `tetra:dynamic_handheld` 模块化物品（archetype `modular_spear`），此后左键戳刺、右键蓄力（不再是投掷），复用同一套长矛姿态、判定与动画。
 
 - 只支持 **Tetra 1.20.1-6.17.0 及以上**。
-- 数值由 Tetra 材料算出的攻击力 / 攻速拟合，高值区间放缓；Tetra 工具攻击力先按 `tetraDamageScale` 打折。
-- Tetra 的攻击距离延伸按 `tetraExtraReachScale` 计入。
-- 附魔台可刷本模组支持的 8 种原版附魔与突进（突进对 Tetra 长矛同样生效）。附魔书走铁砧仍被 Tetra 自身禁用（`isBookEnchantable=false`）。
+- 四个槽位暂用**剑的部件**：刀身 `sword/blade`、手柄 `sword/hilt`、护手 `sword/guard`、配重 `sword/pommel`；七种材质分别映射到 oak / stone / copper / iron / gold / diamond / netherite，之后可以在工作台里换部件。
+- 数值由 Tetra 算出的攻击力 / 攻速拟合，高值区间放缓；Tetra 物品自身的攻击力先按 `tetraDamageScale` 打折。
+- Tetra 提供的攻击距离延伸（`forge:entity_reach`）按 `tetraExtraReachScale` 计入。
+- 附魔台可刷本模组支持的 8 种原版附魔与突进（突进对模块化长矛同样生效）。附魔书走铁砧仍被 Tetra 自身禁用（`isBookEnchantable=false`）。
 - 命中时的原版附魔效果会正常触发：火焰附加点燃、节肢杀手 / 冰霜附加等 `doPostHurt` 类效果走原版 `EnchantmentHelper` 钩子。
 - 模组添加的武器类附魔（如 Enigmatic Legacy 的 Slayer）也可附在长矛上：用本模组内置的隐藏探针剑判断「能不能附在标准武器上」，不依赖整合包是否保留钻石剑。玩家持矛的伤害按原版 `player_attack` 类型结算（死亡消息仍是长矛文案），所以 Slayer 这类按原版玩家攻击给伤害的附魔会正常生效；原版非白名单附魔（如横扫之刃）仍不放行。
 - 同一 tick 里先打一段伤害的模组（如 fantasy_ending 的 Void Collapsing）不会再吞掉长矛本体的伤害。
 - 固定 Java 语义：不受 `jabCooldown` / `jabToChargeDelay` 控制。
-- 模型用本仓库自己的四张灰阶图（16×16 图标 + 32×32 手持），游戏内按材料 tint。
+- 模型与贴图由 Tetra 按模块部件拼装，本仓库不再替换模型。
+- 关掉 `tetraCompat` 后工作台替换照样发生（那是数据包行为），但转换出来的模块化物品回到普通 Tetra 工具。
 - 该兼容仍在调整中；遇到姿势/数值问题请带上 Tetra 版本反馈。
 
 ### Avaritia Spear
@@ -199,7 +201,7 @@ JEI、KubeJS、Punchy、Tetra、Avaritia Spear 都已适配；遇到其它冲突
 - 仓库约定与自检：**[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.4.0.jar
 ./gradlew runServer          # 无头启动，自检会打印已注册的长矛数量
 ./gradlew runGameTestServer  # 自动化测试，看日志里的 "All N required tests passed :)"
 ```

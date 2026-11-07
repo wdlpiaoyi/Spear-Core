@@ -25,7 +25,7 @@ This repository is a fork of [wdlpiaoyi/Spear-Core](https://github.com/wdlpiaoyi
 - **Lunge enchantment**: `spearcore:lunge`, up to level 3, pushes you forward on a jab at the cost of durability and hunger.
 - **Mobs use spears too**: zombies and piglins may spawn with spears (configurable) and will actually charge.
 - **Poses and sounds**: first/third-person holding, charging and jabbing animations, arm animations and hit feedback.
-- **Tetra compatibility**: a single-headed tool with both a long handle and a spearhead behaves like this mod's spear.
+- **Tetra compatibility**: drop one of this mod's spears into a Tetra workbench and it turns into a four-slot modular spear.
 - **Resource-pack compatibility**: 1.21.9+ spear packs are detected and patched to 1.20.1 in memory.
 - **Avaritia Spear compatibility**: upstream public method signatures are preserved, so `avaritia_spear` 1.4.0 works.
 - **Multipart entities**: Forge multipart mobs such as the Ender Dragon take part-based damage (hitting the head hurts more), and a single swing hits each parent only once.
@@ -132,13 +132,13 @@ punchyStageBridge = true
 # Whether to recognise 1.21.9+ spear resource packs and patch them to pack_format 15 in memory
 resourcepackCompat = true
 
-# Whether Tetra single-headed tools (long handle + spearhead) should work like this mod's spears
+# Whether this mod's Tetra modular spear should work like this mod's spears (does not affect the workbench replacement)
 tetraCompat = true
 
 # Scale Tetra's extra attack range into this mod's spear reach (0 = ignored, 1 = full, default 0.3)
 tetraExtraReachScale = 0.3
 
-# Scale Tetra's own weapon attack damage into spear damage (0 = ignored, 1 = full, default 0.5)
+# Scale the Tetra item's own attack damage into spear damage (0 = ignored, 1 = full, default 0.5)
 tetraDamageScale = 0.5
 ```
 
@@ -150,17 +150,19 @@ There are 17 more per-behaviour switches under `[behavior]` (all default to `JAV
 
 ### Tetra (WIP, still being validated)
 
-A Tetra single-headed tool with both **long handle** and **spearhead** behaves like this mod's spear: left-click jab, right-click charge (instead of throwing), reusing the same poses, hit detection and animations.
+This mod **no longer turns Tetra's own single-headed tools (spearhead + long handle) into spears**. Instead it adds a **new modular spear**: drop one of this mod's spears into a Tetra workbench and it is replaced by a `tetra:dynamic_handheld` modular item (archetype `modular_spear`); from then on it left-click jabs and right-click charges (instead of throwing), reusing the same poses, hit detection and animations.
 
 - Requires **Tetra 1.20.1-6.17.0 or newer**.
-- Stats are fitted from Tetra's material attack damage / speed with a soft cap; Tetra weapon damage is first scaled by `tetraDamageScale`.
-- Tetra's extra reach is scaled by `tetraExtraReachScale`.
-- Vanilla enchantments supported by this mod and Lunge work on Tetra spears too; anvil book enchanting is still blocked by Tetra itself (`isBookEnchantable=false`).
+- Its four slots use **sword parts for now**: blade `sword/blade`, hilt `sword/hilt`, guard `sword/guard` and pommel `sword/pommel`; the seven materials map to oak / stone / copper / iron / gold / diamond / netherite, and you can swap parts at the workbench later.
+- Stats are fitted from Tetra's attack damage / speed with a soft cap; the Tetra item's own damage is first scaled by `tetraDamageScale`.
+- Tetra's extra reach (`forge:entity_reach`) is scaled by `tetraExtraReachScale`.
+- Vanilla enchantments supported by this mod and Lunge work on the modular spear too; anvil book enchanting is still blocked by Tetra itself (`isBookEnchantable=false`).
 - On-hit enchantment effects fire as in vanilla: Fire Aspect ignites, and `doPostHurt` effects such as Bane of Arthropods / Frost Aspect run through `EnchantmentHelper`.
 - Weapon enchantments added by other mods (e.g. Enigmatic Legacy's Slayer) also work on spears: the mod uses its own hidden probe sword to decide whether an enchantment applies to a standard weapon, so it does not depend on diamond swords being present. Player spear hits use the vanilla `player_attack` damage type (the spear death message is preserved), so bonuses gated on a real player attack are applied; non-whitelisted vanilla enchantments (e.g. Sweeping Edge) stay excluded.
 - Mods that deal a pre-hit chunk of damage in the same tick (e.g. fantasy_ending's Void Collapsing) no longer swallow the spear's own damage.
 - Fixed Java semantics: not affected by `jabCooldown` / `jabToChargeDelay`.
-- The model uses four grayscale textures from this repository (16x16 icons + 32x32 in-hand), tinted by material in game.
+- Model and textures are assembled by Tetra from the installed modules; this mod no longer replaces the model.
+- Turning `tetraCompat` off keeps the workbench replacement (that is datapack behaviour) but the converted item falls back to a plain Tetra tool.
 - This compatibility is still being tuned; report pose/stat issues together with your Tetra version.
 
 ### Avaritia Spear
@@ -199,7 +201,7 @@ JEI, KubeJS, Punchy, Tetra and Avaritia Spear are supported. For other conflicts
 - Repository conventions and self-checks: **[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.4.0.jar
 ./gradlew runServer          # headless launch; startup self-check prints the registered spears
 ./gradlew runGameTestServer  # automated tests; look for "All N required tests passed :)"
 ```

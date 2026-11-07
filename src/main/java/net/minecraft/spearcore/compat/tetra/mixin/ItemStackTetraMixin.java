@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * （{@code m_7203_} 等），Mixin 的 refmap 只覆盖 MC 类，映射不到模组自己类的 override，
  * 生产环境注入不可靠。而 {@link ItemStack} 的这几个方法都是 MC 方法，refmap 正常工作。</p>
  *
- * <p>只对「长手柄 + 矛头」的 Tetra 单头工具生效；普通 Tetra 工具仍走 Tetra 自己的逻辑。</p>
+ * <p>只对 archetype 为 modular_spear 的模块化长矛生效；Tetra 自带的工具仍走 Tetra 自己的逻辑。</p>
  */
 @Mixin(ItemStack.class)
 public abstract class ItemStackTetraMixin {
@@ -108,7 +108,7 @@ public abstract class ItemStackTetraMixin {
         cir.setReturnValue(TetraDamageScaling.scaleAttackDamage(cir.getReturnValue(), scale));
     }
 
-    /** 仅 Tetra 的 3D 单头工具走这里；本模组自己的贴图矛继续走 {@code SpearItem} 的原逻辑。 */
+    /** 仅本模组的 Tetra 模块化长矛走这里；贴图长矛继续走 {@code SpearItem} 的原逻辑。 */
     private SpearLike spearLike() {
         SpearLike spear = SpearLikeSupport.of((ItemStack) (Object) this);
         return spear != null && spear.style() == SpearStyle.MODULAR_3D ? spear : null;
