@@ -28,6 +28,7 @@ This repository is a fork of [wdlpiaoyi/Spear-Core](https://github.com/wdlpiaoyi
 - **Tetra compatibility**: a single-headed tool with both a long handle and a spearhead behaves like this mod's spear.
 - **Resource-pack compatibility**: 1.21.9+ spear packs are detected and patched to 1.20.1 in memory.
 - **Avaritia Spear compatibility**: upstream public method signatures are preserved, so `avaritia_spear` 1.4.0 works.
+- **Multipart entities**: Forge multipart mobs such as the Ender Dragon take part-based damage (hitting the head hurts more), and a single swing hits each parent only once.
 
 ## Installation
 
@@ -198,7 +199,7 @@ JEI, KubeJS, Punchy, Tetra and Avaritia Spear are supported. For other conflicts
 - Repository conventions and self-checks: **[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
 ./gradlew runServer          # headless launch; startup self-check prints the registered spears
 ./gradlew runGameTestServer  # automated tests; look for "All N required tests passed :)"
 ```

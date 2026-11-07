@@ -30,9 +30,14 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.entity.PartEntity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
@@ -49,6 +54,42 @@ public final class SpearCombat {
             new WeakHashMap<>();
 
     private SpearCombat() {
+    }
+
+    /**
+     * 把多部件实体（如末影龙的头/颈/身/尾/翅）解析回母 {@link LivingEntity}。
+     *
+     * <p>Forge 会把 {@code Entity#getParts()} 注册进 {@code ServerLevel.dragonParts}，
+     * 所以 {@code Level.getEntities} 扫到的是部件本身；部件不是 LivingEntity，
+     * 附魔/免疫/击退/仇恨等逻辑必须先回到母实体，伤害则仍落在具体部件上，
+     * 这样原版对龙头的满伤、对其他部件的打折才不会被我们改掉。</p>
+     */
+    public static LivingEntity resolveLivingTarget(Entity target) {
+        if (target instanceof LivingEntity living) return living;
+        if (target instanceof PartEntity<?> part && part.getParent() instanceof LivingEntity parent) {
+            return parent;
+        }
+        return null;
+    }
+
+    public static Entity rootTarget(Entity target) {
+        LivingEntity living = resolveLivingTarget(target);
+        return living != null ? living : target;
+    }
+
+    /**
+     * 同一次射线扫描里，对同一只母实体只保留最近的一个部件。
+     * 不这么做的话，一次蓄力会同时打中龙头、颈、身，结算好几遍。
+     * 输入已按距离从近到远排序，输出保持该顺序。
+     */
+    public static List<EntityHitResult> dedupeByRoot(List<EntityHitResult> hits) {
+        if (hits.size() < 2) return hits;
+        Set<Entity> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        List<EntityHitResult> out = new ArrayList<>(hits.size());
+        for (EntityHitResult hit : hits) {
+            if (seen.add(rootTarget(hit.getEntity()))) out.add(hit);
+        }
+        return out;
     }
 
     // ========== 蓄力 tick ==========
@@ -92,16 +133,17 @@ public final class SpearCombat {
         for (EntityHitResult hit : SpearItem.getHitEntitiesAlong(user, spear, spear.getHitboxMargin(),
                 entity -> SpearItem.canHitEntity(user, entity))) {
             Entity target = hit.getEntity();
-            if (!(target instanceof LivingEntity)) continue;
+            LivingEntity living = resolveLivingTarget(target);
+            if (living == null) continue;
 
             // 蓄力重复命中：JAVA 每个目标每次蓄力只结算一次；BEDROCK 用 10 tick 接触冷却。
             if (user instanceof SpearCooldownAccessor accessor
-                    && accessor.WasRecentlyStabbed(target,
+                    && accessor.WasRecentlyStabbed(living,
                     SpearRules.chargeRepeatCooldownTicks(spear.getContactCooldownTicks()))) {
                 continue;
             }
 
-            double targetSpeed = look.dot(SpearItem.getMotion(target));
+            double targetSpeed = look.dot(SpearItem.getMotion(living));
             double relSpeed = Math.max(0.0, attackerSpeed - targetSpeed);
             if (user instanceof UseSpearSpecialEntity u) {
                 relSpeed *= u.getJerotesSpearDamageMultiple();
@@ -127,7 +169,7 @@ public final class SpearCombat {
                     target, damage, canDamage, canKnockback, canDismount, user,
                     SpearDamageEvent.AttackType.CHARGE, spear);
             if (applied && user instanceof SpearCooldownAccessor accessor) {
-                accessor.RememberStabbedEntity(target);
+                accessor.RememberStabbedEntity(living);
             }
             hitSomething |= applied;
         }
@@ -231,9 +273,11 @@ public final class SpearCombat {
         for (EntityHitResult hit : SpearItem.getHitEntitiesAlong(attacker, spear, spear.getHitboxMargin2(),
                 entity -> SpearItem.canHitEntity(attacker, entity))) {
             Entity target = hit.getEntity();
+            LivingEntity living = resolveLivingTarget(target);
+            if (living == null) continue;
             if (SpearRules.hasJabRepeatCooldown()
                     && attacker instanceof SpearCooldownAccessor accessor
-                    && accessor.WasRecentlyStabbed(target, spear.getContactCooldownTicks())) {
+                    && accessor.WasRecentlyStabbed(living, spear.getContactCooldownTicks())) {
                 continue;
             }
             // 戳刺一次可能扫到多个目标，事件按目标逐个发：以前只在循环外发一次、
@@ -247,34 +291,34 @@ public final class SpearCombat {
             // 1.20.1 的 API 是 getDamageBonus(ItemStack, MobType)。
             DamageSource spearSource = SpearDamageTypes.spear(attacker.level(), attacker);
             float finalDamage = stabDamage;
-            if (target instanceof LivingEntity livingTarget) {
-                finalDamage += EnchantmentHelper.getDamageBonus(stack, livingTarget.getMobType());
+            if (living != null) {
+                finalDamage += EnchantmentHelper.getDamageBonus(stack, living.getMobType());
                 // 同一 tick 里别的模组（如 fantasy_ending）可能已经先打了一段，
                 // 会留下受伤免疫；不清掉的话长矛本体这次的伤害会被吞。
-                clearSameAttackerHurtImmunity(attacker, livingTarget);
+                clearSameAttackerHurtImmunity(attacker, living);
             }
             if (target.hurt(spearSource, finalDamage)) {
-                if (target instanceof LivingEntity livingTarget) {
-                    applyOnHitEnchantments(attacker, livingTarget);
+                if (living != null) {
+                    applyOnHitEnchantments(attacker, living);
                 }
                 // 与蓄力路径一致，命中后把效果转发给 hurtEnemy 钩子
-                if (target instanceof LivingEntity livingTarget && attacker instanceof Player player) {
-                    stack.hurtEnemy(livingTarget, player);
+                if (living != null && attacker instanceof Player player) {
+                    stack.hurtEnemy(living, player);
                 }
                 hitSomething = true;
                 stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(slot));
                 if (spear.dealsKnockback()) {
                     // 与原版一致：0.4 基础击退 + 附魔击退加成
-                    causeExtraKnockback(attacker, target,
+                    causeExtraKnockback(attacker, living != null ? living : target,
                             0.4F + EnchantmentHelper.getKnockbackBonus(attacker), target.getDeltaMovement());
                 }
                 if (attacker instanceof Player player) {
-                    player.setLastHurtMob(target);
+                    player.setLastHurtMob(living != null ? living : target);
                 }
                 MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, finalDamage,
                         SpearDamageEvent.AttackType.STAB));
                 if (attacker instanceof SpearCooldownAccessor accessor) {
-                    accessor.RememberStabbedEntity(target);
+                    accessor.RememberStabbedEntity(living != null ? living : target);
                 }
             }
         }
@@ -370,6 +414,7 @@ public final class SpearCombat {
 
         ItemStack stack = attacker.getItemBySlot(slot);
         DamageSource damageSource = SpearDamageTypes.spear(level, attacker);
+        LivingEntity living = resolveLivingTarget(target);
 
         float finalDamage = damage;
         Vec3 preMotion = target.getDeltaMovement();
@@ -379,20 +424,20 @@ public final class SpearCombat {
         if (canDamage) {
             // 与 26.1.2 原版矛一致：伤害要过原版附魔修正（锋利/亡灵杀手/节肢杀手等）。
             // 1.20.1 的 API 是 getDamageBonus(ItemStack, MobType)。
-            if (target instanceof LivingEntity livingTarget) {
-                finalDamage += EnchantmentHelper.getDamageBonus(stack, livingTarget.getMobType());
-                clearSameAttackerHurtImmunity(attacker, livingTarget);
+            if (living != null) {
+                finalDamage += EnchantmentHelper.getDamageBonus(stack, living.getMobType());
+                clearSameAttackerHurtImmunity(attacker, living);
             }
             damaged = target.hurt(damageSource, finalDamage);
-            if (damaged && target instanceof LivingEntity livingTarget) {
-                applyOnHitEnchantments(attacker, livingTarget);
+            if (damaged && living != null) {
+                applyOnHitEnchantments(attacker, living);
             }
             hitSomething |= damaged;
         }
 
         if (canKnockback) {
             // 与原版一致：0.4 基础击退 + 附魔击退加成（1.20.1 用 getKnockbackBonus）
-            causeExtraKnockback(attacker, target,
+            causeExtraKnockback(attacker, living != null ? living : target,
                     0.4f + EnchantmentHelper.getKnockbackBonus(attacker), preMotion);
         }
 
@@ -401,15 +446,15 @@ public final class SpearCombat {
             target.stopRiding();
         }
 
-        if (target instanceof LivingEntity livingTarget && attacker instanceof Player player) {
-            stack.hurtEnemy(livingTarget, player);
+        if (living != null && attacker instanceof Player player) {
+            stack.hurtEnemy(living, player);
         }
 
         if (!hitSomething) return false;
         MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, finalDamage, attackType));
         level.playSound(null, target.getX(), target.getY(), target.getZ(),
                 spear.getHitSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
-        attacker.setLastHurtMob(target);
+        attacker.setLastHurtMob(living != null ? living : target);
         stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(slot));
         return true;
     }
