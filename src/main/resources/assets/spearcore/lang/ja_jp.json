@@ -6,6 +6,7 @@
   "item.spearcore.golden_spear": "金の槍",
   "item.spearcore.diamond_spear": "ダイヤモンドの槍",
   "item.spearcore.netherite_spear": "ネザライトの槍",
+  "item.spearcore.modular_spear": "槍",
   "item.spearcore.spear.desc": "突進して突き刺す武器。移動速度が速いほどダメージが増加する。",
   "enchantment.spearcore.lunge": "突進",
   "enchantment.spearcore.lunge.description": "突き攻撃時、攻撃者を前方に押し出す。",

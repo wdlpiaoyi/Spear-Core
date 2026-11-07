@@ -161,7 +161,8 @@ This mod **no longer turns Tetra's own single-headed tools (spearhead + long han
 - Weapon enchantments added by other mods (e.g. Enigmatic Legacy's Slayer) also work on spears: the mod uses its own hidden probe sword to decide whether an enchantment applies to a standard weapon, so it does not depend on diamond swords being present. Player spear hits use the vanilla `player_attack` damage type (the spear death message is preserved), so bonuses gated on a real player attack are applied; non-whitelisted vanilla enchantments (e.g. Sweeping Edge) stay excluded.
 - Mods that deal a pre-hit chunk of damage in the same tick (e.g. fantasy_ending's Void Collapsing) no longer swallow the spear's own damage.
 - Fixed Java semantics: not affected by `jabCooldown` / `jabToChargeDelay`.
-- Model and textures are assembled by Tetra from the installed modules; this mod no longer replaces the model.
+- The look is this mod's own texture-based spear model (reusing the four `tetra_spear*` textures) with handle and head tinted from Tetra materials; the item is always named "Spear".
+- The four workbench slots currently borrow Tetra's sword modules (blade / hilt / guard / pommel) as placeholders. **The item is not a sword**: combat, enchantments and damage are all spear behaviour.
 - Turning `tetraCompat` off keeps the workbench replacement (that is datapack behaviour) but the converted item falls back to a plain Tetra tool.
 - This compatibility is still being tuned; report pose/stat issues together with your Tetra version.
 

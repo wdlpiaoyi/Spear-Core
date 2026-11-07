@@ -20,7 +20,9 @@ import se.mickelus.tetra.items.modular.impl.dynamic.DynamicModularItem;
  *
  * <p>这里只按物品类型挂扩展（任何 {@code DynamicModularItem} 栈都能走到），具体某个栈是不是本模组的
  * 模块化长矛由 {@link SpearClientExtensions#applyForgeHandTransform} 内部的 {@code SpearLikeSupport.of(stack)}
- * 二次判定；其余 Tetra 工具会返回 {@code false}，交还原版渲染。模型由 Tetra 自己拼装，我们不再替换。</p>
+ * 二次判定；其余 Tetra 工具会返回 {@code false}，交还原版渲染。模型由
+ * {@code ItemRendererTetraModelMixin} 换成 assets 里的贴图长矛（{@code spearcore:tetra_spear}），
+ * 不在这里处理。</p>
  *
  * <p>本 mixin 只在 {@code spearcore.tetra.mixins.json} 的 client 列表里，且该配置由
  * {@code TetraMixinPlugin} 保证在未安装 Tetra 时不会加载，因此可以直接引用 Tetra 类。</p>

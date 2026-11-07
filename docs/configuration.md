@@ -64,7 +64,8 @@ tetraDamageScale = 0.5
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
 - 模块化长矛固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种模块组合都是不同实例。
 - 指向方块 / 挥空时播放长矛攻击音效；创造模式左键不破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
-- 模型与材料 tint 交给 Tetra 自己拼装（`dynamic_handheld` 的模块模型）；本仓库不再替换 Tetra 的渲染，也不再维护 Tetra 专用贴图。仓库里旧的 `tetra_spear*` 模型与四张灰阶贴图只作为以后的素材保留，当前没有任何代码引用。
+- 外观固定是 `assets/spearcore/models/item/tetra_spear.json`（复用贴图长矛的四张贴图），杆与矛头分别按 Tetra 材料 tint（`TetraSpearColors`，tint 0 = `sword/hilt`、tint 1 = `sword/blade`）；物品名由 `ItemStack#getHoverName` 上的注入固定成「矛」。
+- 四个槽位暂时借用 Tetra 剑的模块（`sword/blade`、`sword/hilt`、`sword/guard`、`sword/pommel`）占位，物品本身不是剑。工作台里的槽位坐标写在 `data/tetra/archetypes/modular_spear.json`，是 `GuiModuleOffsets` 的像素偏移。
 
 ### 模组兼容（Avaritia Spear）
 

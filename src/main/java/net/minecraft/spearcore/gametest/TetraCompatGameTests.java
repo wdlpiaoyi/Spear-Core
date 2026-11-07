@@ -6,6 +6,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.compat.tetra.TetraDamageScaling;
+import net.minecraft.spearcore.compat.tetra.TetraMaterialKey;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
 import net.minecraft.spearcore.init.SpearCombat;
@@ -352,6 +353,20 @@ public final class TetraCompatGameTests {
 
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraMaterialKeySuffixMatches(GameTestHelper helper) {
+        // 材料色靠 variant key 的最后一段匹配材质表（basic_blade/iron → iron），必须按 / 边界匹配，
+        // 否则 ironwood 会被 iron 误判、矛头染成铁色。
+        helper.assertTrue(TetraMaterialKey.matches("basic_blade/iron", "iron"), "应匹配 basic_blade/iron 与 iron");
+        helper.assertTrue(TetraMaterialKey.matches("iron", "iron"), "应匹配完全相同的 key");
+        helper.assertTrue(TetraMaterialKey.matches("addon/tools/long_handle/iron", "iron"), "应匹配多级前缀");
+        helper.assertTrue(!TetraMaterialKey.matches("basic_blade/ironwood", "iron"), "ironwood 不能被 iron 误匹配");
+        helper.assertTrue(!TetraMaterialKey.matches(null, "iron"), "null key 不应匹配");
+        helper.assertTrue(!TetraMaterialKey.matches("basic_blade/iron", null), "null 材料不应匹配");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearArchetypeDataIsValid(GameTestHelper helper) {
         JsonElement root = spearcore$readJson(helper, "tetra", "archetypes/modular_spear.json");
         if (root == null) {
@@ -369,6 +384,13 @@ public final class TetraCompatGameTests {
             Set<String> keys = new HashSet<>();
             boolean bladeMajor = false;
             boolean hiltMajor = false;
+            // 工作台里的模块框位置来自 GuiModuleOffsets(ArchetypeSlotDefinition[])：x/y 会被原样当成像素偏移。
+            // 只允许 Tetra 默认布局量级（2 major 用 (4,0)/(4,18)，2 minor 用 (-18,5)/(-18,18)），
+            // 写成 0/40/80 这种大数会让模块框散到物品外面。
+            Map<String, Integer> expectedX = Map.of(
+                    "sword/blade", 4, "sword/hilt", 4, "sword/guard", -18, "sword/pommel", -18);
+            Map<String, Integer> expectedY = Map.of(
+                    "sword/blade", 0, "sword/hilt", 18, "sword/guard", 5, "sword/pommel", 18);
             for (JsonElement element : slots) {
                 JsonObject slot = element.getAsJsonObject();
                 String key = slot.get("key").getAsString();
@@ -380,6 +402,12 @@ public final class TetraCompatGameTests {
                 if ("sword/hilt".equals(key)) {
                     hiltMajor = major;
                 }
+                int x = slot.has("x") ? slot.get("x").getAsInt() : 0;
+                int y = slot.has("y") ? slot.get("y").getAsInt() : 0;
+                helper.assertTrue(expectedX.getOrDefault(key, x) == x,
+                        "槽位 " + key + " 的 x 应与 Tetra 默认布局一致，实际: " + x);
+                helper.assertTrue(expectedY.getOrDefault(key, y) == y,
+                        "槽位 " + key + " 的 y 应与 Tetra 默认布局一致，实际: " + y);
             }
             helper.assertTrue(keys.equals(Set.of("sword/blade", "sword/hilt", "sword/guard", "sword/pommel")),
                     "槽位必须是剑的四个槽: " + keys);

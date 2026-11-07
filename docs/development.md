@@ -112,7 +112,13 @@ StartupEvents.registry('item', event => {
 | `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（材质 oak/stone/copper/iron/gold/diamond/netherite） |
 
 - 判定与数值：`compat/tetra/TetraSpearProfile`（守卫 + 判定）→ `TetraSpearBridge`（读 `DynamicModularItem` 属性）→ `TetraSpearStats.fit`（拟合）。
-- 客户端：`ItemRenderPropertiesTetraMixin` 给 `DynamicModularItem` 挂 `SpearClientExtensions`；**模型与 tint 全部交给 Tetra**，本仓库不再替换渲染。
+- 客户端（贴图模型 + 材料 tint）：
+  - `client/TetraSpearModel` 注册 `spearcore:tetra_spear#inventory`（`forge:separate_transforms`：base = 手持 32×32 贴图，gui/fixed/ground = 16×16 图标）。
+  - `compat/tetra/mixin/ItemRendererTetraModelMixin`（`ItemRenderer#getModel` HEAD，`require=0`）只对 `SpearStyle.MODULAR_3D` 的栈替换模型。
+  - `client/TetraSpearColorsEvent` → `client/TetraColorRegistration` 给所有 `IModularItem` 注册物品色；`compat/tetra/TetraSpearColors` 读 Tetra 材料色（`glyph.tint` 优先，其次材质 `tints.texture`，按 `variant.key` 的最后一段匹配），tint 0 = 杆（`sword/hilt`）、tint 1 = 矛头（`sword/blade`）。
+  - `ItemRenderPropertiesTetraMixin` 给 `DynamicModularItem` 挂 `SpearClientExtensions`（第一/第三人称姿态）。
+- 物品名：`ItemStackTetraMixin.spearcore$modularSpearName` 注入 `ItemStack#getHoverName` HEAD，返回 `item.spearcore.modular_spear`；铁砧改过名的不覆盖。**不要**去 mixin Tetra 的 `ModularItem#getName`（发行版是 SRG 名 `m_7626_`）。
+- 工作台布局：archetype 的 `x`/`y` 是 `GuiModuleOffsets` 的像素偏移，照 Tetra 默认布局写——2 major `(4,0)`/`(4,18)`、2 minor `(-18,5)`/`(-18,18)`；写大数会让模块框散开。
 - GameTest 服务端不加载 Tetra，只能覆盖纯函数与数据文件；真正的手感必须在装了 Tetra 的实例里手工验。
 - 对应版本：Tetra **1.20.1-6.17.0**（`compileOnly 'curse.maven:tetra-289712:8570756'`）。
 
