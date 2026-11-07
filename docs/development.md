@@ -116,12 +116,12 @@ StartupEvents.registry('item', event => {
 
 槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。打磨配方是唯一的例外：它们把 `localizationKey` 指向 Tetra 自带的 `sword/shared_blade/hone_damage_N` 与 `double/shared_head/hone_speed_N`，直接沿用 Tetra 的「打磨：伤害/速度」翻译。
 
-其它冒险模组对 **Tetra 剑** 的联动（改进 / 涂层 / 打磨）默认不会作用到本模组的矛上：那些配方的 `slots` 与 `requirement` 写死了 `sword/*` 之类的模块 key。想要兼容，用数据包补两层即可，不用改 Java：
+其它冒险模组的 **Tetra 联动**分两类：
 
-1. 把对方改进所在的目录写进 `data/tetra/modules/spear/head.json` 的 `improvements`（同路径 + `replace: true` 覆盖本模组那份，Tetra 的 `MergingDataStore` 按路径合并）；
-2. 在本模组槽位上补一份 schematic（`slots: ["spear/head"]`），`outcomes.improvements` 授予对方的改进 key，工作台里就会出现对应配方。
+- **材料联动**（静态扫描 `Niubiosis` 整合包的 jar：art_of_forging、tetracelium、irons_spellbooks、malum、rainbowcompound、Gobber2 加的都是这一类；该实例只用来读数据，功能验证在 `1.20.1-forge` 实例）只要材料落在本模组模块的 `materials` 前缀里就能直接当矛部件用，材质自带的 `improvements` 也会跟着生效。前缀覆盖面与 Tetra 自带的 spearhead / long_handle / binding 一致：矛头/枪尾 wood/stone/metal/gem/bone，矛杆 wood/metal/bone/rod，绑定 fibre/skin/fabric。`socket/*` 材料是 Tetra 插槽模块用的，本模组 archetype 没有插槽槽位；`item_effects/`、`crafting_effects/`、`synergies/` 三种机制对 `tetra:dynamic_handheld` 都不生效（synergy 需要物品类自己拉取）。
+- **配方 / 模块联动**（工作台配方写死 `sword/*` 模块）不会自动生效，需要用数据包补两层，不用改 Java：① 把对方改进目录写进 `data/tetra/modules/spear/head.json` 的 `improvements`（同路径 + `replace: true` 覆盖本模组那份，`MergingDataStore` 按路径合并）；② 在本模组槽位上补一份 schematic（`slots: ["spear/head"]`），`outcomes.improvements` 授予对方的改进 key。
 
-（已核对：Goety 2.5.60.6 的 jar 内没有 `data/tetra`，它没有 Tetra 联动数据。）
+（Goety 2.5.60.6 的 jar 内没有 `data/tetra`，它没有 Tetra 联动数据。）
 
 打磨进度由 archetype 的 `honeable` / `honeBase` / `honeIntegrityMultiplier` 控制：本模组取 Tetra `config/tetra.toml` 里双手重武器档的 **140 / 75**（剑是 110 / 65），意思是「基础击杀数 140 + 刚性成本 × 75」次使用后可以打磨矛头一次；打磨只能在伤害或速度里选一条线，每条 5 级。
 

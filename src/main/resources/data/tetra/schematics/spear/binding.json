@@ -8,7 +8,7 @@
     },
     "outcomes": [
         {
-            "materials": [ "tetra:fibre/", "tetra:skin/" ],
+            "materials": [ "tetra:fibre/", "tetra:skin/", "tetra:fabric/" ],
             "moduleKey": "spear/binding",
             "moduleVariant": "spear_binding/"
         },

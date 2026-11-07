@@ -618,7 +618,7 @@ public final class TetraCompatGameTests {
                 "head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"},
                 "butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"},
                 "handle", new String[]{"tetra:rod/"},
-                "binding", new String[]{"tetra:fibre/"});
+                "binding", new String[]{"tetra:fibre/", "tetra:fabric/"});
         for (Map.Entry<String, String> entry : slotsToPart.entrySet()) {
             String slot = entry.getKey();
             String part = entry.getValue();

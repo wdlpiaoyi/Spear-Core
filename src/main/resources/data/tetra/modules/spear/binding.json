@@ -4,7 +4,7 @@
     "renderLayer": "higher",
     "variants": [
         {
-            "materials": [ "tetra:fibre/", "tetra:skin/" ],
+            "materials": [ "tetra:fibre/", "tetra:skin/", "tetra:fabric/" ],
             "key": "spear_binding/",
             "extract": {
                 "secondaryAttributes": {
