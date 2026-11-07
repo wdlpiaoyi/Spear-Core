@@ -37,7 +37,19 @@ import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.RegisterGameTestsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.registries.ForgeRegistries;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.BufferedReader;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tetra 兼容层的纯公式测试。
@@ -347,6 +359,136 @@ public final class TetraCompatGameTests {
         helper.assertTrue(zombie.invulnerableTime == 0,
                 "同一攻击者的受伤免疫应被清掉，长矛本体伤害才能落地");
         helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearArchetypeKeyMatching(GameTestHelper helper) {
+        helper.assertTrue(TetraSpearProfile.isModularSpearArchetype(TetraSpearProfile.SPEAR_ARCHETYPE_KEY),
+                "modular_spear 应被识别为本模组的模块化长矛");
+        String[] notSpears = {"modular_spear_alt", "modular_sword", "spear", "MODULAR_SPEAR"};
+        for (String key : notSpears) {
+            helper.assertTrue(!TetraSpearProfile.isModularSpearArchetype(key),
+                    "不应把该 archetype 当成模块化长矛: " + key);
+        }
+        helper.assertTrue(!TetraSpearProfile.isModularSpearArchetype(null), "null archetype 不应被识别为长矛");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearArchetypeDataIsValid(GameTestHelper helper) {
+        JsonElement root = spearcore$readJson(helper, "tetra", "archetypes/modular_spear.json");
+        if (root == null) {
+            return;
+        }
+        try {
+            JsonObject json = root.getAsJsonObject();
+            helper.assertTrue("modular_spear".equals(json.get("id").getAsString()),
+                    "archetype 的 id 必须是 modular_spear");
+            helper.assertTrue(json.has("honeable") && json.has("honeBase") && json.has("honeIntegrityMultiplier"),
+                    "archetype 必须写全 honeable/honeBase/honeIntegrityMultiplier（Tetra 用 record 反序列化）");
+
+            JsonArray slots = json.getAsJsonArray("slots");
+            helper.assertTrue(slots != null && slots.size() == 4, "模块化长矛应有 4 个槽位");
+            Set<String> keys = new HashSet<>();
+            boolean bladeMajor = false;
+            boolean hiltMajor = false;
+            for (JsonElement element : slots) {
+                JsonObject slot = element.getAsJsonObject();
+                String key = slot.get("key").getAsString();
+                keys.add(key);
+                boolean major = slot.has("major") && slot.get("major").getAsBoolean();
+                if ("sword/blade".equals(key)) {
+                    bladeMajor = major;
+                }
+                if ("sword/hilt".equals(key)) {
+                    hiltMajor = major;
+                }
+            }
+            helper.assertTrue(keys.equals(Set.of("sword/blade", "sword/hilt", "sword/guard", "sword/pommel")),
+                    "槽位必须是剑的四个槽: " + keys);
+            helper.assertTrue(bladeMajor && hiltMajor, "刀身与手柄必须是 major 槽位");
+        } catch (RuntimeException exception) {
+            helper.fail("archetype 数据格式不符: " + exception);
+        }
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void spearReplacementsCoverAllSpears(GameTestHelper helper) {
+        JsonElement root = spearcore$readJson(helper, "tetra", "replacements/spearcore_spears.json");
+        if (root == null) {
+            return;
+        }
+        Map<String, String> expectedMaterials = Map.of(
+                "spearcore:wooden_spear", "oak",
+                "spearcore:stone_spear", "stone",
+                "spearcore:copper_spear", "copper",
+                "spearcore:iron_spear", "iron",
+                "spearcore:golden_spear", "gold",
+                "spearcore:diamond_spear", "diamond",
+                "spearcore:netherite_spear", "netherite");
+        try {
+            JsonArray array = root.getAsJsonArray();
+            helper.assertTrue(array.size() == expectedMaterials.size(),
+                    "替换规则应正好覆盖七把矛，实际: " + array.size());
+            Set<String> covered = new HashSet<>();
+            for (JsonElement element : array) {
+                JsonObject entry = element.getAsJsonObject();
+                helper.assertTrue("tetra:dynamic_handheld".equals(entry.get("item").getAsString()),
+                        "替换目标必须是 tetra:dynamic_handheld");
+                helper.assertTrue(TetraSpearProfile.SPEAR_ARCHETYPE_KEY.equals(entry.get("archetype").getAsString()),
+                        "替换必须写入 archetype=modular_spear");
+
+                JsonObject modules = entry.getAsJsonObject("modules");
+                helper.assertTrue(modules != null, "替换规则必须带 modules");
+                for (String slot : new String[]{"sword/blade", "sword/hilt", "sword/guard", "sword/pommel"}) {
+                    helper.assertTrue(modules.has(slot), "缺少槽位模块: " + slot);
+                }
+
+                JsonArray items = entry.getAsJsonObject("predicate").getAsJsonArray("items");
+                helper.assertTrue(items != null && items.size() == 1, "每条规则只应匹配一个物品");
+                String itemId = items.get(0).getAsString();
+                covered.add(itemId);
+                helper.assertTrue(ForgeRegistries.ITEMS.containsKey(new ResourceLocation(itemId)),
+                        "替换规则引用了不存在的物品: " + itemId);
+
+                String material = expectedMaterials.get(itemId);
+                helper.assertTrue(material != null, "替换规则里出现未知物品: " + itemId);
+                helper.assertTrue(("basic_blade/" + material)
+                                .equals(modules.getAsJsonArray("sword/blade").get(1).getAsString()),
+                        "刀身材质映射不符: " + itemId);
+                helper.assertTrue(("makeshift_guard/" + material)
+                                .equals(modules.getAsJsonArray("sword/guard").get(1).getAsString()),
+                        "护手材质映射不符: " + itemId);
+                helper.assertTrue(("decorative_pommel/" + material)
+                                .equals(modules.getAsJsonArray("sword/pommel").get(1).getAsString()),
+                        "配重材质映射不符: " + itemId);
+                helper.assertTrue("basic_hilt/stick".equals(modules.getAsJsonArray("sword/hilt").get(1).getAsString()),
+                        "手柄固定用 basic_hilt/stick");
+            }
+            helper.assertTrue(covered.equals(expectedMaterials.keySet()),
+                    "替换规则必须覆盖七把矛，实际覆盖: " + covered);
+        } catch (RuntimeException exception) {
+            helper.fail("替换数据格式不符: " + exception);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * 读取数据包里的 JSON：GameTest 服务端不加载 Tetra，这里只验证本模组自己 ship 的数据文件是否合法。
+     */
+    private static JsonElement spearcore$readJson(GameTestHelper helper, String namespace, String path) {
+        ResourceLocation location = new ResourceLocation(namespace, path);
+        ResourceManager resources = helper.getLevel().getServer().getResourceManager();
+        try (BufferedReader reader = resources.getResource(location).orElseThrow().openAsReader()) {
+            return JsonParser.parseReader(reader);
+        } catch (Exception exception) {
+            helper.fail("读取 " + location + " 失败（文件缺失或不是合法 JSON）: " + exception);
+            return null;
+        }
     }
 
     private static void assertReach(GameTestHelper helper, double extraReach, double sourceBonus,

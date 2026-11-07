@@ -1,0 +1,12 @@
+{
+    "id": "modular_spear",
+    "honeable": false,
+    "honeBase": 0,
+    "honeIntegrityMultiplier": 1,
+    "slots": [
+        { "key": "sword/blade",  "major": true,  "required": true,  "x": 0,  "y": 0 },
+        { "key": "sword/hilt",   "major": true,  "required": true,  "x": 0,  "y": 40 },
+        { "key": "sword/guard",  "major": false, "required": false, "x": 40, "y": 40 },
+        { "key": "sword/pommel", "major": false, "required": false, "x": 0,  "y": 80 }
+    ]
+}

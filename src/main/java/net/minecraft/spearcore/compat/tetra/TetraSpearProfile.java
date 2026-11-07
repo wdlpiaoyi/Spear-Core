@@ -18,6 +18,15 @@ public final class TetraSpearProfile {
 
     private static final String TETRA_MOD_ID = "tetra";
 
+    /**
+     * 本模组模块化长矛的 archetype key。
+     *
+     * <p>Tetra 的 {@code DynamicModularItem} 把 archetype 写成物品栈 NBT 里的纯 path，读取时固定拼
+     * {@code tetra} 命名空间，所以这里只比较 path 部分，数据文件也必须放在
+     * {@code data/tetra/archetypes/modular_spear.json}。</p>
+     */
+    public static final String SPEAR_ARCHETYPE_KEY = "modular_spear";
+
     private static boolean warningLogged;
 
     private TetraSpearProfile() {
@@ -54,6 +63,13 @@ public final class TetraSpearProfile {
             // 配置尚未加载（例如数据生成 / 启动早期）时按开启处理。
             return true;
         }
+    }
+
+    /**
+     * 是否为「本模组自己的模块化长矛」：唯一判定入口，Tetra 自带的单头工具不在此列。
+     */
+    public static boolean isModularSpearArchetype(@Nullable String archetypeKey) {
+        return SPEAR_ARCHETYPE_KEY.equals(archetypeKey);
     }
 
     /**
