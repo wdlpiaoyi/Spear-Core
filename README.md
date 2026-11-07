@@ -199,7 +199,7 @@ JEI、KubeJS、Punchy、Tetra、Avaritia Spear 都已适配；遇到其它冲突
 - 仓库约定与自检：**[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
 ./gradlew runServer          # 无头启动，自检会打印已注册的长矛数量
 ./gradlew runGameTestServer  # 自动化测试，看日志里的 "All N required tests passed :)"
 ```

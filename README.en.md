@@ -199,7 +199,7 @@ JEI, KubeJS, Punchy, Tetra and Avaritia Spear are supported. For other conflicts
 - Repository conventions and self-checks: **[AGENTS.md](AGENTS.md)**
 
 ```bash
-./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.2.jar
+./gradlew build              # output: build/libs/spear-core-forked-1.20.1-forge-3.3.3.jar
 ./gradlew runServer          # headless launch; startup self-check prints the registered spears
 ./gradlew runGameTestServer  # automated tests; look for "All N required tests passed :)"
 ```
