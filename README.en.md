@@ -155,6 +155,7 @@ This mod **no longer turns Tetra's own single-headed tools (spearhead + long han
 - Requires **Tetra 1.20.1-6.17.0 or newer**.
 - Its four slots are **this mod's own spear parts**: spearhead `spear/head` (↗), shaft `spear/handle` (↘), binding `spear/binding` (↖) and counterweight `spear/butt` (↙). The conversion takes the spearhead and counterweight material from oak / stone / copper / iron / gold / diamond / netherite, uses a wooden stick for the shaft and string for the binding; afterwards you can swap any part with materials at the workbench.
 - Stats are fitted from Tetra's attack damage / speed with a soft cap; the Tetra item's own damage is first scaled by `tetraDamageScale`.
+- The spearhead can be honed: once it has seen enough use, pick one line in Tetra's honing panel — **damage I~V** or **speed I~V** (reusing Tetra's own honing improvements, including its icons and translations).
 - Tetra's extra reach (`forge:entity_reach`) is scaled by `tetraExtraReachScale`.
 - Vanilla enchantments supported by this mod and Lunge work on the modular spear too; anvil book enchanting is still blocked by Tetra itself (`isBookEnchantable=false`).
 - On-hit enchantment effects fire as in vanilla: Fire Aspect ignites, and `doPostHurt` effects such as Bane of Arthropods / Frost Aspect run through `EnchantmentHelper`.

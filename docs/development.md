@@ -111,9 +111,19 @@ StartupEvents.registry('item', event => {
 | `data/tetra/archetypes/modular_spear.json` | 四个槽位：`spear/head`、`spear/handle`（major + required）、`spear/binding`、`spear/butt` |
 | `data/tetra/modules/spear/{head,handle,binding,butt}.json` | 四个矛部件模块（变体前缀 `spear_head/` / `spear_handle/` / `spear_binding/` / `spear_butt/`；`models` 复用 Tetra 自带模块模型） |
 | `data/tetra/schematics/spear/{head,handle,binding,butt}.json` | 四个换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic） |
+| `data/tetra/schematics/spear/head/hone_{damage,speed}_{1..5}.json` | 矛头打磨配方（`hone: true`；改进复用 Tetra 的 `spearhead_hone/damage` 与 `head_hone/speed`，翻译复用 Tetra 的 `localizationKey`） |
 | `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（矛头/枪尾按 oak…netherite，矛杆 `spear_handle/stick`，绑定 `spear_binding/string`） |
 
-槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。
+槽位、模块与配方的显示名走 Tetra 的 I18n key，全部写在本模组的 `assets/spearcore/lang/*.json` 里：`tetra.slot.spear/head`、`tetra.module.spear/head.name`、`tetra/schematic/spear/head.name`（**配方是斜杠前缀**）。打磨配方是唯一的例外：它们把 `localizationKey` 指向 Tetra 自带的 `sword/shared_blade/hone_damage_N` 与 `double/shared_head/hone_speed_N`，直接沿用 Tetra 的「打磨：伤害/速度」翻译。
+
+其它冒险模组对 **Tetra 剑** 的联动（改进 / 涂层 / 打磨）默认不会作用到本模组的矛上：那些配方的 `slots` 与 `requirement` 写死了 `sword/*` 之类的模块 key。想要兼容，用数据包补两层即可，不用改 Java：
+
+1. 把对方改进所在的目录写进 `data/tetra/modules/spear/head.json` 的 `improvements`（同路径 + `replace: true` 覆盖本模组那份，Tetra 的 `MergingDataStore` 按路径合并）；
+2. 在本模组槽位上补一份 schematic（`slots: ["spear/head"]`），`outcomes.improvements` 授予对方的改进 key，工作台里就会出现对应配方。
+
+（已核对：Goety 2.5.60.6 的 jar 内没有 `data/tetra`，它没有 Tetra 联动数据。）
+
+打磨进度由 archetype 的 `honeable` / `honeBase` / `honeIntegrityMultiplier` 控制：本模组取 Tetra `config/tetra.toml` 里双手重武器档的 **140 / 75**（剑是 110 / 65），意思是「基础击杀数 140 + 刚性成本 × 75」次使用后可以打磨矛头一次；打磨只能在伤害或速度里选一条线，每条 5 级。
 
 - 判定与数值：`compat/tetra/TetraSpearProfile`（守卫 + 判定）→ `TetraSpearBridge`（读 `DynamicModularItem` 属性）→ `TetraSpearStats.fit`（拟合）。
 - 客户端（贴图模型 + 材料 tint）：

@@ -422,6 +422,13 @@ public final class TetraCompatGameTests {
                     "archetype 的 id 必须是 modular_spear");
             helper.assertTrue(json.has("honeable") && json.has("honeBase") && json.has("honeIntegrityMultiplier"),
                     "archetype 必须写全 honeable/honeBase/honeIntegrityMultiplier（Tetra 用 record 反序列化）");
+            // 打磨：honeable 关掉的话工作台里不会出现 hone 配方，矛头永远停在初始数值。
+            // 数值参考 Tetra 自己的 tetra.toml（module_progression.hone_double_base / hone_double_integrity_multiplier
+            // = 140 / 75，双手重武器的档位；剑是 110 / 65，长矛按重武器算）。
+            helper.assertTrue(json.get("honeable").getAsBoolean(), "archetype 必须开启 honeable，否则矛头不能打磨");
+            helper.assertTrue(json.get("honeBase").getAsInt() > 0, "honeBase 必须大于 0，否则第一次打磨要的击杀数没有基数");
+            helper.assertTrue(json.get("honeIntegrityMultiplier").getAsInt() > 0,
+                    "honeIntegrityMultiplier 必须大于 0，否则刚性成本不参与打磨进度");
 
             JsonArray slots = json.getAsJsonArray("slots");
             helper.assertTrue(slots != null && slots.size() == 4, "模块化长矛应有 4 个槽位");
@@ -466,6 +473,67 @@ public final class TetraCompatGameTests {
         } catch (RuntimeException exception) {
             helper.fail("archetype 数据格式不符: " + exception);
         }
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearHoneSchematicsAreDataDefined(GameTestHelper helper) {
+        // 打磨配方：Tetra 的 hone 面板只列 hone=true 且 slots 命中当前物品的 schematic，
+        // 所以矛头（spear/head）必须自带一套，不能指望 Tetra 剑/单头武器那份还会出现。
+        // 改进 key 复用 Tetra 自带的两种打磨（矛头的 spearhead_hone/damage、共用头部的 head_hone/speed），
+        // 因为 modules/spear/head.json 的 improvements 已经把这两个目录列进去了；
+        // 翻译也复用 Tetra 的 localizationKey，省得本模组再写十份语言文件。
+        String[][] hones = {
+                {"damage", "spearhead_hone/damage", "sword/shared_blade/hone_damage_"},
+                {"speed", "head_hone/speed", "double/shared_head/hone_speed_"},
+        };
+        for (String[] hone : hones) {
+            String kind = hone[0];
+            String improvementKey = hone[1];
+            String localizationPrefix = hone[2];
+            for (int level = 1; level <= 5; level++) {
+                String file = "schematics/spear/head/hone_" + kind + "_" + level + ".json";
+                JsonElement root = spearcore$readJson(helper, "tetra", file);
+                if (root == null) {
+                    return;
+                }
+                try {
+                    JsonObject json = root.getAsJsonObject();
+                    helper.assertTrue(json.has("hone") && json.get("hone").getAsBoolean(),
+                            file + " 必须标 hone=true，否则不会出现在打磨面板");
+                    helper.assertTrue(localizationPrefix.concat(Integer.toString(level))
+                                    .equals(json.get("localizationKey").getAsString()),
+                            file + " 必须复用 Tetra 的 localizationKey，才会跟着 Tetra 的翻译走");
+                    JsonArray slots = json.getAsJsonArray("slots");
+                    helper.assertTrue(slots != null && slots.size() == 1 && "spear/head".equals(slots.get(0).getAsString()),
+                            file + " 必须只作用于矛头槽位 spear/head");
+                    JsonArray outcomes = json.getAsJsonArray("outcomes");
+                    helper.assertTrue(outcomes != null && !outcomes.isEmpty(), file + " 必须有 outcomes");
+                    JsonObject improvements = outcomes.get(0).getAsJsonObject().getAsJsonObject("improvements");
+                    helper.assertTrue(improvements != null && improvements.has(improvementKey),
+                            file + " 的 outcome 必须给改进 " + improvementKey);
+                    helper.assertTrue(improvements.get(improvementKey).getAsInt() == level,
+                            file + " 的改进等级必须是 " + level);
+                } catch (RuntimeException exception) {
+                    helper.fail(file + " 数据格式不符: " + exception);
+                    return;
+                }
+            }
+        }
+        // 上面复用的两个改进 key 必须真的被矛头模块接受，否则打磨面板照样是空的。
+        JsonElement moduleRoot = spearcore$readJson(helper, "tetra", "modules/spear/head.json");
+        if (moduleRoot == null) {
+            return;
+        }
+        Set<String> accepted = new HashSet<>();
+        for (JsonElement element : moduleRoot.getAsJsonObject().getAsJsonArray("improvements")) {
+            accepted.add(element.getAsString());
+        }
+        helper.assertTrue(accepted.contains("tetra:single/spearhead/"),
+                "矛头必须接受 tetra:single/spearhead/ 下的改进（含 spearhead_hone/damage）");
+        helper.assertTrue(accepted.contains("tetra:single/shared_head/"),
+                "矛头必须接受 tetra:single/shared_head/ 下的改进（含 head_hone/speed）");
         helper.succeed();
     }
 

@@ -51,7 +51,7 @@ tetraDamageScale = 0.5
 本模组**不再劫持 Tetra 自带的单头工具**。取而代之的是一个**独立的模块化长矛**：
 
 - 把本模组七把贴图长矛中的任意一把放进 Tetra 工作台，数据包里的 replacement 会把它替换成 `tetra:dynamic_handheld`，并写入 archetype `modular_spear` 与四个模块槽位。
-- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件（换部件的配方在 `data/tetra/schematics/spear/*`）。
+- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件（换部件的配方在 `data/tetra/schematics/spear/*`），矛头还能在打磨面板里选一条线打磨：伤害 I~V 或速度 I~V（复用 Tetra 自带的打磨改进，数值与 Tetra 矛头一致）。
 - 只有 archetype 是 `modular_spear` 的物品才会被当成长矛（`TetraSpearProfile.isModularSpearArchetype`）。Tetra 自带的单头工具、普通模块工具一律按普通工具工作。
 - `tetraCompat` 只控制「长矛化」：关掉后工作台替换照样发生（那是数据包行为），但转换出来的物品回到普通 Tetra 工具。
 

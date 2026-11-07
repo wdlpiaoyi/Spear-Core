@@ -1,8 +1,8 @@
 {
     "id": "modular_spear",
-    "honeable": false,
-    "honeBase": 0,
-    "honeIntegrityMultiplier": 1,
+    "honeable": true,
+    "honeBase": 140,
+    "honeIntegrityMultiplier": 75,
     "slots": [
         { "key": "spear/head",    "major": true,  "required": true,  "x": 4,   "y": 0 },
         { "key": "spear/handle",  "major": true,  "required": true,  "x": 4,   "y": 18 },

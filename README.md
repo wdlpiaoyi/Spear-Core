@@ -155,6 +155,7 @@ tetraDamageScale = 0.5
 - 只支持 **Tetra 1.20.1-6.17.0 及以上**。
 - 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。转换时矛头与枪尾按 oak / stone / copper / iron / gold / diamond / netherite 取材质，矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件。
 - 数值由 Tetra 算出的攻击力 / 攻速拟合，高值区间放缓；Tetra 物品自身的攻击力先按 `tetraDamageScale` 打折。
+- 矛头可以打磨：用久了之后在 Tetra 的打磨面板里二选一——**伤害 I~V** 或 **速度 I~V**（复用 Tetra 自带的两套打磨改进，翻译与图标沿用 Tetra）。
 - Tetra 提供的攻击距离延伸（`forge:entity_reach`）按 `tetraExtraReachScale` 计入。
 - 附魔台可刷本模组支持的 8 种原版附魔与突进（突进对模块化长矛同样生效）。附魔书走铁砧仍被 Tetra 自身禁用（`isBookEnchantable=false`）。
 - 命中时的原版附魔效果会正常触发：火焰附加点燃、节肢杀手 / 冰霜附加等 `doPostHurt` 类效果走原版 `EnchantmentHelper` 钩子。
