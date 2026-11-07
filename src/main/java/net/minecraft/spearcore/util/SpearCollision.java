@@ -5,7 +5,6 @@ import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -29,22 +28,18 @@ public class SpearCollision {
         }
         Vec3 look = getHeadLookAngle(attacker);
 
-        boolean creative = attacker instanceof Player player && player.getAbilities().instabuild;
-        // MODDED：最小距离归零；JAVA：按原版 2 格（创造 2 格、怪物减半）。
-        double minRange = SpearRules.ignoresMinRange()
-                ? 0.0
-                : (creative ? spear.getMinCreativeRange() : spear.getMinRange());
-        double maxRange = creative ? spear.getMaxCreativeRange() : spear.getMaxRange();
-        double speedBonus = Math.max(0.0, look.dot(SpearItem.getMotion(attacker)));
-        speedBonus = Math.min(speedBonus, 4.0); // 最多加 4 格
-        maxRange += speedBonus;
+        // 射程必须和真正结算的 SpearItem#getHitEntitiesAlongInternal 一致：
+        // 走 effectiveMinRange / effectiveMaxRange —— 它们含创造模式射程、
+        // 怪物的 mobFactor 减半、以及持有者 reach 超出原版 3.0 的部分。
+        // 以前这里直接用 getMaxRange()，怪物 AI 会拿「玩家射程」判断出手距离。
+        double minRange = spear.effectiveMinRange(attacker);
+        // 目标朝矛尖跑来时多留一点余量，与结算路径同一口径。
+        // 不再夹 4.0 上限：那个硬编码会在高机动整合包里让 AI 提前出手。
+        double maxRange = spear.effectiveMaxRange(attacker)
+                + Math.max(0.0, look.dot(SpearItem.getKnownMovement(attacker)));
 
         Vec3 start = eyePos.add(look.scale(minRange));
         Vec3 end = eyePos.add(look.scale(maxRange));
-
-        // 调试日志
-        //System.out.println("[SpearCollision] start=" + start + " end=" + end);
-        //System.out.println("[SpearCollision] minRange=" + minRange + " maxRange=" + maxRange + " speedBonus=" + speedBonus);
 
         return getHitEntitiesAlong(start, attacker, predicate, end, hitboxMargin);
     }

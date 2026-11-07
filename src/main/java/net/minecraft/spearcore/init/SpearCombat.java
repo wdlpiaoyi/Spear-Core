@@ -20,6 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -220,10 +221,6 @@ public final class SpearCombat {
         }
 
         double attrMult = getSpearMultiplier(attacker, SpearAttributes.SPEAR_STAB_MULTIPLIER.get());
-        SpearDamageEvent event = new SpearDamageEvent(attacker, /* 首个目标暂填 null */ null,
-                damage, SpearDamageEvent.AttackType.STAB);
-        MinecraftForge.EVENT_BUS.post(event);
-        damage *= (float) (attrMult * event.getMultiplier());
 
         boolean hitSomething = false;
         if (playSound) {
@@ -239,10 +236,17 @@ public final class SpearCombat {
                     && accessor.WasRecentlyStabbed(target, spear.getContactCooldownTicks())) {
                 continue;
             }
+            // 戳刺一次可能扫到多个目标，事件按目标逐个发：以前只在循环外发一次、
+            // 且 target 填 null，监听方既分不清打的是谁，也没法按目标改伤害。
+            SpearDamageEvent event = new SpearDamageEvent(attacker, target,
+                    damage, SpearDamageEvent.AttackType.STAB);
+            MinecraftForge.EVENT_BUS.post(event);
+            float stabDamage = damage * (float) (attrMult * event.getMultiplier());
+
             // 与 26.1.2 原版一致：左键穿刺也要过原版附魔伤害修正。
             // 1.20.1 的 API 是 getDamageBonus(ItemStack, MobType)。
             DamageSource spearSource = SpearDamageTypes.spear(attacker.level(), attacker);
-            float finalDamage = damage;
+            float finalDamage = stabDamage;
             if (target instanceof LivingEntity livingTarget) {
                 finalDamage += EnchantmentHelper.getDamageBonus(stack, livingTarget.getMobType());
                 // 同一 tick 里别的模组（如 fantasy_ending）可能已经先打了一段，
@@ -267,7 +271,7 @@ public final class SpearCombat {
                 if (attacker instanceof Player player) {
                     player.setLastHurtMob(target);
                 }
-                MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, damage,
+                MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, finalDamage,
                         SpearDamageEvent.AttackType.STAB));
                 if (attacker instanceof SpearCooldownAccessor accessor) {
                     accessor.RememberStabbedEntity(target);
@@ -402,7 +406,7 @@ public final class SpearCombat {
         }
 
         if (!hitSomething) return false;
-        MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, damage, attackType));
+        MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, finalDamage, attackType));
         level.playSound(null, target.getX(), target.getY(), target.getZ(),
                 spear.getHitSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
         attacker.setLastHurtMob(target);
@@ -461,15 +465,42 @@ public final class SpearCombat {
     /**
      * 蓄力伤害的基线。
      *
-     * <p>JAVA：取裸武器攻击力，力量/虚弱等修饰符不算（原版 MC-302778）。</p>
+     * <p>JAVA：取裸武器攻击力，力量/虚弱等修饰符不算（原版 MC-302778）。
+     * 但长矛<b>自己</b>提供的 {@code ADDITION} 攻击力必须算进来 —— 武器加成是装备期才挂上的，
+     * 不进 {@code getAttributeBaseValue}，只取基础值会让七种材质的蓄力基线全是玩家的 1.0
+     * （铁矛应该比木矛高 2 点）。</p>
      * <p>BEDROCK：取包含修饰符的攻击力，力量药水会加进蓄力伤害。</p>
      */
     public static float chargeBaseDamage(LivingEntity user, SpearLike spear) {
         if (user.getAttribute(Attributes.ATTACK_DAMAGE) == null) return 0.0F;
-        double value = SpearRules.chargeGainsAttributeModifiers()
-                ? user.getAttributeValue(Attributes.ATTACK_DAMAGE)
-                : user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
-        return (float) value;
+        double weaponBonus = weaponAttackDamage(user);
+        if (SpearRules.chargeGainsAttributeModifiers()) {
+            // 玩家的装备修饰符会进属性，怪物不会（原版只在 Mob#doHurtTarget 里临时加武器加成），
+            // 所以非玩家要自己把武器加成补上，否则 BEDROCK 档下怪物蓄力反而丢了武器伤害。
+            return (float) (user.getAttributeValue(Attributes.ATTACK_DAMAGE)
+                    + (user instanceof Player ? 0.0D : weaponBonus));
+        }
+        return (float) (user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE) + weaponBonus);
+    }
+
+    /**
+     * 使用者手里那根长矛在 {@code ADDITION} 上贡献的攻击力。
+     *
+     * <p>只统计 {@code ADDITION}：{@code MULTIPLY_BASE} / {@code MULTIPLY_TOTAL} 属于
+     * 全局乘区，JAVA 档的语义是「不算 buff」，把它们算进来会连带把力量药水挪回蓄力伤害里。</p>
+     */
+    private static double weaponAttackDamage(LivingEntity user) {
+        ItemStack stack = user.getUseItem();
+        if (stack.isEmpty()) stack = user.getMainHandItem();
+        if (stack.isEmpty()) return 0.0D;
+        double sum = 0.0D;
+        for (AttributeModifier modifier : stack.getAttributeModifiers(EquipmentSlot.MAINHAND)
+                .get(Attributes.ATTACK_DAMAGE)) {
+            if (modifier.getOperation() == AttributeModifier.Operation.ADDITION) {
+                sum += modifier.getAmount();
+            }
+        }
+        return sum;
     }
 
     public static float effectiveMinRange(SpearLike spear, Entity entity) {

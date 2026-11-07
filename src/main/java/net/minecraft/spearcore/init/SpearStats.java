@@ -94,7 +94,7 @@ public class SpearStats {
                 attackDuration,
                 0.25F, 10,
                 (int)(delaySec * 20.0F),
-                SpearCondition.ofAttackerSpeed((int)(dismountSec * 20.0F), dismountSpeedFor(materialName)),
+                dismountConditionFor(materialName, (int)(dismountSec * 20.0F)),
                 SpearCondition.ofAttackerSpeed((int)(knockbackSec * 20.0F), 5.1F),
                 SpearCondition.ofRelativeSpeed((int)(damageSec * 20.0F), 4.6F),
                 0.38F,
@@ -126,6 +126,19 @@ public class SpearStats {
     /** 某材质的击落速度阈值；未知材质按铁矛的 11.0 处理。 */
     public static float dismountSpeedFor(String materialName) {
         return JE_DISMOUNT_SPEED.getOrDefault(materialName, 11.0F);
+    }
+
+    /**
+     * 按材质造一个「可击落骑手」的蓄力条件。
+     *
+     * @param materialName 材质名（wood / stone / copper / iron / gold / diamond / netherite）
+     * @param windowTicks  可击落窗口的长度（tick）
+     *
+     * <p>KubeJS 建造器也必须走这里：自己写死一个阈值会跟内置预设差一个数量级，
+     * 历史上就是 0.3 格/秒 —— 等于任何移动速度都能把人从坐骑上打下来。</p>
+     */
+    public static Optional<SpearCondition> dismountConditionFor(String materialName, int windowTicks) {
+        return SpearCondition.ofAttackerSpeed(windowTicks, dismountSpeedFor(materialName));
     }
 
     // 无防火

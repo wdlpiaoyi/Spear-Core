@@ -87,21 +87,6 @@ public abstract class SpearItem extends Item implements SpearLike {
 
     protected int getSpearEnchantmentValue() { return 0; }
     protected boolean canRepair(ItemStack stack, ItemStack repairCandidate) { return false; }
-    /** 该实体是否正在蓄力持矛 */
-    public static boolean isChargingSpear(LivingEntity entity) {
-        return entity.isUsingItem()
-                && !entity.getUseItem().isEmpty()
-                && entity.getUseItem().getItem() instanceof SpearItem;
-    }
-
-    /** 蓄力进度 0~1 */
-    public static float getSpearChargeProgress(LivingEntity entity) {
-        if (!isChargingSpear(entity)
-                || !(entity.getUseItem().getItem() instanceof SpearItem spear)) return 0.0F;
-        ItemStack stack = entity.getUseItem();
-        int usedTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
-        return Mth.clamp(usedTicks / (float) spear.getDamageEndTick(), 0.0F, 1.0F);
-    }
     protected static double getSpearMultiplier(LivingEntity entity,
                                                net.minecraft.world.entity.ai.attributes.Attribute attribute) {
         var instance = entity.getAttribute(attribute);
@@ -109,7 +94,8 @@ public abstract class SpearItem extends Item implements SpearLike {
     }
     // ========== getKnownMovement / getMotion（J库 static） ==========
 
-    private static Vec3 getKnownMovement(Entity entity) {
+    /** 最近一 tick 的位移（服务端用玩家上报的 known movement，其他实体走 delta movement）。 */
+    public static Vec3 getKnownMovement(Entity entity) {
         if (entity instanceof KnownMovementAccessor accessor && entity instanceof ServerPlayer && entity.isAlive()) {
             return accessor.GetKnownMovement();
         }
@@ -183,7 +169,8 @@ public abstract class SpearItem extends Item implements SpearLike {
     /**
      * 蓄力伤害的基线。
      *
-     * <p>JAVA：取裸武器攻击力，力量/虚弱等修饰符不算（原版 MC-302778）。</p>
+     * <p>JAVA：取裸武器攻击力，力量/虚弱等修饰符不算（原版 MC-302778），
+     * 但要加上本矛自己的 {@code ADDITION} 攻击力加成（否则各材质蓄力伤害都一样）。</p>
      * <p>BEDROCK：取包含修饰符的攻击力，力量药水会加进蓄力伤害。</p>
      */
     public float chargeBaseDamage(LivingEntity user) {

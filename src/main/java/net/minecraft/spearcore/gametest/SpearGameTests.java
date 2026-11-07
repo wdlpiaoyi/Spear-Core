@@ -6,11 +6,18 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.config.SpearConfig;
+import net.minecraft.spearcore.event.SpearDamageEvent;
+import net.minecraft.spearcore.event.SpearHitEvent;
+import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearCoreItems;
 import net.minecraft.spearcore.init.SpearStats;
 import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.util.SpearCooldownAccessor;
+import net.minecraft.spearcore.util.SpearCollision;
+import net.minecraft.spearcore.util.SpearCondition;
 import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -21,13 +28,17 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterGameTestsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -326,21 +337,31 @@ public final class SpearGameTests {
         helper.succeed();
     }
 
-    /** 蓄力基线是否吃攻击力修饰符：JAVA 只取裸值（力量药水无效，原版 MC-302778）/ BEDROCK 吃修饰符。 */
+    /**
+     * 蓄力基线：JAVA 只取裸值（力量药水无效，原版 MC-302778）/ BEDROCK 吃修饰符，
+     * 但两者都必须把<b>手持长矛自己的攻击力加成</b>算进去。
+     *
+     * <p>这是回归测试：以前 JAVA 只取 {@code getAttributeBaseValue}，而武器加成是装备期
+     * 才挂上的 ADDITION，于是七种材质的蓄力基线全是玩家的 1.0，铁矛与木矛同样疼。</p>
+     */
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void chargeStrengthFollowsConfig(GameTestHelper helper) {
         SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
         Mob user = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        user.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(iron));
+        float weaponBonus = spearcore$attackDamageBonus(iron);
+        helper.assertTrue(weaponBonus > 0.0F, "铁矛的攻击力加成不应为 0（木矛才是 0）");
         user.getAttribute(Attributes.ATTACK_DAMAGE).addTransientModifier(
                 new AttributeModifier("spearcore_test_strength", 5.0D, AttributeModifier.Operation.ADDITION));
         SpearRules.ChargeStrength original = SpearConfig.CHARGE_STRENGTH.get();
         try {
             SpearConfig.CHARGE_STRENGTH.set(SpearRules.ChargeStrength.JAVA);
             float javaBase = iron.chargeBaseDamage(user);
-            helper.assertTrue(
-                    Math.abs(javaBase - (float) user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE)) < 1.0E-6F,
-                    "JAVA 蓄力基线应忽略修饰符，实际 " + javaBase);
+            float expectedJava = (float) user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE) + weaponBonus;
+            helper.assertTrue(Math.abs(javaBase - expectedJava) < 1.0E-6F,
+                    "JAVA 蓄力基线应为「裸攻击力 " + (float) user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE)
+                            + " + 武器加成 " + weaponBonus + "」，实际 " + javaBase);
             SpearConfig.CHARGE_STRENGTH.set(SpearRules.ChargeStrength.BEDROCK);
             float bedrockBase = iron.chargeBaseDamage(user);
             helper.assertTrue(Math.abs(bedrockBase - (javaBase + 5.0F)) < 1.0E-6F,
@@ -466,6 +487,158 @@ public final class SpearGameTests {
         helper.succeed();
     }
 
+    /**
+     * 怪物 AI 的攻击距离必须和真正结算的射程一致（mobFactor 减半）。
+     *
+     * <p>这是回归测试：{@code SpearCollision#getHitEntitiesAlong} 以前直接用
+     * {@code getMaxRange()}（4.5），怪物会在 3 格外就起手，而它实际只够到 2.25 格。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void mobAttackRangeMatchesMobFactor(GameTestHelper helper) {
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        Mob attacker = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        attacker.setYRot(0.0F);
+        attacker.setXRot(0.0F);
+        attacker.setYHeadRot(0.0F);
+
+        float expectedMax = iron.getMaxRange() * iron.getMobFactor();
+        helper.assertTrue(Math.abs(iron.effectiveMaxRange(attacker) - expectedMax) < 1.0E-6F,
+                "怪物有效射程应为 " + expectedMax + "，实际 " + iron.effectiveMaxRange(attacker));
+
+        Mob far = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 4);   // 3 格外
+        helper.assertTrue(SpearCollision.getHitEntitiesAlong(attacker, iron, iron.getHitboxMargin(),
+                        e -> e == far).isEmpty(),
+                "3 格外（怪物射程 " + expectedMax + "）的目标不应被 AI 判定为命中");
+
+        Mob near = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 2);   // 1 格外
+        helper.assertTrue(!SpearCollision.getHitEntitiesAlong(attacker, iron, iron.getHitboxMargin(),
+                        e -> e == near).isEmpty(),
+                "1 格外的目标在怪物射程内，应被 AI 判定为命中");
+        helper.succeed();
+    }
+
+    /**
+     * 第一次戳刺也要把目标记进「最近戳过谁」的表。
+     *
+     * <p>回归测试：那张表以前只在 {@code startUsingItem}（起手蓄力）时才 new，
+     * 于是首次戳刺的 {@code RememberStabbedEntity} 被静默丢弃。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void stabRecordSurvivesFirstHit(GameTestHelper helper) {
+        Mob mob = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        Mob target = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 2);
+        SpearCooldownAccessor accessor = (SpearCooldownAccessor) mob;
+
+        helper.assertFalse(accessor.WasRecentlyStabbed(target, 10), "没记录过就不该算刚被戳过");
+        accessor.RememberStabbedEntity(target);
+        helper.assertTrue(accessor.WasRecentlyStabbed(target, 10),
+                "第一次 RememberStabbedEntity 必须生效（表应懒初始化）");
+        helper.succeed();
+    }
+
+    /**
+     * 戳刺的 {@link SpearDamageEvent} 必须带上被命中的目标。
+     *
+     * <p>回归测试：以前事件在循环外只发一次、target 填 null，监听方分不清打的是谁。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void stabDamageEventCarriesTarget(GameTestHelper helper) {
+        SpearEventRecorder recorder = new SpearEventRecorder();
+        MinecraftForge.EVENT_BUS.register(recorder);
+        try {
+            StabResult result = spearcore$stabOnce(helper, 1, 1, null, 0);
+            List<SpearDamageEvent> stabs = recorder.stabEvents();
+            helper.assertTrue(stabs.size() == 1,
+                    "一次戳刺应恰好发一次 STAB 的 SpearDamageEvent，实际 " + stabs.size() + " 次");
+            helper.assertTrue(stabs.get(0).getTarget() == result.target(),
+                    "SpearDamageEvent 必须带上被戳中的目标");
+        } finally {
+            MinecraftForge.EVENT_BUS.unregister(recorder);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * {@link SpearHitEvent} 报的伤害必须是实际造成的那一份（含附魔修正）。
+     *
+     * <p>回归测试：以前传的是附魔修正之前的 {@code damage}。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void hitEventReportsActualDamage(GameTestHelper helper) {
+        SpearEventRecorder recorder = new SpearEventRecorder();
+        MinecraftForge.EVENT_BUS.register(recorder);
+        try {
+            StabResult result = spearcore$stabOnce(helper, 1, 1, Enchantments.SHARPNESS, 5);
+            helper.assertTrue(recorder.hits().size() == 1,
+                    "一次戳刺应恰好发一次 SpearHitEvent，实际 " + recorder.hits().size() + " 次");
+            float reported = recorder.hits().get(0).getDamageDealt();
+            // 事件报的是"护甲减免前"的结算伤害：攻击力（含武器加成）+ 附魔伤害修正。
+            // 旧实现传的是附魔修正之前的数，所以锋利附魔下这条会失败。
+            float expected = (float) result.attacker().getAttributeValue(Attributes.ATTACK_DAMAGE)
+                    + EnchantmentHelper.getDamageBonus(result.spear(), result.target().getMobType());
+            helper.assertTrue(Math.abs(reported - expected) < 1.0E-3F,
+                    "SpearHitEvent 应报附魔修正后的伤害 " + expected + "，实际报 " + reported);
+        } finally {
+            MinecraftForge.EVENT_BUS.unregister(recorder);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * 击落骑手的速度阈值按材质取 Java 版数据（KubeJS 建造器也走同一条）。
+     *
+     * <p>回归测试：建造器曾写死 0.3 格/秒，等于任何速度都能把人打下坐骑。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void dismountConditionFollowsMaterial(GameTestHelper helper) {
+        SpearCondition wood = SpearStats.dismountConditionFor("wood", 100).orElseThrow();
+        helper.assertTrue(Math.abs(wood.minSpeed() - 14.0F) < 1.0E-6F, "木矛击落阈值应为 14，实际 " + wood.minSpeed());
+        helper.assertTrue(wood.maxDurationTicks() == 100, "窗口长度应原样保留");
+        helper.assertTrue(Math.abs(SpearStats.dismountConditionFor("copper", 80).orElseThrow().minSpeed() - 12.0F) < 1.0E-6F,
+                "铜矛击落阈值应为 12");
+        helper.assertTrue(Math.abs(SpearStats.dismountConditionFor("netherite", 50).orElseThrow().minSpeed() - 9.0F) < 1.0E-6F,
+                "下界合金矛击落阈值应为 9");
+        helper.assertTrue(Math.abs(SpearStats.dismountConditionFor("custom", 50).orElseThrow().minSpeed() - 11.0F) < 1.0E-6F,
+                "未知材质应回落铁矛的 11");
+
+        // 与内置预设同源：任意材质都必须等于内置预设里的那一份阈值。
+        helper.assertTrue(Math.abs(SpearStats.WOOD.dismountConditions().orElseThrow().minSpeed()
+                        - SpearStats.dismountConditionFor("wood", 1).orElseThrow().minSpeed()) < 1.0E-6F,
+                "建造器路径与内置预设的击落阈值必须一致");
+        helper.succeed();
+    }
+
+    /** 记录长矛事件（注册/注销都包在 try/finally 里）。 */
+    private static final class SpearEventRecorder {
+        private final List<SpearDamageEvent> damageEvents = new ArrayList<>();
+        private final List<SpearHitEvent> hitEvents = new ArrayList<>();
+
+        @SubscribeEvent
+        public void onSpearDamage(SpearDamageEvent event) {
+            this.damageEvents.add(event);
+        }
+
+        @SubscribeEvent
+        public void onSpearHit(SpearHitEvent event) {
+            this.hitEvents.add(event);
+        }
+
+        private List<SpearDamageEvent> stabEvents() {
+            return this.damageEvents.stream()
+                    .filter(e -> e.getAttackType() == SpearDamageEvent.AttackType.STAB)
+                    .toList();
+        }
+
+        private List<SpearHitEvent> hits() {
+            return this.hitEvents;
+        }
+    }
+
     /** 读一件长矛当前配置下的最大耐久。 */
     private static int spearcore$maxDamage(Item item) {
         return new ItemStack(item).getMaxDamage();
@@ -495,7 +668,7 @@ public final class SpearGameTests {
         return Math.sqrt(motion.x * motion.x + motion.z * motion.z);
     }
 
-    private record StabResult(Mob attacker, Mob target, float damageDealt) {
+    private record StabResult(Mob attacker, Mob target, ItemStack spear, float damageDealt) {
     }
 
     /** 摆一对"持矛攻击者 + 目标"并戳一次；矛按需附魔。 */
@@ -522,7 +695,7 @@ public final class SpearGameTests {
         float before = target.getHealth();
         boolean hit = spearItem.performStabAttack(attacker, spear, EquipmentSlot.MAINHAND, false);
         helper.assertTrue(hit, "戳刺没有命中目标（车道 x=" + attackerX + "）");
-        return new StabResult(attacker, target, before - target.getHealth());
+        return new StabResult(attacker, target, spear, before - target.getHealth());
     }
 
     /**

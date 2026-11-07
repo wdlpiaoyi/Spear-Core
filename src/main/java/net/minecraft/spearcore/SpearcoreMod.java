@@ -29,57 +29,57 @@ import it.unimi.dsi.fastutil.ints.IntObjectImmutablePair;
 
 @Mod(SpearcoreMod.MODID)
 public class SpearcoreMod {
-	public static final Logger LOGGER = LogManager.getLogger(SpearcoreMod.class);
-	public static final String MODID = "spearcore";
+    public static final Logger LOGGER = LogManager.getLogger(SpearcoreMod.class);
+    public static final String MODID = "spearcore";
 
-	public SpearcoreMod() {
-		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public SpearcoreMod() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
-		SpearStabAttackPacket.register();
-		// Start of user code block mod init
-		SpearSounds.REGISTRY.register(modEventBus);
-		SpearCoreItems.REGISTRY.register(modEventBus);
-		SpearAttributes.ATTRIBUTES.register(modEventBus);
-		SpearEnchantments.REGISTRY.register(modEventBus);
-		modEventBus.addListener(SpearAttributes::addToPlayer);
-		// End of user code block mod init
+        SpearStabAttackPacket.register();
+        // Start of user code block mod init
+        SpearSounds.REGISTRY.register(modEventBus);
+        SpearCoreItems.REGISTRY.register(modEventBus);
+        SpearAttributes.ATTRIBUTES.register(modEventBus);
+        SpearEnchantments.REGISTRY.register(modEventBus);
+        modEventBus.addListener(SpearAttributes::addToPlayer);
+        // End of user code block mod init
 
-		modEventBus.addListener(this::commonSetup);
-		SpearConfig.register();
-		MinecraftForge.EVENT_BUS.register(this);
-	}
+        modEventBus.addListener(this::commonSetup);
+        SpearConfig.register();
+        MinecraftForge.EVENT_BUS.register(this);
+    }
 
-	/** 启动自检：确认七把矛真的注册进物品注册表（1.20.1 版的"怎么确认成功"标记）。 */
-	@SubscribeEvent
-	public void commonSetup(FMLCommonSetupEvent event) {
-		event.enqueueWork(() -> {
-			long spears = ForgeRegistries.ITEMS.getValues().stream()
-					.filter(i -> MODID.equals(ForgeRegistries.ITEMS.getKey(i).getNamespace()))
-					.count();
-			LOGGER.info("[spearcore] 已注册 {} 把长矛（Minecraft 1.20.1 / Forge）", spears);
-		});
-	}
+    /** 启动自检：确认七把矛真的注册进物品注册表（1.20.1 版的"怎么确认成功"标记）。 */
+    @SubscribeEvent
+    public void commonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            long spears = ForgeRegistries.ITEMS.getValues().stream()
+                    .filter(i -> MODID.equals(ForgeRegistries.ITEMS.getKey(i).getNamespace()))
+                    .count();
+            LOGGER.info("[spearcore] 已注册 {} 把长矛（Minecraft 1.20.1 / Forge）", spears);
+        });
+    }
 
-	// ========== 延后任务队列（与原版一致，供后续阶段使用） ==========
+    // ========== 延后任务队列（与原版一致，供后续阶段使用） ==========
 
-	private static final Queue<IntObjectPair<Runnable>> workToBeScheduled = new ConcurrentLinkedQueue<>();
-	private static final PriorityQueue<TickTask> workQueue = new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));
+    private static final Queue<IntObjectPair<Runnable>> workToBeScheduled = new ConcurrentLinkedQueue<>();
+    private static final PriorityQueue<TickTask> workQueue = new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));
 
-	public static void queueServerWork(int delay, Runnable action) {
-		if (Thread.currentThread().getThreadGroup() == SidedThreadGroups.SERVER)
-			workToBeScheduled.add(new IntObjectImmutablePair<>(delay, action));
-	}
+    public static void queueServerWork(int delay, Runnable action) {
+        if (Thread.currentThread().getThreadGroup() == SidedThreadGroups.SERVER)
+            workToBeScheduled.add(new IntObjectImmutablePair<>(delay, action));
+    }
 
-	@SubscribeEvent
-	public void tick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END) return;
-		int currentTick = event.getServer().getTickCount();
-		IntObjectPair<Runnable> work;
-		while ((work = workToBeScheduled.poll()) != null) {
-			workQueue.add(new TickTask(currentTick + work.leftInt(), work.right()));
-		}
-		while (!workQueue.isEmpty() && currentTick >= workQueue.peek().getTick()) {
-			workQueue.poll().run();
-		}
-	}
+    @SubscribeEvent
+    public void tick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        int currentTick = event.getServer().getTickCount();
+        IntObjectPair<Runnable> work;
+        while ((work = workToBeScheduled.poll()) != null) {
+            workQueue.add(new TickTask(currentTick + work.leftInt(), work.right()));
+        }
+        while (!workQueue.isEmpty() && currentTick >= workQueue.peek().getTick()) {
+            workQueue.poll().run();
+        }
+    }
 }

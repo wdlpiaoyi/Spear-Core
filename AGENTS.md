@@ -44,7 +44,9 @@
 - `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`、`resourcepackCompat`、`tetraCompat`、`tetraExtraReachScale`、`tetraDamageScale`）+ `[behavior]` 段的 17 个行为开关。
 - `util/SpearRules.java`：17 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
 - 约定：每个开关的默认值是 `JAVA`（= 原版 Java 行为）；**某版本取值和 Java 一样时，不要为它提供重复选项**（例如「戳刺速度加成」只有 `JAVA`/`MODDED` 两个值）。新增开关时同步改：`SpearConfig`（带中文注释）+ `SpearRules` + `README.md`（中文）与 `README.en.md`（英文）+ `kjs-guide.md`。
-- 击落骑手的速度阈值**固定为 Java 数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9），见 `SpearStats.dismountSpeedFor`，不要再加开关。
+- 击落骑手的速度阈值**固定为 Java 数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9），见 `SpearStats.dismountSpeedFor`，不要再加开关。KubeJS 建造器的 `phases()` 只给窗口长度，阈值一律走 `SpearStats.dismountConditionFor(materialName, windowTicks)`，不要另写一个数（历史上写死过 0.3 格/秒，等于任何速度都能把人打下坐骑）。
+- **蓄力伤害基线** = `ATTACK_DAMAGE` 的基础值 + 手持长矛自己的 `ADDITION` 攻击力（`SpearCombat.chargeBaseDamage` + `weaponAttackDamage`）；`chargeStrength=BEDROCK` 时取属性总值（玩家已含武器加成，怪物不含所以要补）。别退回「只取 `getAttributeBaseValue`」——那会让七种材质的蓄力基线全等于玩家的 1.0。
+- 怪物 AI 判断出手距离必须和结算同一口径：`SpearItem.effectiveMinRange/effectiveMaxRange`（含创造射程、`mobFactor`、持有者 reach 超出 3.0 的部分），不要用 `getMaxRange()`。`SpearCollision.getHitEntitiesAlong` 与 `SpearItem#getHitEntitiesAlongInternal` 必须一致，否则怪物会在两倍于自己射程的距离上起手。
 - 两条**不提供开关**的原版行为，别被旧说法带偏：蓄力（举矛）时**本来就能疾跑且不减速**（原版 `use_effects` 的 `speed_multiplier` 为 1.0、`can_sprint` 为 true）；命中目标时**攻击者自己会被减速**（`hitSlowDown` 的 `JAVA` 档才是原版手感）。
 - 版本事实（改动对应开关前先确认）：Java 版蓄力伤害**不吃**力量/虚弱（原版 bug MC-302778，`chargeStrength` 的 `JAVA` 档就是复刻它）；基岩版戳刺后有一段后摇才能再蓄力（MCPE-233837，对应 `jabToChargeDelay` 的 `BEDROCK`）。
 - `movingTargetAssist` 的 `MODDED` 档在**判断命中**时把目标判定箱按最近 3 tick 的位移往回挪（`SpearItem.compensatedTargetBox`），用来修 MC-310857「移动靶要预判」；只对玩家出手生效，怪物 AI 与伤害结算都不受影响，别顺手把「怪物的移动」也算进去。
@@ -56,7 +58,7 @@
 
 - **1.20.1 的 tag 目录是 `data/<ns>/tags/items/`（复数）**，不是 1.21 的 `tags/item`。写错目录不会报错，tag 直接静默失效——原仓库就是这样，所有 tag 实际都没生效。
 - 长矛必须挂进这些 tag（新增长矛时同步加，注意 `#spearcore:spears` 是「六把原版材质矛」、`#spearcore:spear` 才是「全部七把含铜矛」的上游约定）：
-  - `#spearcore:spears`（六把原版材质矛，不含铜）、`#spearcore:spear`（全部七把，含铜矛；KubeJS 的 `supported_items` 与突进附魔用它）、`#spearcore:copper_spear`（仅铜矛）；
+  - `#spearcore:spears`（六把原版材质矛，不含铜）、`#spearcore:spear`（全部七把，含铜矛；KubeJS 建造器的 `supported_items` 用它，突进附魔用的是 `EnchantmentCategory`，见下文）、`#spearcore:copper_spear`（仅铜矛）；
   - `#minecraft:spears`（前向兼容 1.21 的名字；KubeJS 新建的矛会自动加进来）；
   - `#minecraft:swords`（近战武器归类，顺带自动进入 `#minecraft:tools` 与 `#forge:tools`）；
   - `#minecraft:piglin_loved`（仅金矛）。

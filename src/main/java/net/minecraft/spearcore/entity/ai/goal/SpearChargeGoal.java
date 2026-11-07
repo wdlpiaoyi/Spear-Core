@@ -28,8 +28,10 @@ public class SpearChargeGoal<T extends Monster> extends Goal {
         if (!(mob.getMainHandItem().getItem() instanceof SpearItem spear)) return false;
         if (mob.isUsingItem()) return false;
 
-        // 必须在最大攻击范围内
-        maxChargeRangeSq = spear.getMaxRange() * spear.getMaxRange();
+        // 必须在最大攻击范围内。必须用 effectiveMaxRange：怪物还要乘 mobFactor（0.5），
+        // 直接用 getMaxRange() 会让怪物在 4.5 格上起手，而它实际只够到 2.25 格。
+        float chargeRange = spear.effectiveMaxRange(mob);
+        maxChargeRangeSq = chargeRange * chargeRange;
         double distSq = mob.distanceToSqr(target);
         if (distSq > maxChargeRangeSq) return false;
 

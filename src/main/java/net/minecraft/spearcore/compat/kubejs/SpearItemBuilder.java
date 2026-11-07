@@ -67,7 +67,10 @@ public class SpearItemBuilder extends ItemBuilder {
     private float hitboxMargin = SpearStats.IRON.hitboxMargin();
     private int contactCooldownTicks = SpearStats.IRON.contactCooldownTicks();
     private int delayTicks = SpearStats.IRON.delayTicks();
-    private Optional<SpearCondition> dismountConditions = SpearStats.IRON.dismountConditions();
+    // 击落窗口长度；速度阈值不在这里定，createObject() 里按 materialName 查
+    // SpearStats.dismountSpeedFor 现算（写死一个阈值就会跟内置预设不一致）。
+    private int dismountWindowTicks = SpearStats.IRON.dismountConditions()
+            .map(SpearCondition::maxDurationTicks).orElse(50);
     private Optional<SpearCondition> knockbackConditions = SpearStats.IRON.knockbackConditions();
     private Optional<SpearCondition> damageConditions = SpearStats.IRON.damageConditions();
     private float forwardMovement = SpearStats.IRON.forwardMovement();
@@ -166,7 +169,13 @@ public class SpearItemBuilder extends ItemBuilder {
     //    argument types (string) is ambiguous"
     // 直接继承 ItemBuilder#rarity(Rarity) 即可，脚本里照旧写 .rarity('uncommon')。
 
-    /** 材质名，仅作标记/调试用。默认 {@code custom}。 */
+    /**
+     * 材质名。默认 {@code custom}（按铁矛的 11 格/秒处理）。
+     *
+     * <p>除了进 {@code Stats} 做标记，它还是<b>击落骑手的速度阈值</b>的来源：
+     * {@code phases()} 只给窗口长度，阈值按这里的材质名查
+     * {@code SpearStats.dismountSpeedFor}（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻石 10 / 下界合金 9）。</p>
+     */
     public SpearItemBuilder materialName(String v) {
         this.materialName = v;
         return this;
@@ -208,10 +217,13 @@ public class SpearItemBuilder extends ItemBuilder {
     /**
      * 四个阶段的时长，单位<b>秒</b>：起手延迟 / 可击落骑手窗口 / 可击退窗口 / 可造成伤害窗口。
      * 默认 0.6 / 2.5 / 6.75 / 11.25（铁矛）。
+     *
+     * <p>只设定<b>窗口长度</b>。击落骑手所需的速度阈值跟内置预设一样按
+     * {@link #materialName(String)} 查表，不要在脚本里另写一个阈值。</p>
      */
     public SpearItemBuilder phases(float delaySec, float dismountSec, float knockbackSec, float damageSec) {
         this.delayTicks = (int) (delaySec * 20.0F);
-        this.dismountConditions = SpearCondition.ofAttackerSpeed((int) (dismountSec * 20.0F), 0.3F);
+        this.dismountWindowTicks = (int) (dismountSec * 20.0F);
         this.knockbackConditions = SpearCondition.ofAttackerSpeed((int) (knockbackSec * 20.0F), 5.1F);
         this.damageConditions = SpearCondition.ofRelativeSpeed((int) (damageSec * 20.0F), 4.6F);
         return this;
@@ -296,7 +308,7 @@ public class SpearItemBuilder extends ItemBuilder {
                 this.hitboxMargin,
                 this.contactCooldownTicks,
                 this.delayTicks,
-                this.dismountConditions,
+                SpearStats.dismountConditionFor(this.materialName, this.dismountWindowTicks),
                 this.knockbackConditions,
                 this.damageConditions,
                 this.forwardMovement,

@@ -44,13 +44,13 @@ When the attack cooldown bar is full:
 
 - Jab damage = weapon attack damage + (optional) forward-speed bonus; standing still is the weakest.
 - The same target cannot be jabbed repeatedly within a short window.
-- Difference from vanilla: by default this mod lets jabs benefit from speed, while vanilla 26.1.2 piercing does not.
+- The speed bonus on jabs is this mod's own `MODDED` mode (`jabSpeedBonus`); the default `JAVA` mode does not apply it, matching vanilla 26.1.2 piercing.
 
 ### Charge (hold right-click)
 
 Hold right-click to walk through **wind-up -> dismount window -> knockback window -> damage window**.
 
-- The charge auto-releases after the maximum duration (roughly 6-12 seconds depending on material).
+- The charge auto-releases after the maximum duration (roughly 9-16 seconds depending on material: netherite 9.15s, iron 11.85s, wood 15.75s).
 - Charging does **not** slow you down like eating; you can walk and sprint normally.
 - Knockback requires enough speed; dismounting riders is the earliest effect.
 
@@ -71,13 +71,15 @@ The mod looks at your speed along your facing direction and the relative speed t
 
 Displayed values with empty hands (enchantments and attribute bonuses excluded):
 
+Values below are for the default config (`durability` = `JAVA`); with `MODDED` copper is 195 and golden 59.
+
 | Spear | Attack damage | Attack speed | Durability | Enchantability | Notes |
 |---|---|---|---|---|---|
 | Wooden | 1 | 1.5 | 59 | 15 | fastest |
 | Stone | 2 | 1.3 | 131 | 5 | |
-| Copper | 2 | 1.2 | 195 | 13 | |
+| Copper | 2 | 1.2 | 190 | 13 | |
 | Iron | 3 | 1.1 | 250 | 14 | baseline feel |
-| Golden | 1 | 1.1 | 59 | 22 | good enchants, fragile |
+| Golden | 1 | 1.1 | 32 | 22 | good enchants, fragile |
 | Diamond | 4 | 1.0 | 1561 | 10 | |
 | Netherite | 5 | 0.9 | 2031 | 15 | fire resistant, floats in lava |
 
@@ -180,7 +182,7 @@ Most damage comes from speed; standing still is weaker than a sword, but a sprin
 The attack cooldown bar is not full, or the target is still within its jab immunity window.
 
 **Can't find spears in the creative tab?**
-Creative-tab visibility is off by default; see `enableVanillaSpears` / `enableCopperSpear`, or just use `/give`.
+Creative-tab visibility is **on** by default (`enableVanillaSpears` / `enableCopperSpear` are both `true`); if spears are missing, check those two switches or just use `/give`.
 
 **Does it support 1.21.1 / NeoForge?**
 No. This repository targets 1.20.1 + Forge only; `main` is leftover upstream code that is neither built nor maintained.

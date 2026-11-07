@@ -102,8 +102,11 @@ dependencies {
 
     // ===== Punchy 联动（可选依赖）=====
     // mixin 目标是用字符串写的，但 Mixin 注解处理器需要 Punchy 在 classpath 上才能校验目标类。
-    // OOYVGbHo = Punchy 2.8d 的 1.20.1-fabric/forge 里的 forge 构建版本 id。
-    compileOnly 'maven.modrinth:punchy-fpa:OOYVGbHo'
+    // DdPbuBDy = Punchy 3.1b 的 1.20.1-forge 版本 id。
+    // 旧的 OOYVGbHo（2.8d）在 Modrinth 上已被删除（maven 路径 404），干净 clone 会构建失败。
+    // 3.1b 仍保留 punchy.client.state.SpearStateMachine#resolveChargeInfo(Minecraft, ItemStack)
+    // 与 $ChargeInfo{stage, elapsedTicks, stage3Limit, hasLimit}，桥接逻辑无需改动。
+    compileOnly 'maven.modrinth:punchy-fpa:DdPbuBDy'
 
     // ===== Tetra 联动（可选依赖，仅编译期）=====
     // 8570756 = CurseForge 上 Tetra 1.20.1-6.17.0 的文件 id。
@@ -130,7 +133,7 @@ mixin {
 // 开发环境目标是 Mojang 名，不反混淆它自己在开发环境就崩。
 configurations { punchyClient }
 dependencies {
-    punchyClient fg.deobf('maven.modrinth:punchy-fpa:OOYVGbHo')
+    punchyClient fg.deobf('maven.modrinth:punchy-fpa:DdPbuBDy')
 }
 tasks.matching { it.name == 'runClient' }.configureEach {
     classpath += configurations.punchyClient

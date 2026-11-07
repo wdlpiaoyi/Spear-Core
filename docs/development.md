@@ -16,7 +16,7 @@
 | 近战武器归类 | `#minecraft:swords`（自动连带进入 `#minecraft:tools` 与 `#forge:tools`） |
 | 猪灵喜爱 | `#minecraft:piglin_loved`（仅金矛） |
 | 伤害类型 | `spearcore:spear` |
-| 突进附魔 | `spearcore:lunge`（`supported_items` 即 `#spearcore:spear`，最高 3 级） |
+| 突进附魔 | `spearcore:lunge`（最高 3 级；放行判定是 `EnchantmentCategory.create("spearcore:spear", item -> item instanceof SpearItem)`，不读任何 tag —— `#spearcore:spear` 只是给数据包/第三方模组看的归类） |
 | 玩家属性 | `spearcore:spear_stab_multiplier`（戳刺伤害倍率，默认 1.0）、`spearcore:spear_charge_multiplier`（冲锋伤害倍率，默认 1.0） |
 
 ## 类继承
@@ -126,8 +126,13 @@ StartupEvents.registry('item', event => {
 
 ### 自己构建与验证
 
+构建前必须把 `JAVA_HOME` 指向 **JDK 17**：ForgeGradle 6 / Gradle 8.8 跑不了 JDK 21+，
+用新 JDK 会报 `Unsupported class file major version 69`。`gradle.properties` 里刻意不写死
+`org.gradle.java.installations.paths`（那是某台机器的绝对路径）。
+
 ```bash
-./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.0.jar
+export JAVA_HOME=/path/to/jdk-17    # 换成你自己机器上的 JDK 17 目录（Windows 也可以写 C:/... 风格）
+./gradlew build              # 产物：build/libs/spear-core-forked-1.20.1-forge-3.3.1.jar
 ./gradlew runServer          # 无头启动；启动自检会打印"已注册 7 把长矛"
 ./gradlew runGameTestServer  # 由游戏本体判定的自动化测试
 ```

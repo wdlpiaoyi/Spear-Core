@@ -40,5 +40,23 @@ description='''Spear Core Forked — 基于 Lyingice 的 Spear Core 的 1.20.1 F
     ordering="AFTER"
     side="BOTH"
 
+# KubeJS 联动是可选依赖：没装时 compat.kubejs 整个包不会被加载
+#（入口靠 kubejs.plugins.txt 反射隔离），行为与没写这条依赖完全一致。
+[[dependencies.spearcore]]
+    modId="kubejs"
+    mandatory=false
+    versionRange="[2001,)"
+    ordering="AFTER"
+    side="BOTH"
+
+# Punchy 是客户端专用模组，只桥接它的蓄力阶段状态机。
+# 没装时 spearcore.punchy.mixins.json 的插件判定失败并整体跳过（required=false）。
+[[dependencies.spearcore]]
+    modId="punchy"
+    mandatory=false
+    versionRange="[3.0,)"
+    ordering="AFTER"
+    side="CLIENT"
+
 # Start of user code block dependencies configuration
 # End of user code block dependencies configuration
