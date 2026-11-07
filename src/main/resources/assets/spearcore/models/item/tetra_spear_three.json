@@ -1,0 +1,21 @@
+{
+  "loader": "forge:separate_transforms",
+  "gui_light": "front",
+  "textures": {
+    "particle": "spearcore:item/tetra_spear_handle"
+  },
+  "base": {
+    "parent": "spearcore:item/tetra_spear_three_in_hand"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "spearcore:item/tetra_spear_icon_three"
+    },
+    "fixed": {
+      "parent": "spearcore:item/tetra_spear_icon_three"
+    },
+    "ground": {
+      "parent": "spearcore:item/tetra_spear_icon_three"
+    }
+  }
+}

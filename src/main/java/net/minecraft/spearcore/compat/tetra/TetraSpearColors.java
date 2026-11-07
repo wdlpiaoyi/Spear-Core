@@ -44,6 +44,32 @@ public final class TetraSpearColors {
         return colorFor(stack, HANDLE_SLOT);
     }
 
+    /**
+     * 矛头槽当前变体 key（例如 {@code spear_head/iron}、{@code spear_shuo_head/stick}）。
+     *
+     * <p>渲染层用它选矛头外观（{@code ItemRendererTetraModelMixin}）；读不到时返回 {@code null}，
+     * 调用方回退到默认模型。</p>
+     */
+    public static String headVariantKey(ItemStack stack) {
+        try {
+            if (stack == null || stack.isEmpty() || !(stack.getItem() instanceof IModularItem modular)) {
+                return null;
+            }
+            ItemModule module = modular.getModuleFromSlot(stack, HEAD_SLOT);
+            if (module == null) {
+                return null;
+            }
+            VariantData variant = module.getVariantData(stack);
+            return variant == null ? null : variant.key;
+        } catch (Throwable throwable) {
+            if (!loggedFailure) {
+                loggedFailure = true;
+                SpearcoreMod.LOGGER.warn("[spearcore] 读取 Tetra 矛头变体失败，长矛将使用默认外观", throwable);
+            }
+            return null;
+        }
+    }
+
     public static void clearCache() {
         MATERIAL_CACHE.clear();
     }

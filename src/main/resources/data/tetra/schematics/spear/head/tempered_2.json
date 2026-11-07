@@ -1,0 +1,27 @@
+{
+    "localizationKey": "sword/shared_blade/tempered_2",
+    "slots": [
+        "spear/head"
+    ],
+    "materialSlotCount": 0,
+    "displayType": "improvement",
+    "glyph": {
+        "textureX": 208,
+        "textureY": 32
+    },
+    "requirement": {
+        "type": "tetra:improvement",
+        "improvement": "spearhead/tempered",
+        "level": 1
+    },
+    "outcomes": [
+        {
+            "requiredTools": {
+                "hammer_dig": "minecraft:iron"
+            },
+            "improvements": {
+                "spearhead/tempered": 2
+            }
+        }
+    ]
+}

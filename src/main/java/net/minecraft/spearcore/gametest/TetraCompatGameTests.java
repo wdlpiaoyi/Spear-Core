@@ -49,6 +49,9 @@ import net.minecraft.nbt.CompoundTag;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -888,6 +891,112 @@ public final class TetraCompatGameTests {
     /**
      * 读取数据包里的 JSON：GameTest 服务端不加载 Tetra，这里只验证本模组自己 ship 的数据文件是否合法。
      */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearHeadUpgradesAreDataDefined(GameTestHelper helper) {
+        // 锯齿 / 淬火：Tetra 给矛头的两条升级线（流血 / 穿甲）。Tetra 自己的 schematic 写死模块 key
+        // single/spearhead，本模组矛头不在其中，所以要自带一份；同样不能按模块 key 过滤，否则
+        // 换上槊头 / 三尖两刃刀之后这两条升级就用不了（和打磨配方踩过的是同一个坑）。
+        String[][] upgrades = {
+                // 文件名前缀, 改进 key, localizationKey 前缀
+                {"serrated", "spearhead/serrated", "sword/shared_blade/serrated_"},
+                {"tempered", "spearhead/tempered", "sword/shared_blade/tempered_"},
+        };
+        for (String[] upgrade : upgrades) {
+            String kind = upgrade[0];
+            String improvementKey = upgrade[1];
+            String localizationPrefix = upgrade[2];
+            for (int level = 1; level <= 3; level++) {
+                String file = "schematics/spear/head/" + kind + "_" + level + ".json";
+                JsonElement root = spearcore$readJson(helper, "tetra", file);
+                if (root == null) {
+                    return;
+                }
+                try {
+                    JsonObject json = root.getAsJsonObject();
+                    helper.assertTrue("improvement".equals(json.get("displayType").getAsString()),
+                            file + " 必须是 displayType=improvement，才会出现在工作台的升级列表");
+                    helper.assertTrue(localizationPrefix.concat(Integer.toString(level))
+                                    .equals(json.get("localizationKey").getAsString()),
+                            file + " 必须复用 Tetra 的 localizationKey，才会跟着 Tetra 的翻译走");
+                    JsonArray slots = json.getAsJsonArray("slots");
+                    helper.assertTrue(slots != null && slots.size() == 1
+                                    && "spear/head".equals(slots.get(0).getAsString()),
+                            file + " 必须只作用于矛头槽位 spear/head");
+                    String requirement = json.get("requirement").toString();
+                    helper.assertFalse(requirement.contains("tetra:module"),
+                            file + " 的 requirement 不能按模块 key 过滤，否则新矛头用不了这条升级");
+                    if (level > 1) {
+                        helper.assertTrue(requirement.contains(improvementKey)
+                                        && requirement.contains("\"level\":" + (level - 1)),
+                                file + " 的 requirement 应该是 " + improvementKey + " 的 " + (level - 1) + " 级");
+                    }
+                    JsonArray outcomes = json.getAsJsonArray("outcomes");
+                    helper.assertTrue(outcomes != null && !outcomes.isEmpty(), file + " 必须有 outcomes");
+                    JsonObject improvements = outcomes.get(0).getAsJsonObject().getAsJsonObject("improvements");
+                    helper.assertTrue(improvements != null && improvements.has(improvementKey),
+                            file + " 的 outcome 必须给改进 " + improvementKey);
+                    helper.assertTrue(improvements.get(improvementKey).getAsInt() == level,
+                            file + " 的改进等级必须是 " + level);
+                } catch (RuntimeException exception) {
+                    helper.fail(file + " 数据格式不符: " + exception);
+                    return;
+                }
+            }
+        }
+        // 矛头模块必须接受 tetra:single/spearhead/ 下的改进，否则这两条升级会被 Tetra 过滤掉。
+        JsonElement headModuleRoot = spearcore$readJson(helper, "tetra", "modules/spear/head.json");
+        if (headModuleRoot == null) {
+            return;
+        }
+        Set<String> accepted = new HashSet<>();
+        for (JsonElement element : headModuleRoot.getAsJsonObject().getAsJsonArray("improvements")) {
+            accepted.add(element.getAsString());
+        }
+        helper.assertTrue(accepted.contains("tetra:single/spearhead/"),
+                "矛头必须接受 tetra:single/spearhead/ 下的改进（含 spearhead/serrated、spearhead/tempered）");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearHeadTexturesAreWired(GameTestHelper helper) {
+        // 三种矛头外观：默认（tetra_spear）、槊头（tetra_spear_shuo）、三尖两刃刀（tetra_spear_three）。
+        // 只换头部那一层贴图，杆贴图共用：头部贴图本来就该盖住杆（槊头 / 三尖两刃刀比普通矛头长），
+        // 所以以后新增矛头只需要复制一份 tetra_spear_head* 改画，不用为每种矛头重画杆。
+        for (String part : new String[]{"shuo", "three"}) {
+            JsonElement hand = spearcore$readAssetJson(helper,
+                    "models/item/tetra_spear_" + part + "_in_hand.json");
+            JsonElement icon = spearcore$readAssetJson(helper,
+                    "models/item/tetra_spear_icon_" + part + ".json");
+            JsonElement split = spearcore$readAssetJson(helper,
+                    "models/item/tetra_spear_" + part + ".json");
+            if (hand == null || icon == null || split == null) {
+                return;
+            }
+            String handTextures = hand.getAsJsonObject().getAsJsonObject("textures").toString();
+            helper.assertTrue(handTextures.contains("spearcore:item/tetra_spear_handle_in_hand"),
+                    part + " 的手持模型必须共用杆贴图 tetra_spear_handle_in_hand");
+            helper.assertTrue(handTextures.contains("spearcore:item/tetra_spear_head_" + part + "_in_hand"),
+                    part + " 的手持模型必须用各自的头部贴图");
+            String iconTextures = icon.getAsJsonObject().getAsJsonObject("textures").toString();
+            helper.assertTrue(iconTextures.contains("spearcore:item/tetra_spear_handle"),
+                    part + " 的物品栏模型必须共用杆贴图 tetra_spear_handle");
+            helper.assertTrue(iconTextures.contains("spearcore:item/tetra_spear_head_" + part + "\""),
+                    part + " 的物品栏模型必须用各自的头部贴图");
+            helper.assertTrue(("spearcore:item/tetra_spear_" + part + "_in_hand").equals(
+                            split.getAsJsonObject().getAsJsonObject("base").get("parent").getAsString()),
+                    part + " 的 separate_transforms 模型必须指向自己的手持模型");
+            helper.assertTrue(spearcore$assetExists(
+                            "textures/item/tetra_spear_head_" + part + ".png"),
+                    part + " 缺少物品栏头部贴图 textures/item/tetra_spear_head_" + part + ".png");
+            helper.assertTrue(spearcore$assetExists(
+                            "textures/item/tetra_spear_head_" + part + "_in_hand.png"),
+                    part + " 缺少手持头部贴图 textures/item/tetra_spear_head_" + part + "_in_hand.png");
+        }
+        helper.succeed();
+    }
+
     private static JsonElement spearcore$readJson(GameTestHelper helper, String namespace, String path) {
         ResourceLocation location = new ResourceLocation(namespace, path);
         ResourceManager resources = helper.getLevel().getServer().getResourceManager();
@@ -897,6 +1006,25 @@ public final class TetraCompatGameTests {
             helper.fail("读取 " + location + " 失败（文件缺失或不是合法 JSON）: " + exception);
             return null;
         }
+    }
+
+    /** 从 classpath 读本模组 assets 里的 JSON（模型这类纯客户端资产不走服务端 ResourceManager）。 */
+    private static JsonElement spearcore$readAssetJson(GameTestHelper helper, String path) {
+        try (InputStream stream = TetraCompatGameTests.class.getResourceAsStream("/assets/spearcore/" + path)) {
+            if (stream == null) {
+                helper.fail("缺少 assets/spearcore/" + path);
+                return null;
+            }
+            return JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        } catch (Exception exception) {
+            helper.fail("读取 assets/spearcore/" + path + " 失败: " + exception);
+            return null;
+        }
+    }
+
+    /** classpath 里是否存在本模组 assets 下的这个文件（用来钉住贴图别被误删）。 */
+    private static boolean spearcore$assetExists(String path) {
+        return TetraCompatGameTests.class.getResource("/assets/spearcore/" + path) != null;
     }
 
     private static void assertReach(GameTestHelper helper, double extraReach, double sourceBonus,
