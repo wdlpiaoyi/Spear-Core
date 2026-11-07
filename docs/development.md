@@ -112,7 +112,7 @@ StartupEvents.registry('item', event => {
 | `data/tetra/modules/spear/{head,handle,binding,butt,socket}.json` | 五个基础矛部件模块（变体前缀 `spear_head/` / `spear_handle/` / `spear_binding/` / `spear_butt/` / `spear_socket/`；`models` 复用 Tetra 自带模块模型）。`spear/socket` 与绑定共用 `spear/binding` 槽，只吃 `tetra:socket/*` 材料 |
 | `data/tetra/modules/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个**卷轴解锁**的替换部件：槊头（`spear/head`，变体 `spear_shuo_head/`）、积竹木柲（`spear/handle`，变体 `spear_composite_shaft/`）、三尖两刃刀（`spear/head`，变体 `spear_three_point/`） |
 | `data/tetra/schematics/spear/{head,handle,binding,butt,socket}.json` | 五个基础换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic；socket 与 binding 同为 `spear/binding`，互相替换） |
-| `data/tetra/schematics/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个卷轴解锁的换部件配方，`requirement` 是 `{"type": "tetra:locked", "key": "tetra:spear/<part>"}`；三尖两刃刀另标 `"rarity": "hone"` |
+| `data/tetra/schematics/spear/{shuo_head,composite_shaft,three_point_blade}.json` | 三个卷轴解锁的换部件配方，`requirement` 是 `{"type": "tetra:locked", "key": "tetra:spear/<part>"}` |
 | `data/tetra/schematics/spear/head/hone_{damage,durability,speed}_{1..5}.json` | 矛头打磨配方（`hone: true`；改进复用 Tetra 的 `spearhead_hone/damage`、`head_hone/durability`、`head_hone/speed`，翻译复用 Tetra 的 `localizationKey`；requirement 只按改进等级锁，**不要**按模块 key 过滤，否则换上槊头/三尖两刃刀后整条线消失） |
 | `data/tetra/schematics/spear/handle/hone_speed_{1..5}.json` | 矛杆速度打磨配方（改进 `handle_hone/speed`，翻译复用 Tetra 的 `single/handle/hone_speed_N`） |
 | `data/tetra/schematics/spear/head/{serrated,tempered}_{1..3}.json` | 矛头锯齿（流血）/ 淬火（穿甲）升级，`displayType: improvement`；Tetra 原版那 6 份写死 `single/spearhead`，所以自带一份，`localizationKey` 复用 `sword/shared_blade/{serrated,tempered}_N` |

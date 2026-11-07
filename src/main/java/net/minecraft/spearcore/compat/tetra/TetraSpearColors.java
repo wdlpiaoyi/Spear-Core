@@ -30,6 +30,7 @@ public final class TetraSpearColors {
 
     private static final Map<String, Integer> MATERIAL_CACHE = new HashMap<>();
     private static boolean loggedFailure;
+    private static boolean validatedReflection;
 
     private TetraSpearColors() {
     }
@@ -106,6 +107,7 @@ public final class TetraSpearColors {
         if (variantKey == null || variantKey.isEmpty()) {
             return FALLBACK;
         }
+        validateReflection();
         Integer cached = MATERIAL_CACHE.get(variantKey);
         if (cached != null) {
             return cached;
@@ -137,6 +139,43 @@ public final class TetraSpearColors {
         }
         MATERIAL_CACHE.put(variantKey, color);
         return color;
+    }
+
+    /**
+     * 启动后第一次取色时确认「反射读取 Tetra 材料表」这条路仍然可用。
+     *
+     * <p>Tetra 升级后如果 {@code DataManager.materialData} 的结构变了，这里会静默退回白色，
+     * 玩家只看到「所有矛都白了」而没有任何线索；所以拿已知材料 {@code iron} 探一次，失败就明确告警。</p>
+     */
+    private static void validateReflection() {
+        if (validatedReflection) {
+            return;
+        }
+        validatedReflection = true;
+        Object materials = materialDataMap();
+        if (!(materials instanceof java.util.Map<?, ?> map) || map.isEmpty()) {
+            SpearcoreMod.LOGGER.warn(
+                    "[spearcore] 读不到 Tetra 的材料表（DataManager.materialData 结构可能变了），长矛将退回白色杆/头");
+            return;
+        }
+        for (Object value : map.values()) {
+            if ("iron".equals(materialKeyOf(value))) {
+                return;
+            }
+        }
+        SpearcoreMod.LOGGER.warn(
+                "[spearcore] Tetra 材料表里找不到已知材料 iron，材质色可能全部退回白色（Tetra 版本不匹配？）");
+    }
+
+    private static String materialKeyOf(Object material) {
+        if (material == null) {
+            return null;
+        }
+        try {
+            return (String) material.getClass().getField("key").get(material);
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
     }
 
     private static Object materialDataMap() {

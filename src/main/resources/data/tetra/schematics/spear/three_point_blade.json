@@ -2,7 +2,6 @@
     "slots": [ "spear/head" ],
     "materialSlotCount": 1,
     "displayType": "major",
-    "rarity": "hone",
     "glyph": {
         "textureX": 208,
         "textureY": 32
