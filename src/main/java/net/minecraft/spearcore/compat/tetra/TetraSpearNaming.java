@@ -29,7 +29,7 @@ import se.mickelus.tetra.module.data.VariantData;
  */
 public final class TetraSpearNaming {
 
-    /** 带材料前缀的名字，唯一参数是材料名前缀（{@code tetra.material.<材料>.prefix}）。 */
+    /** 普通矛头的带材料前缀名字；槊头/三尖两刃刀用 {@link TetraSpearHead#nameKey()}。 */
     public static final String NAMED_KEY = "item.spearcore.modular_spear.named";
 
     private static boolean loggedFailure;
@@ -50,7 +50,8 @@ public final class TetraSpearNaming {
         Component material = Component.translatableWithFallback(
                 "tetra.material." + materialKey + ".prefix",
                 "tetra.material." + materialKey);
-        return Component.translatable(NAMED_KEY, material);
+        TetraSpearHead head = TetraSpearHead.of(TetraSpearColors.headVariantKey(stack));
+        return Component.translatable(head.nameKey(), material);
     }
 
     /** 矛头槽位当前部件的材料 key：{@code basic_blade/netherite} → {@code netherite}。 */

@@ -1,7 +1,6 @@
 package net.minecraft.spearcore.compat.tetra;
 
 import net.minecraft.spearcore.SpearcoreMod;
-import net.minecraft.spearcore.config.SpearConfig;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.ModList;
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * 模块化长矛（Tetra）的识别与数值层。
  *
- * <p>本类不 import 任何 Tetra 类型：先确认 Tetra 已加载、{@code tetraCompat} 开启，然后才进
+ * <p>本类不 import 任何 Tetra 类型：先确认 Tetra 已加载，然后才进
  * {@link TetraSpearBridge} 读 Tetra API；桥接里任何意外都只记一次日志并当作「不是长矛」，
  * 绝不让兼容层把游戏搞崩。</p>
  *
@@ -40,7 +39,7 @@ public final class TetraSpearProfile {
         if (stack == null || stack.isEmpty()) {
             return null;
         }
-        if (!isTetraLoaded() || !enabled()) {
+        if (!isTetraLoaded()) {
             return null;
         }
         try {
@@ -57,15 +56,6 @@ public final class TetraSpearProfile {
     private static boolean isTetraLoaded() {
         ModList modList = ModList.get();
         return modList != null && modList.isLoaded(TETRA_MOD_ID);
-    }
-
-    private static boolean enabled() {
-        try {
-            return SpearConfig.TETRA_COMPAT.get();
-        } catch (IllegalStateException exception) {
-            // 配置尚未加载（例如数据生成 / 启动早期）时按开启处理。
-            return true;
-        }
     }
 
     /**

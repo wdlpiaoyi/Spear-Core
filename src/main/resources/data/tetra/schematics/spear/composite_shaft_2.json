@@ -1,0 +1,29 @@
+{
+    "slots": [
+        "spear/handle"
+    ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "glyph": {
+        "textureX": 16
+    },
+    "requirement": {
+        "type": "tetra:module",
+        "module": "spear/composite_shaft_1"
+    },
+    "outcomes": [
+        {
+            "material": {
+                "items": [
+                    "minecraft:bamboo"
+                ],
+                "count": 64
+            },
+            "moduleKey": "spear/composite_shaft_2",
+            "moduleVariant": "spear_composite_2/",
+            "requiredTools": {
+                "sword_dig": "minecraft:stone"
+            }
+        }
+    ]
+}

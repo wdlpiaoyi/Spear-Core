@@ -5,14 +5,18 @@
         "tetra:single/spearhead/",
         "tetra:single/shared_head/",
         "tetra:single/shared/",
-        "tetra:shared/"
+        "tetra:shared/",
+        "tetra:spear/head/",
+        "tetra:sword/",
+        "tetra:single/",
+        "tetra:double/"
     ],
     "variants": [
         {
-            "materials": [ "tetra:metal/", "tetra:stone/", "tetra:bone/" ],
+            "materials": [ "tetra:metal/" ],
             "key": "spear_shuo_head/",
             "attributes": {
-                "generic.attack_speed": -1.15,
+                "generic.attack_speed": -1.25,
                 "forge:entity_reach": 0.15
             },
             "aspects": {
@@ -23,10 +27,10 @@
             "durability": -25,
             "extract": {
                 "primaryAttributes": {
-                    "generic.attack_damage": 1.9
+                    "generic.attack_damage": 2.1
                 },
                 "secondaryAttributes": {
-                    "generic.attack_speed": -0.15,
+                    "generic.attack_speed": -0.1,
                     "generic.attack_damage": 0.15
                 },
                 "tertiaryAttributes": {

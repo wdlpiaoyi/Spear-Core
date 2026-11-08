@@ -85,6 +85,15 @@ public interface SpearLike {
         return SpearStyle.VANILLA_SPEAR;
     }
 
+    /**
+     * 左键是否走「挥砍 + 横扫」而不是戳刺。
+     *
+     * <p>只有特定矛头（槊头、三尖两刃刀）为 true；贴图矛与普通矛头仍按 Java 版长矛的戳刺处理。</p>
+     */
+    default boolean slashing() {
+        return false;
+    }
+
     default float effectiveMinRange(Entity entity) {
         return SpearCombat.effectiveMinRange(this, entity);
     }

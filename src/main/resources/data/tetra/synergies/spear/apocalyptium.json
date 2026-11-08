@@ -1,0 +1,12 @@
+[
+    {
+        "improvements": [ "blade/apocalyptium_blade" ],
+        "effects": { "crushing": 2 },
+        "visibilityKey": "blade/apocalyptium_blade"
+    },
+    {
+        "improvements": [ "blade/apocalyptium_hilt" ],
+        "effects": { "quickStrike": 1 },
+        "visibilityKey": "blade/apocalyptium_hilt"
+    }
+]

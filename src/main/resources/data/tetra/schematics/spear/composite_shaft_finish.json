@@ -1,0 +1,35 @@
+{
+    "slots": [
+        "spear/handle"
+    ],
+    "materialSlotCount": 0,
+    "displayType": "major",
+    "glyph": {
+        "textureX": 16
+    },
+    "requirement": {
+        "type": "tetra:and",
+        "requirements": [
+            {
+                "type": "tetra:module",
+                "module": "spear/composite_shaft_3"
+            },
+            {
+                "type": "tetra:improvement",
+                "improvement": "spear_hone/stable",
+                "level": {
+                    "min": 5
+                }
+            }
+        ]
+    },
+    "outcomes": [
+        {
+            "materials": [
+                "tetra:wood/"
+            ],
+            "moduleKey": "spear/composite_shaft",
+            "moduleVariant": "spear_composite_shaft/"
+        }
+    ]
+}

@@ -22,12 +22,12 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 public final class TetraDamageScaling {
 
     /** 配置未加载时的兜底值（与 {@link SpearConfig#TETRA_DAMAGE_SCALE} 的默认值一致）。 */
-    public static final double DEFAULT_DAMAGE_SCALE = 0.5D;
+    public static final double DEFAULT_DAMAGE_SCALE = 1.0D;
 
     private TetraDamageScaling() {
     }
 
-    /** 跟随配置 {@code tetraDamageScale}（0~1，默认 0.5）；配置未加载时回落默认值。 */
+    /** 跟随配置 {@code tetraDamageScale}（0~1，默认 1.0）；配置未加载时回落默认值。 */
     public static double damageScale() {
         try {
             return SpearConfig.TETRA_DAMAGE_SCALE.get();

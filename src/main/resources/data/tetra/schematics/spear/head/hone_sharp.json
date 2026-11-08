@@ -1,0 +1,61 @@
+{
+    "slots": [
+        "spear/head"
+    ],
+    "materialSlotCount": 0,
+    "hone": true,
+    "rarity": "hone",
+    "displayType": "major",
+    "glyph": {
+        "textureX": 208,
+        "textureY": 32
+    },
+    "requirement": {
+        "type": "tetra:and",
+        "requirements": [
+            {
+                "type": "tetra:not",
+                "requirement": {
+                    "type": "tetra:improvement",
+                    "improvement": "spearhead_hone/sharp"
+                }
+            },
+            {
+                "type": "tetra:or",
+                "requirements": [
+                    {
+                        "type": "tetra:improvement",
+                        "improvement": "spearhead_hone/damage",
+                        "level": {
+                            "min": 5
+                        }
+                    },
+                    {
+                        "type": "tetra:improvement",
+                        "improvement": "head_hone/durability",
+                        "level": {
+                            "min": 5
+                        }
+                    },
+                    {
+                        "type": "tetra:improvement",
+                        "improvement": "head_hone/speed",
+                        "level": {
+                            "min": 5
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "outcomes": [
+        {
+            "requiredTools": {
+                "hammer_dig": "minecraft:gold"
+            },
+            "improvements": {
+                "spearhead_hone/sharp": 1
+            }
+        }
+    ]
+}

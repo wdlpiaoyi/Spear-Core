@@ -5,14 +5,18 @@
         "tetra:single/spearhead/",
         "tetra:single/shared_head/",
         "tetra:single/shared/",
-        "tetra:shared/"
+        "tetra:shared/",
+        "tetra:spear/head/",
+        "tetra:sword/",
+        "tetra:single/",
+        "tetra:double/"
     ],
     "variants": [
         {
-            "materials": [ "tetra:metal/", "tetra:gem/", "tetra:bone/" ],
+            "materials": [ "tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/", "tetra:bone/" ],
             "key": "spear_three_point/",
             "attributes": {
-                "generic.attack_speed": -1.45,
+                "generic.attack_speed": -0.65,
                 "forge:entity_reach": 0.3
             },
             "aspects": {
@@ -20,21 +24,21 @@
                 "pointy_weapon": 2,
                 "breakable": 3
             },
-            "durability": -30,
+            "durability": -15,
             "extract": {
                 "primaryAttributes": {
                     "generic.attack_damage": 2.8
                 },
                 "secondaryAttributes": {
-                    "generic.attack_speed": -0.3,
+                    "generic.attack_speed": -0.1,
                     "generic.attack_damage": 0.2
                 },
                 "tertiaryAttributes": {
                     "forge:entity_reach": 0.15
                 },
-                "durability": 0.9,
-                "integrity": -3,
-                "magicCapacity": 2,
+                "durability": 0.95,
+                "integrity": -1,
+                "magicCapacity": 2.5,
                 "glyph": {
                     "textureX": 208,
                     "textureY": 32

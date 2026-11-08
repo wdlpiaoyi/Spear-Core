@@ -22,15 +22,11 @@ punchyStageBridge = true
 # 是否识别 1.21.9+ 格式的长矛材质包，并在内存中改写成 1.20.1 可读格式
 resourcepackCompat = true
 
-# 是否让本模组的 Tetra 模块化长矛（archetype modular_spear）按本模组长矛工作
-# 关掉不影响工作台替换，只是转换出来的物品回到普通 Tetra 工具
-tetraCompat = true
+# Tetra 提供的攻击距离延伸按比例计入本模组长矛射程（0=完全不计，1=原样计入，默认 1.0）
+tetraExtraReachScale = 1.0
 
-# Tetra 提供的攻击距离延伸按比例计入本模组长矛射程（0=完全不计，1=原样计入，默认 0.3）
-tetraExtraReachScale = 0.3
-
-# Tetra 物品自身攻击力按比例计入长矛伤害（0=完全不计，1=原样计入，默认 0.5）
-tetraDamageScale = 0.5
+# Tetra 物品自身攻击力按比例计入长矛伤害（0=完全不计，1=原样计入，默认 1.0）
+tetraDamageScale = 1.0
 ```
 
 前两个开关控制的是（**默认都开着**）：
@@ -51,25 +47,25 @@ tetraDamageScale = 0.5
 本模组**不再劫持 Tetra 自带的单头工具**。取而代之的是一个**独立的模块化长矛**：
 
 - 把本模组七把贴图长矛中的任意一把放进 Tetra 工作台，数据包里的 replacement 会把它替换成 `tetra:dynamic_handheld`，并写入 archetype `modular_spear` 与四个模块槽位。
-- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定/涂层 `spear/binding`（↖）、枪尾配重 `spear/butt`（↙）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件（换部件的配方在 `data/tetra/schematics/spear/*`）；绑定槽还能换成**镶座**（`spear/socket`，吃 `tetra:socket/*` 宝石类材料，宝石自带的属性/效果会并入长矛，和绑定二选一），矛头还能在打磨面板里选一条线打磨：伤害 I~V 或速度 I~V（复用 Tetra 自带的打磨改进，数值与 Tetra 矛头一致）。
+- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定 `spear/binding`（↖）、**枪纂** `spear/butt`（↙，与 Tetra 剑配重同机制）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件；绑定槽还能换成**镶嵌**（`spear/socket`，任何 `tetra:socket/*` 材料都能装，不限于宝石），矛头可在打磨面板里选伤害/耐久/速度任一条（各 I~V），五级后可再磨「尖锐」）。
 - 还有三件**必须先用卷轴解锁**的替换部件（`data/tetra/schematics/spear/{shuo_head,composite_shaft,three_point_blade}.json`，`requirement` 是 `tetra:locked`）：
   - **槊头**（占 `spear/head`）：更沉更长的矛头，伤害与射程更高、攻速更低；
   - **积竹木柲**（占 `spear/handle`）：复合矛杆，更结实也更长；
   - **三尖两刃刀**（占 `spear/head`）：三尖两刃的重型矛头，伤害与射程远超普通矛头，属于「复杂原理图」（卷轴必须**直接摆在加工台上**）。
-  - 卷轴本体是 Tetra 的 `tetra:scroll_rolled`（`TetraSpearScrolls` 拼 NBT），放在工作台旁边即解锁前两件；**目前只能从 Tetra 创造栏拿，没有获取方式**。
+  - 卷轴本体是 Tetra 的 `tetra:scroll_rolled`（`TetraSpearScrolls` 拼 NBT）：工具匠大师卖积竹木柲卷轴，武器匠大师卖槊头卷轴，三尖两刃刀卷轴在四张下界/要塞/末地战利品表里低概率产出；摆在工作台旁（intricate 需正对上方一格）解锁。
 - 只有 archetype 是 `modular_spear` 的物品才会被当成长矛（`TetraSpearProfile.isModularSpearArchetype`）。Tetra 自带的单头工具、普通模块工具一律按普通工具工作。
-- `tetraCompat` 只控制「长矛化」：关掉后工作台替换照样发生（那是数据包行为），但转换出来的物品回到普通 Tetra 工具。
+- Tetra 兼容从 3.4.0 起强制开启：`tetraCompat` 开关已删除，旧配置里残留的该键会被 Forge 忽略；模块化长矛始终按长矛工作。
 
 长矛化之后的行为：
 
 - 左键戳刺、右键蓄力（不再是 Tetra 的投掷），复用同一套长矛姿态、命中判定与动画。
 - 数值由 Tetra 算出的攻击力 / 攻击速度**拟合**，不复刻本模组各材质的固定数值；高数值区间会放缓，避免 overpowered。
-- Tetra 物品自身提供的攻击距离延伸（`forge:entity_reach`，即 `ForgeMod.ENTITY_REACH`）只按 `tetraExtraReachScale`（0~1，默认 0.3）计入长矛射程；其他模组 / 整合包给的 reach 不受影响。
-- Tetra 物品自带的攻击力先按 `tetraDamageScale`（0~1，默认 0.5）打折，再参与长矛伤害计算；玩家基础攻击力、力量效果、附魔与其他来源不受影响。
+- Tetra 物品自身提供的攻击距离延伸（`forge:entity_reach`，即 `ForgeMod.ENTITY_REACH`）只按 `tetraExtraReachScale`（0~1，默认 1.0）计入长矛射程；其他模组 / 整合包给的 reach 不受影响。
+- Tetra 物品自带的攻击力先按 `tetraDamageScale`（0~1，默认 1.0）缩放，再参与长矛伤害计算；玩家基础攻击力、力量效果、附魔与其他来源不受影响。
 - 只适配 **Tetra 1.20.1-6.17.0 及以上**；6.9.0 分支不保证可用。
 - 模块化长矛固定按 **Java 语义**：不受 `jabCooldown`（全背包共享冷却）和 `jabToChargeDelay`（戳刺后摇）控制——这两项依赖「同一物品实例」，而 Tetra 每种模块组合都是不同实例。
 - 指向方块 / 挥空时播放长矛攻击音效；创造模式左键不破坏方块（`Item#canAttackBlock` 返回 `false`），因此 WieldYourPower 之类的「强制破坏」也不会排队。
-- 外观固定是 `assets/spearcore/models/item/tetra_spear.json`（复用贴图长矛的四张贴图），杆与矛头分别按 Tetra 材料 tint（`TetraSpearColors`，tint 0 = `spear/handle`、tint 1 = `spear/head`）；放在 Tetra 工作台上是平躺的（模型声明 `isGui3d = false`）。物品名按 Tetra 的命名规则拼「材料 + 矛」：矛头材料来自 `spear/head` 当前部件，材料前缀用 Tetra 自己的 `tetra.material.<材料>.prefix`，所以铁矛头显示「铁矛」、下界合金矛头显示「下界合金矛」；材料读不到时回退成「矛」。
+- 外观是三套模型（默认 / 槊头 / 三尖两刃刀，`assets/spearcore/models/item/tetra_spear{,_shuo,_three}.json`），只换头部那一层，杆贴图共用；放在 Tetra 工作台上是平躺的。物品名按 Tetra 的命名规则拼「材料 + 矛 / 槊 / 刃」：铁矛头显示「铁矛」、槊头「铁槊」、三尖两刃刀「铁刃」；材料读不到时回退成「矛」。
 - 槽位挂的是本模组自带的矛模块（`data/tetra/modules/spear/{head,handle,binding,butt,socket,shuo_head,composite_shaft,three_point_blade}.json`），不再借用 Tetra 剑的模块，物品本身不是剑。工作台里的槽位坐标写在 `data/tetra/archetypes/modular_spear.json`，是 `GuiModuleOffsets` 的像素偏移。
 
 ### 模组兼容（Avaritia Spear）

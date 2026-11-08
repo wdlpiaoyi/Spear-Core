@@ -45,17 +45,17 @@ public final class TetraSpearScrolls {
 
     /** 槊头：重装长枪矛头，普通卷轴（附近即可）。 */
     public static final Definition SHUO_HEAD = new Definition(
-            "spear/shuo_head", false, 1, "c8c8c8",
+            "spear/shuo_head", false, 2, "b58a4a",
             new int[]{2, 3, 5, 6}, new String[]{"tetra:spear/shuo_head"});
 
     /** 积竹木柲：复合层压矛杆，普通卷轴。 */
     public static final Definition COMPOSITE_SHAFT = new Definition(
-            "spear/composite_shaft", false, 0, "d8b070",
-            new int[]{3, 4, 2, 7}, new String[]{"tetra:spear/composite_shaft"});
+            "spear/composite_shaft", false, 1, "8fa24a",
+            new int[]{3, 4, 2, 7}, new String[]{"tetra:spear/composite_shaft_1"});
 
     /** 三尖两刃刀：二郎神制式，复杂原理图，必须摆在加工台正上方。 */
     public static final Definition THREE_POINT_BLADE = new Definition(
-            "spear/three_point_blade", true, 2, "c0c0ff",
+            "spear/three_point_blade", true, 0, "7a6fd0",
             new int[]{1, 7, 6, 8}, new String[]{"tetra:spear/three_point_blade"});
 
     public static final List<Definition> ALL = List.of(SHUO_HEAD, COMPOSITE_SHAFT, THREE_POINT_BLADE);

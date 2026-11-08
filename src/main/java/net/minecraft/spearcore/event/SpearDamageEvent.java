@@ -10,7 +10,7 @@ import net.minecraftforge.eventbus.api.Event;
  *   - 最终伤害 = 基础计算伤害 × 对应属性值 × multiplier
  */
 public class SpearDamageEvent extends Event {
-    public enum AttackType { STAB, CHARGE }
+    public enum AttackType { STAB, CHARGE, SLASH }
 
     private final LivingEntity attacker;
     private final Entity target;

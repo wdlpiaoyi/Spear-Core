@@ -1,0 +1,37 @@
+{
+    "slots": [
+        "spear/handle"
+    ],
+    "materialSlotCount": 0,
+    "hone": true,
+    "rarity": "hone",
+    "displayType": "major",
+    "glyph": {
+        "textureX": 16,
+        "textureY": 240
+    },
+    "requirement": {
+        "type": "tetra:and",
+        "requirements": [
+            {
+                "type": "tetra:module",
+                "module": "spear/composite_shaft_3"
+            },
+            {
+                "type": "tetra:improvement",
+                "improvement": "spear_hone/stable",
+                "level": 2
+            }
+        ]
+    },
+    "outcomes": [
+        {
+            "requiredTools": {
+                "hammer_dig": "minecraft:gold"
+            },
+            "improvements": {
+                "spear_hone/stable": 3
+            }
+        }
+    ]
+}

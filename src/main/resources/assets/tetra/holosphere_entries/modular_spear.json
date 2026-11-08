@@ -1,0 +1,10 @@
+{
+    "item": "tetra:dynamic_handheld",
+    "archetype": "modular_spear",
+    "icon": {
+        "textureLocation": "spearcore:textures/item/tetra_spear.png",
+        "textureX": 0,
+        "textureY": 0
+    },
+    "position": 8
+}

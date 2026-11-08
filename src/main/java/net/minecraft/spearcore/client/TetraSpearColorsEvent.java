@@ -13,8 +13,9 @@ import net.minecraftforge.fml.common.Mod;
 /**
  * 物品颜色与材质色缓存的事件入口。
  *
- * <p>先用 {@code ModList} 守卫，确认装了 Tetra 才触碰 {@link TetraColorRegistration} / 清缓存，
- * 保证未安装 Tetra 时客户端不会加载任何 {@code se.mickelus.tetra.*} 类。</p>
+ * <p>这个类是客户端 {@code @Mod.EventBusSubscriber}，FML 会主动加载；所以这里**只用反射**接触
+ * {@code TetraColorRegistration} / {@code TetraSpearColors}——它们 import 了 Tetra 类，
+ * 未装 Tetra 的客户端如果被直接引用，会在类校验阶段 {@code NoClassDefFoundError}（3.4.0 踩过）。</p>
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class TetraSpearColorsEvent {
@@ -27,13 +28,20 @@ public final class TetraSpearColorsEvent {
         if (!ModList.get().isLoaded("tetra")) {
             return;
         }
-        TetraColorRegistration.register(event);
+        try {
+            Class<?> registration = Class.forName(
+                    "net.minecraft.spearcore.client.TetraColorRegistration");
+            registration.getMethod("register", RegisterColorHandlersEvent.Item.class)
+                    .invoke(null, event);
+        } catch (Throwable ignored) {
+            // 兼容层失败只是没有按材料着色，不影响游戏。
+        }
     }
 
     /**
      * 资源重载（包括 KubeJS / Tetra 的数据包热重载）时清掉材质色缓存。
      *
-     * <p>不清的话，改过材料 tint 的整合包要重启游戏才生效；普通玩家看不到，但作者调试时会以为改坏了。</p>
+     * <p>不清的话，改过材料 tint 的整合包要重启游戏才生效。</p>
      */
     @SubscribeEvent
     public static void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
@@ -47,8 +55,14 @@ public final class TetraSpearColorsEvent {
             }
 
             @Override
-            protected void apply(Void ignored, ResourceManager resourceManager, ProfilerFiller profiler) {
-                net.minecraft.spearcore.compat.tetra.TetraSpearColors.clearCache();
+            protected void apply(Void value, ResourceManager resourceManager, ProfilerFiller profiler) {
+                try {
+                    Class<?> colors = Class.forName(
+                            "net.minecraft.spearcore.compat.tetra.TetraSpearColors");
+                    colors.getMethod("clearCache").invoke(null);
+                } catch (Throwable throwable) {
+                    // 缓存清理失败只影响热重载后的颜色。
+                }
             }
         });
     }

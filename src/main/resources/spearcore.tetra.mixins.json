@@ -8,7 +8,10 @@
   "mixins": [
     "ItemStackTetraMixin",
     "ItemTetraCanAttackBlockMixin",
-    "ModularItemTetraEnchantMixin"
+    "ModularItemTetraEnchantMixin",
+    "ModuleRequirementSpearMixin",
+    "ItemModuleRepairMixin",
+    "ModularItemSynergyMixin"
   ],
   "client": [
     "ItemRendererTetraModelMixin",

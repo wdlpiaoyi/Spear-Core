@@ -8,6 +8,7 @@ import net.minecraft.spearcore.event.SpearDamageEvent;
 import net.minecraft.spearcore.event.SpearHitEvent;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.item.SpearLike;
+import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.spearcore.util.SpearCooldownAccessor;
 import net.minecraft.spearcore.util.SpearCondition;
 import net.minecraft.spearcore.util.SpearRules;
@@ -52,6 +53,20 @@ public final class SpearCombat {
     /** 蓄力阶段缓存，用于阶段变更检测。 */
     private static final WeakHashMap<LivingEntity, SpearChargePhaseEvent.Phase> PHASE_CACHE =
             new WeakHashMap<>();
+
+    /**
+     * 「虚拟原版攻击」的重入闸门。
+     *
+     * <p>蓄力命中后我们会补一次 {@code Player#attack(target)}，让只挂在原版攻击上的 mod
+     * （例如 fantasy_ending 的 Void Collapsing）能看到这次攻击；本闸门防止我们自己的
+     * {@code SpearAttackHandler} 在这条路径上再跑一遍戳刺、造成双倍伤害。</p>
+     */
+    private static final ThreadLocal<Boolean> VIRTUAL_ATTACK = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    /** 每次蓄力只补一次虚拟攻击；起手时置位，第一次命中后消费掉。 */
+    private static final WeakHashMap<LivingEntity, Boolean> VIRTUAL_PENDING = new WeakHashMap<>();
+
+    private static boolean virtualAttackFailureLogged;
 
     private SpearCombat() {
     }
@@ -168,8 +183,16 @@ public final class SpearCombat {
                     SpearItem.SlotUtil.slotForHand(user, user.getUsedItemHand()),
                     target, damage, canDamage, canKnockback, canDismount, user,
                     SpearDamageEvent.AttackType.CHARGE, spear);
-            if (applied && user instanceof SpearCooldownAccessor accessor) {
-                accessor.RememberStabbedEntity(living);
+            if (applied) {
+                if (user instanceof SpearCooldownAccessor accessor) {
+                    accessor.RememberStabbedEntity(living);
+                }
+                if (spear.style() == SpearStyle.MODULAR_3D) {
+                    SpearLikeSupport.tetraOnHit(stack, user, living);
+                }
+                if (user instanceof Player player && VIRTUAL_PENDING.remove(player) != null) {
+                    virtualAttack(player, target);
+                }
             }
             hitSomething |= applied;
         }
@@ -201,6 +224,10 @@ public final class SpearCombat {
         }
         player.startUsingItem(hand);
         playUseSound(player, spear);
+        VIRTUAL_PENDING.put(player, Boolean.TRUE);
+        if (spear.style() == SpearStyle.MODULAR_3D) {
+            SpearLikeSupport.tetraOnUse(stack, player);
+        }
         return InteractionResultHolder.consume(stack);
     }
 
@@ -300,6 +327,9 @@ public final class SpearCombat {
             if (target.hurt(spearSource, finalDamage)) {
                 if (living != null) {
                     applyOnHitEnchantments(attacker, living);
+                    if (spear.style() == SpearStyle.MODULAR_3D) {
+                        SpearLikeSupport.tetraOnHit(stack, attacker, living);
+                    }
                 }
                 // 与蓄力路径一致，命中后把效果转发给 hurtEnemy 钩子
                 if (living != null && attacker instanceof Player player) {
@@ -340,6 +370,50 @@ public final class SpearCombat {
         }
         SpearItem.jerotesLungeForwardMaybe(attacker);
         return hitSomething;
+    }
+
+    /**
+     * 挥砍命中后的横扫（槊头 / 三尖两刃刀），走 Tetra 的横扫实现（自带横扫之刃 III）。
+     */
+    public static void slashSweep(Player player, ItemStack stack, Entity target, SpearLike spear) {
+        if (player.level().isClientSide || target == null) {
+            return;
+        }
+        LivingEntity living = resolveLivingTarget(target);
+        if (living == null) {
+            return;
+        }
+        SpearLikeSupport.tetraSlashSweep(player, stack, living, 3);
+    }
+
+    /** 当前是否处于「虚拟原版攻击」里；{@code SpearAttackHandler} 用它避免重复结算。 */
+    public static boolean inVirtualAttack() {
+        return VIRTUAL_ATTACK.get();
+    }
+
+    /**
+     * 补一次原版 {@code Player#attack}，只为让挂在原版攻击上的 mod 钩子/事件生效。
+     *
+     * <p>伤害已经由长矛自己的流程结算，所以 {@code SpearAttackHandler} 会在这条路径上取消 Forge
+     * {@code AttackEntityEvent}，原版本体伤害不会重复；其它 mod 在 {@code Player#attack} 头部的
+     * mixin（fantasy_ending 等）会照常触发。</p>
+     */
+    public static void virtualAttack(Player player, Entity target) {
+        if (player == null || target == null || player.level().isClientSide) {
+            return;
+        }
+        VIRTUAL_ATTACK.set(Boolean.TRUE);
+        try {
+            player.attack(target);
+        } catch (Throwable throwable) {
+            if (!virtualAttackFailureLogged) {
+                virtualAttackFailureLogged = true;
+                net.minecraft.spearcore.SpearcoreMod.LOGGER.warn(
+                        "[spearcore] 虚拟原版攻击失败，mod 攻击钩子可能收不到蓄力命中", throwable);
+            }
+        } finally {
+            VIRTUAL_ATTACK.set(Boolean.FALSE);
+        }
     }
 
     public static boolean canPlayerPerformStab(Player player, ItemStack stack, SpearLike spear) {

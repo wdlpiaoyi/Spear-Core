@@ -1,5 +1,7 @@
 {
-    "slots": [ "spear/head" ],
+    "slots": [
+        "spear/head"
+    ],
     "materialSlotCount": 1,
     "displayType": "major",
     "glyph": {
@@ -27,7 +29,13 @@
     },
     "outcomes": [
         {
-            "materials": [ "tetra:metal/", "tetra:gem/", "tetra:bone/" ],
+            "materials": [
+                "tetra:wood/",
+                "tetra:stone/",
+                "tetra:metal/",
+                "tetra:gem/",
+                "tetra:bone/"
+            ],
             "moduleKey": "spear/three_point_blade",
             "moduleVariant": "spear_three_point/"
         }

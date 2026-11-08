@@ -1,15 +1,26 @@
 {
     "type": "tetra:basic_major_module",
-    "slots": [ "spear/handle" ],
+    "slots": [
+        "spear/handle"
+    ],
     "renderLayer": "lower",
     "improvements": [
         "tetra:single/shared_handle/",
         "tetra:single/shared/",
-        "tetra:shared/"
+        "tetra:shared/",
+        "tetra:spear/handle/",
+        "tetra:sword/",
+        "tetra:single/",
+        "tetra:double/"
     ],
     "variants": [
         {
-            "materials": [ "tetra:wood/", "tetra:metal/", "tetra:bone/", "tetra:rod/" ],
+            "materials": [
+                "tetra:wood/",
+                "tetra:metal/",
+                "tetra:bone/",
+                "tetra:rod/"
+            ],
             "key": "spear_handle/",
             "attributes": {
                 "generic.attack_speed": -1.1,
@@ -35,8 +46,17 @@
                 "glyph": {
                     "textureX": 16
                 },
-                "availableTextures": [ "default", "metal", "bone", "bright" ],
-                "models": [ { "location": "tetra:item/module/single/handle/long/" } ]
+                "availableTextures": [
+                    "default",
+                    "metal",
+                    "bone",
+                    "bright"
+                ],
+                "models": [
+                    {
+                        "location": "tetra:item/module/single/handle/long/"
+                    }
+                ]
             }
         }
     ]

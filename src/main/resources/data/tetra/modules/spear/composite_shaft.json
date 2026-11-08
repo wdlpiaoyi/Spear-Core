@@ -1,19 +1,27 @@
 {
     "type": "tetra:basic_major_module",
-    "slots": [ "spear/handle" ],
+    "slots": [
+        "spear/handle"
+    ],
     "renderLayer": "lower",
     "improvements": [
         "tetra:single/shared_handle/",
         "tetra:single/shared/",
-        "tetra:shared/"
+        "tetra:shared/",
+        "tetra:spear/handle/",
+        "tetra:sword/",
+        "tetra:single/",
+        "tetra:double/"
     ],
     "variants": [
         {
-            "materials": [ "tetra:wood/", "tetra:rod/", "tetra:bone/" ],
+            "materials": [
+                "tetra:wood/"
+            ],
             "key": "spear_composite_shaft/",
             "attributes": {
-                "generic.attack_speed": -0.95,
-                "forge:entity_reach": 0.6
+                "generic.attack_speed": -2.2,
+                "forge:entity_reach": 1.0
             },
             "aspects": {
                 "block_breaker": 1,
@@ -22,19 +30,31 @@
             "durability": 10,
             "extract": {
                 "primaryAttributes": {
-                    "forge:entity_reach": 0.12
+                    "forge:entity_reach": 0.2
                 },
                 "secondaryAttributes": {
-                    "generic.attack_speed": -0.15
+                    "generic.attack_speed": -0.5
                 },
-                "durability": 0.4,
-                "integrity": 1.2,
-                "magicCapacity": 1,
+                "tertiaryAttributes": {
+                    "forge:entity_reach": 0.4
+                },
+                "durability": 0.5,
+                "integrity": 5.0,
+                "magicCapacity": 2,
                 "glyph": {
                     "textureX": 16
                 },
-                "availableTextures": [ "default", "metal", "bone", "bright" ],
-                "models": [ { "location": "tetra:item/module/single/handle/long/" } ]
+                "availableTextures": [
+                    "default",
+                    "metal",
+                    "bone",
+                    "bright"
+                ],
+                "models": [
+                    {
+                        "location": "tetra:item/module/single/handle/long/"
+                    }
+                ]
             }
         }
     ]

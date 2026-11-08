@@ -45,7 +45,32 @@ final class TetraSpearBridge {
         if (!(tetraReachBonus > 0.0D)) {
             tetraReachBonus = reachFromItemModifiers(stack);
         }
-        return TetraSpearStats.fit(attackDamage, attackSpeed, tetraReachBonus);
+        TetraSpearHead head = head(stack);
+        return TetraSpearStats.fit(attackDamage, attackSpeed, tetraReachBonus,
+                head.slashing(), sharpBonus(modular, stack));
+    }
+
+    /** 矛头形态（渲染、命名、行为共用）；读不到按普通矛头处理。 */
+    static TetraSpearHead head(ItemStack stack) {
+        return TetraSpearHead.of(TetraSpearColors.headVariantKey(stack));
+    }
+
+    /**
+     * 「尖锐」打磨的蓄力系数加成：Tetra 的改进列表里有 {@code spearhead_hone/sharp} 就是 +5%。
+     *
+     * <p>改进是 Tetra 数据（{@code data/tetra/improvements/spear/head/sharp.json}），这里只读不改。</p>
+     */
+    private static float sharpBonus(IModularItem modular, ItemStack stack) {
+        try {
+            for (var improvement : modular.getImprovements(stack)) {
+                if (improvement != null && "spearhead_hone/sharp".equals(improvement.key)) {
+                    return 0.05F;
+                }
+            }
+        } catch (Throwable ignored) {
+            // 改进数据不完整时按没有打磨处理，不影响基础行为。
+        }
+        return 0.0F;
     }
 
     /**

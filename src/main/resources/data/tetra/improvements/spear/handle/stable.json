@@ -1,0 +1,42 @@
+[
+    {
+        "key": "spear_hone/stable",
+        "level": 1,
+        "integrity": -1,
+        "attributes": {
+            "**generic.attack_speed": 0.04
+        }
+    },
+    {
+        "key": "spear_hone/stable",
+        "level": 2,
+        "integrity": -1,
+        "attributes": {
+            "**generic.attack_speed": 0.08
+        }
+    },
+    {
+        "key": "spear_hone/stable",
+        "level": 3,
+        "integrity": -1,
+        "attributes": {
+            "**generic.attack_speed": 0.12
+        }
+    },
+    {
+        "key": "spear_hone/stable",
+        "level": 4,
+        "integrity": -1,
+        "attributes": {
+            "**generic.attack_speed": 0.16
+        }
+    },
+    {
+        "key": "spear_hone/stable",
+        "level": 5,
+        "integrity": -1,
+        "attributes": {
+            "**generic.attack_speed": 0.2
+        }
+    }
+]

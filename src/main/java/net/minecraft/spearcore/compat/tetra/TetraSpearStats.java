@@ -25,7 +25,7 @@ import java.util.Optional;
  *   <li>蓄力阶段（前摇 / 击落 / 击退 / 伤害）以本模组铁矛的秒数为基准，按 duration 等比缩放。</li>
  *   <li>击落骑手的速度阈值同样随 soft 值从 14 往 9 收，最低不低于下界合金的 9。</li>
  *   <li>Tetra 自己贡献的额外攻击距离（长手柄 / 插槽等）只按配置 {@code tetraExtraReachScale}
- *       （默认 0.3）计入本模组长矛射程，其他来源的 reach 不受影响。</li>
+ *       （默认 1.0，可调小）计入本模组长矛射程，其他来源的 reach 不受影响。</li>
  * </ul>
  *
  * <p>这样同一个公式对「原版材料 + 模组材料 + 附属新加材料」都成立，也不会因为某个材料数值特别高而失控。
@@ -58,7 +58,7 @@ public final class TetraSpearStats implements SpearLike {
     private static final float DISMOUNT_SPEED_MIN = 9.0F;
 
     /** 配置未加载时的兜底值（与 {@link SpearConfig#TETRA_EXTRA_REACH_SCALE} 的默认值一致）。 */
-    private static final double DEFAULT_EXTRA_REACH_SCALE = 0.3D;
+    public static final double DEFAULT_EXTRA_REACH_SCALE = 1.0D;
 
     private final float attackDuration;
     private final float damageMultiplier;
@@ -73,12 +73,15 @@ public final class TetraSpearStats implements SpearLike {
     /** Tetra 自身贡献的额外攻击距离（forge:entity_reach 的 ADDITION 之和）。 */
     private final double tetraReachBonus;
 
+    /** 左键是否走「挥砍 + 横扫」（槊头 / 三尖两刃刀）。 */
+    private final boolean slashing;
+
     private TetraSpearStats(float attackDuration, float damageMultiplier,
                             int delayTicks,
                             Optional<SpearCondition> dismountConditions,
                             Optional<SpearCondition> knockbackConditions,
                             Optional<SpearCondition> damageConditions,
-                            double tetraReachBonus) {
+                            double tetraReachBonus, boolean slashing) {
         this.attackDuration = attackDuration;
         this.damageMultiplier = damageMultiplier;
         this.delayTicks = delayTicks;
@@ -86,6 +89,7 @@ public final class TetraSpearStats implements SpearLike {
         this.knockbackConditions = knockbackConditions;
         this.damageConditions = damageConditions;
         this.tetraReachBonus = tetraReachBonus;
+        this.slashing = slashing;
         this.dismountEndTick = delayTicks + dismountConditions.map(SpearCondition::maxDurationTicks).orElse(0);
         this.knockbackEndTick = delayTicks + knockbackConditions.map(SpearCondition::maxDurationTicks).orElse(0);
         this.damageEndTick = delayTicks + damageConditions.map(SpearCondition::maxDurationTicks).orElse(0);
@@ -98,7 +102,7 @@ public final class TetraSpearStats implements SpearLike {
      * @param attackSpeed  Tetra 的 {@code Attributes.ATTACK_SPEED} 总值
      */
     public static TetraSpearStats fit(double attackDamage, double attackSpeed) {
-        return fit(attackDamage, attackSpeed, 0.0D);
+        return fit(attackDamage, attackSpeed, 0.0D, false, 0.0F);
     }
 
     /**
@@ -109,13 +113,28 @@ public final class TetraSpearStats implements SpearLike {
      * @param tetraReachBonus Tetra 自己贡献的 {@code forge:entity_reach} 加成（长手柄 / 插槽等）
      */
     public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus) {
+        return fit(attackDamage, attackSpeed, tetraReachBonus, false, 0.0F);
+    }
+
+    /**
+     * 从 Tetra 算好的属性拟合一份长矛行为，并带上矛头形态与「尖锐」打磨加成。
+     *
+     * @param attackDamage    Tetra 的 {@code Attributes.ATTACK_DAMAGE} 总值
+     * @param attackSpeed     Tetra 的 {@code Attributes.ATTACK_SPEED} 总值
+     * @param tetraReachBonus Tetra 自己贡献的 {@code forge:entity_reach} 加成（长手柄 / 插槽等）
+     * @param slashing        左键是否挥砍（槊头 / 三尖两刃刀）
+     * @param sharpBonus      蓄力伤害系数加成（「尖锐」打磨：0.05）
+     */
+    public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus,
+                                      boolean slashing, float sharpBonus) {
         float duration = clamp(1.10F + 0.10F * ((float) attackSpeed + 2.0F), MIN_DURATION, MAX_DURATION);
 
         float damage = (float) attackDamage;
         float soft = damage <= SOFT_CAP
                 ? damage
                 : SOFT_CAP + (damage - SOFT_CAP) / (1.0F + (damage - SOFT_CAP) / 8.0F);
-        float multiplier = clamp(0.55F + 0.09F * soft, MIN_MULTIPLIER, MAX_MULTIPLIER);
+        float multiplier = clamp(0.55F + 0.09F * soft, MIN_MULTIPLIER, MAX_MULTIPLIER)
+                * (1.0F + Math.max(0.0F, sharpBonus));
 
         float scale = duration / BASE_DURATION;
         int delay = Math.round(BASE_DELAY_SEC * scale * 20.0F);
@@ -128,12 +147,12 @@ public final class TetraSpearStats implements SpearLike {
                 SpearCondition.ofAttackerSpeed(Math.round(BASE_DISMOUNT_SEC * scale * 20.0F), dismountSpeed),
                 SpearCondition.ofAttackerSpeed(Math.round(BASE_KNOCKBACK_SEC * scale * 20.0F), 5.1F),
                 SpearCondition.ofRelativeSpeed(Math.round(BASE_DAMAGE_SEC * scale * 20.0F), 4.6F),
-                Math.max(0.0D, tetraReachBonus)
+                Math.max(0.0D, tetraReachBonus), slashing
         );
     }
 
     /**
-     * Tetra 额外攻击距离的计入比例，跟随配置 {@code tetraExtraReachScale}（0~1，默认 0.3）。
+     * Tetra 额外攻击距离的计入比例，跟随配置 {@code tetraExtraReachScale}（0~1，默认 1.0）。
      * 配置未加载时回落默认值，避免早期调用抛出。
      */
     static double reachScale() {
@@ -291,5 +310,10 @@ public final class TetraSpearStats implements SpearLike {
     @Override
     public SpearStyle style() {
         return SpearStyle.MODULAR_3D;
+    }
+
+    @Override
+    public boolean slashing() {
+        return slashing;
     }
 }

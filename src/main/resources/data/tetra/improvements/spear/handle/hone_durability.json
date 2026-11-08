@@ -1,0 +1,31 @@
+[
+    {
+        "key": "handle_hone/durability",
+        "level": 1,
+        "durability": 25
+    },
+    {
+        "key": "handle_hone/durability",
+        "level": 2,
+        "durability": 50,
+        "integrity": -1
+    },
+    {
+        "key": "handle_hone/durability",
+        "level": 3,
+        "durability": 100,
+        "integrity": -1
+    },
+    {
+        "key": "handle_hone/durability",
+        "level": 4,
+        "durability": 175,
+        "integrity": -2
+    },
+    {
+        "key": "handle_hone/durability",
+        "level": 5,
+        "durability": 275,
+        "integrity": -2
+    }
+]

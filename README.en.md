@@ -132,14 +132,11 @@ punchyStageBridge = true
 # Whether to recognise 1.21.9+ spear resource packs and patch them to pack_format 15 in memory
 resourcepackCompat = true
 
-# Whether this mod's Tetra modular spear should work like this mod's spears (does not affect the workbench replacement)
-tetraCompat = true
+# Scale Tetra's extra attack range into this mod's spear reach (0 = ignored, 1 = full, default 1.0)
+tetraExtraReachScale = 1.0
 
-# Scale Tetra's extra attack range into this mod's spear reach (0 = ignored, 1 = full, default 0.3)
-tetraExtraReachScale = 0.3
-
-# Scale the Tetra item's own attack damage into spear damage (0 = ignored, 1 = full, default 0.5)
-tetraDamageScale = 0.5
+# Scale the Tetra item's own attack damage into spear damage (0 = ignored, 1 = full, default 1.0)
+tetraDamageScale = 1.0
 ```
 
 The first two switches only control the **creative tab and mob equipment**; crafting, `/give` and other ways of obtaining spears still work.
@@ -153,21 +150,24 @@ There are 17 more per-behaviour switches under `[behavior]` (all default to `JAV
 This mod **no longer turns Tetra's own single-headed tools (spearhead + long handle) into spears**. Instead it adds a **new modular spear**: drop one of this mod's spears into a Tetra workbench and it is replaced by a `tetra:dynamic_handheld` modular item (archetype `modular_spear`); from then on it left-click jabs and right-click charges (instead of throwing), reusing the same poses, hit detection and animations.
 
 - Requires **Tetra 1.20.1-6.17.0 or newer**.
-- Its four slots are **this mod's own spear parts**: spearhead `spear/head` (↗), shaft `spear/handle` (↘), binding `spear/binding` (↖) and counterweight `spear/butt` (↙). The conversion takes the spearhead and counterweight material from oak / stone / copper / iron / gold / diamond / netherite, uses a wooden stick for the shaft and string for the binding; afterwards you can swap any part with materials at the workbench. The binding slot can also be turned into a **socket** (takes `tetra:socket/*` gem materials; the gem's attributes and effects are carried by the spear, mutually exclusive with the binding).
-- Three special parts must be unlocked with a **scroll**: the **shuo head** (spearhead slot; a heavier, longer head), the **composite shaft** (shaft slot; a laminated bamboo shaft, longer and tougher) and the **three-point blade** (spearhead slot; far more damage and reach than a plain head). Scrolls are Tetra scroll items — a plain scroll unlocks its schematic while placed near the workbench; the three-point blade is an *intricate schematic*, so its scroll must sit **directly above the workbench** (one block up). For now the scrolls are only available from Tetra's creative tab.
-- Stats are fitted from Tetra's attack damage / speed with a soft cap; the Tetra item's own damage is first scaled by `tetraDamageScale`.
-- Tools can be honed: once the spearhead has seen enough use, pick one of three lines in Tetra's honing panel — **damage I~V**, **durability I~V** or **speed I~V**; the shaft has its own **speed I~V** line (reusing Tetra's own honing improvements, including their icons and translations).
+- Its four slots are **this mod's own spear parts**: spearhead `spear/head` (↗), shaft `spear/handle` (↘), binding `spear/binding` (↖) and **butt cap** `spear/butt` (↙, same mechanism as Tetra's sword counterweight). The conversion takes the spearhead and butt material from oak / stone / copper / iron / gold / diamond / netherite, uses a wooden stick for the shaft and string for the binding; afterwards you can swap any part with materials at the workbench. The binding slot can also be turned into an **inlay** (any `tetra:socket/*` material, not just gems; its attributes and effects carry over, mutually exclusive with the binding).
+- Three special parts must be unlocked with a **scroll**: the **shuo head** (spearhead slot; left-click becomes a sweep with built-in Sweeping Edge, higher damage and reach but slower; metals only), the **composite shaft** (shaft slot; planks → 1/3 → 64 bamboo → 2/3 → 64 vines → 3/3 → Stability I~V → finish) and the **three-point blade** (spearhead slot; sweep + built-in Sweeping Edge, and damage/speed/durability/reach all above a plain head; any material). Scrolls are Tetra scroll items — a plain scroll unlocks its schematic while placed near the workbench; the three-point blade is an *intricate schematic*, so its scroll must sit **directly above the workbench** (one block up).
+- Scroll sources: master toolsmiths sell the composite shaft scroll, master weaponsmiths sell the shuo head scroll; the three-point blade scroll can be found in nether fortress, bastion treasure, stronghold library and end city chests.
+- Stats are fitted from Tetra's attack damage / speed with a soft cap; the Tetra item's own damage is scaled by `tetraDamageScale` (default 1.0, no scaling).
+- Tools can be honed: on the spearhead pick one of three lines — **damage I~V**, **durability I~V** or **speed I~V**; after any line reaches V, **Sharp** becomes available (charged damage +5%). The shaft has **speed I~V** and **durability I~V**, and the 3/3 composite shaft has **Stability I~V** (level V unlocks the finish).
 - The spearhead can also take two upgrade lines in the workbench: **serrated I~III** (attacks may make the target bleed) and **tempered I~III** (attacks partially ignore armor), reusing Tetra's own improvements.
-- The shuo head and the three-point blade have their own head textures (the shaft texture is shared — the head layer covers the shaft, so a new head never needs a new shaft texture). Those are currently placeholder copies of the plain head texture and will be redrawn later.
-- Tetra's extra reach (`forge:entity_reach`) is scaled by `tetraExtraReachScale`.
+- The shuo head and the three-point blade have their own head textures (the shaft texture is shared — the head layer covers the shaft, so a new head never needs a new shaft texture).
+- Tetra's extra reach (`forge:entity_reach`) is scaled by `tetraExtraReachScale` (default 1.0, taken as-is).
 - Vanilla enchantments supported by this mod and Lunge work on the modular spear too; enchanted books can also be applied at an anvil, as long as every enchantment on the book is in this mod's whitelist (Sweeping Edge and friends stay blocked).
 - On-hit enchantment effects fire as in vanilla: Fire Aspect ignites, and `doPostHurt` effects such as Bane of Arthropods / Frost Aspect run through `EnchantmentHelper`.
 - Weapon enchantments added by other mods (e.g. Enigmatic Legacy's Slayer) also work on spears: the mod uses its own hidden probe sword to decide whether an enchantment applies to a standard weapon, so it does not depend on diamond swords being present. Player spear hits use the vanilla `player_attack` damage type (the spear death message is preserved), so bonuses gated on a real player attack are applied; non-whitelisted vanilla enchantments (e.g. Sweeping Edge) stay excluded.
 - Mods that deal a pre-hit chunk of damage in the same tick (e.g. fantasy_ending's Void Collapsing) no longer swallow the spear's own damage.
 - Fixed Java semantics: not affected by `jabCooldown` / `jabToChargeDelay`.
-- The look is this mod's own texture-based spear model (reusing the four `tetra_spear*` textures) with handle and head tinted from Tetra materials; the item name follows Tetra's naming rule — material + "Spear" (e.g. Iron Spear, Netherite Spear) — and it lies flat on the Tetra workbench.
+- The look is this mod's own texture-based spear model, with handle and head tinted from Tetra materials; a plain head reads "material + Spear", the shuo head "material + Shuo", the three-point blade "material + Blade", and it lies flat on the Tetra workbench.
 - The slots carry this mod's own spear modules (`data/tetra/modules/spear/*`) instead of Tetra's sword modules, and **the item is not a sword**: combat, enchantments and damage are all spear behaviour.
-- Turning `tetraCompat` off keeps the workbench replacement (that is datapack behaviour) but the converted item falls back to a plain Tetra tool.
+- Tetra compatibility is always on (the `tetraCompat` switch was removed in 3.4.0).
+- Workbench repair: any spear of any material can be repaired at a Tetra workbench, consuming that material's own item.
+- Third-party Tetra integration: crafting effects/data gated on `sword/*`, `single/*` or `double/*` modules now apply to the spear when the slot role matches (blade↔head, handle↔shaft, guard↔binding, counterweight↔butt) — e.g. GoetyRevelation's Apocalyptium Ingot (Smite 10 on the head, Reality Piercer 10 on the shaft).
 - This compatibility is still being tuned; report pose/stat issues together with your Tetra version.
 
 ### Avaritia Spear

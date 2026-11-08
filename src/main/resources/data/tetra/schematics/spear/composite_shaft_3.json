@@ -1,0 +1,31 @@
+{
+    "slots": [
+        "spear/handle"
+    ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "glyph": {
+        "textureX": 16
+    },
+    "requirement": {
+        "type": "tetra:module",
+        "module": "spear/composite_shaft_2"
+    },
+    "outcomes": [
+        {
+            "material": {
+                "items": [
+                    "minecraft:twisting_vines",
+                    "minecraft:weeping_vines",
+                    "minecraft:vine"
+                ],
+                "count": 64
+            },
+            "moduleKey": "spear/composite_shaft_3",
+            "moduleVariant": "spear_composite_3/",
+            "requiredTools": {
+                "sword_dig": "minecraft:stone"
+            }
+        }
+    ]
+}
