@@ -449,12 +449,13 @@ public final class TetraCompatGameTests {
             // 只允许 Tetra 默认布局量级（2 major 用 (4,0)/(4,18)，2 minor 用 (-18,0)/(-18,18)），
             // 写成 0/40/80 这种大数会让模块框散到物品外面。
             // 方位按设计稿：↗矛头、↘矛杆、↖绑定/涂层、↙枪尾（配重）。
+            // 抄 Tetra 剑 3 minor 的默认交错布局：附层 (-12,-1)、护手 (-21,12)、柄头 (-12,25)。
             Map<String, Integer> expectedX = Map.of(
-                    "spear/head", 4, "spear/handle", 4, "spear/binding", -18, "spear/butt", -18,
-                    "spear/fuller", -18);
+                    "spear/head", 4, "spear/handle", 4, "spear/binding", -21, "spear/butt", -12,
+                    "spear/fuller", -12);
             Map<String, Integer> expectedY = Map.of(
-                    "spear/head", 0, "spear/handle", 18, "spear/binding", 0, "spear/butt", 18,
-                    "spear/fuller", -18);
+                    "spear/head", 0, "spear/handle", 18, "spear/binding", 12, "spear/butt", 25,
+                    "spear/fuller", -1);
             for (JsonElement element : slots) {
                 JsonObject slot = element.getAsJsonObject();
                 String key = slot.get("key").getAsString();
@@ -1178,8 +1179,10 @@ public final class TetraCompatGameTests {
                 "积竹木柲只接受木板（tetra:wood/）");
         double baseSpeed = variant.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         double baseReach = variant.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
-        helper.assertTrue(baseSpeed > -0.5D, "1/3 矛杆攻速必须明显弱于最终形态，实际: " + baseSpeed);
-        helper.assertTrue(baseReach < 0.1D, "1/3 矛杆射程必须很低，实际: " + baseReach);
+        double baseDamage = variant.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
+        helper.assertTrue(baseSpeed < -0.4D, "1/3 矛杆攻速必须很慢，实际: " + baseSpeed);
+        helper.assertTrue(baseReach <= 0.0D, "1/3 矛杆不能加射程（可以更短），实际: " + baseReach);
+        helper.assertTrue(baseDamage < 0.0D, "1/3 矛杆必须减伤害，实际: " + baseDamage);
         helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.5D,
                 "积竹木柲完整度必须固定 2.5（用户要求不动）");
 
@@ -1190,8 +1193,9 @@ public final class TetraCompatGameTests {
         }
         JsonArray levels = stageRoot.getAsJsonArray();
         helper.assertTrue(levels.size() == 3, "积竹木柲应有 3 级原地加固改进");
-        double previousSpeed = baseSpeed;
-        double previousReach = baseReach;
+        double totalSpeed = baseSpeed;
+        double totalReach = baseReach;
+        double totalDamage = baseDamage;
         for (int i = 0; i < levels.size(); i++) {
             JsonObject entry = levels.get(i).getAsJsonObject();
             helper.assertTrue("spear_composite/stage".equals(entry.get("key").getAsString()),
@@ -1202,13 +1206,21 @@ public final class TetraCompatGameTests {
                     "加固改进不能改完整度（用户要求不动）");
             double speed = entry.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
             double reach = entry.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
-            helper.assertTrue(speed < previousSpeed,
-                    "加固 " + (i + 1) + " 的攻速应继续变慢（更重），实际: " + speed);
-            helper.assertTrue(reach > previousReach,
-                    "加固 " + (i + 1) + " 的射程应继续增加，实际: " + reach);
-            previousSpeed = speed;
-            previousReach = reach;
+            double damage = entry.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
+            helper.assertTrue(speed <= 0.0D,
+                    "加固 " + (i + 1) + " 的攻速修正不应是正数，实际: " + speed);
+            helper.assertTrue(reach >= 0.0D,
+                    "加固 " + (i + 1) + " 的射程修正不应是负数，实际: " + reach);
+            helper.assertTrue(damage > 0.0D,
+                    "加固 " + (i + 1) + " 必须补回一部分伤害，实际: " + damage);
+            totalSpeed += speed;
+            totalReach += reach;
+            totalDamage += damage;
         }
+        helper.assertTrue(totalSpeed < baseSpeed, "三级加固后攻速应比 1/3 更慢（更重）");
+        helper.assertTrue(totalReach > baseReach, "三级加固后射程应比 1/3 更远");
+        helper.assertTrue(totalDamage > baseDamage, "三级加固后伤害应比 1/3 更高");
+        helper.assertTrue(totalReach > 0.9D, "最终射程加成应回到 +1 左右，实际: " + totalReach);
 
         // 2/3、3/3、完成都必须是 improvement 类型，且只给改进、不写 moduleKey/moduleVariant。
         String[][] staged = {
@@ -1231,6 +1243,10 @@ public final class TetraCompatGameTests {
                 helper.assertTrue(outcome.getAsJsonObject("material").getAsJsonArray("items")
                                 .get(0).getAsString().contains(stage[2]),
                         stage[0] + " 的固定材料不符");
+                helper.assertTrue(outcome.getAsJsonObject("requiredTools").has("cut"),
+                        stage[0] + " 需要 Tetra 的切具（cut），不是 sword_dig");
+                helper.assertFalse(outcome.getAsJsonObject("requiredTools").has("sword_dig"),
+                        stage[0] + " 不能再写 sword_dig（工作台会显示问号）");
             }
             helper.assertTrue(schematic.get("requirement").toString().contains("spear/composite_shaft"),
                     stage[0] + " 必须要求积竹木柲模块");

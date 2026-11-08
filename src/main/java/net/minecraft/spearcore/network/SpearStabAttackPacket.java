@@ -64,7 +64,7 @@ public class SpearStabAttackPacket {
             ItemStack stack = player.getMainHandItem();
             SpearLike spear = SpearLikeSupport.of(stack);
             if (spear == null || spear.slashing()) {
-                // 挥砍矛永远不走戳刺；客户端应发 SpearSlashAttackPacket。
+                // 挥砍矛永远不走戳刺；左键交给原版剑式攻击。
                 return;
             }
             if (!SpearCombat.canPlayerPerformStab(player, stack, spear)) {

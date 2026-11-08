@@ -37,7 +37,7 @@
                 "count": 64
             },
             "requiredTools": {
-                "sword_dig": "minecraft:stone"
+                "cut": "minecraft:stone"
             }
         }
     ]

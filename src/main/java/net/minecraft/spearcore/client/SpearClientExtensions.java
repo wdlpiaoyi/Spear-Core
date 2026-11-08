@@ -54,12 +54,12 @@ public class SpearClientExtensions implements IClientItemExtensions {
             SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, itemInHand);
             return true;
         } else if (swingProcess > 0.0F) {
-            applyItemArmTransform(poseStack, arm, 0.0F);
             if (spear.slashing()) {
-                SpearAnimations.firstPersonSlash(swingProcess, poseStack, dir, arm);
-            } else {
-                SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
+                // 槊 / 三尖两刃刀：左键沿用原版剑的挥动，不再套长矛前刺动画。
+                return false;
             }
+            applyItemArmTransform(poseStack, arm, 0.0F);
+            SpearAnimations.firstPersonAttack(swingProcess, poseStack, dir, arm);
             return true;
         }
         // 空闲时保留装备进度，正常的「掏出/收起」动画要能看见；3D 模型的蓄力分支也使用同一个

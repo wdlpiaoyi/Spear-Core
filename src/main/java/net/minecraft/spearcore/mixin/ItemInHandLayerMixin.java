@@ -42,6 +42,12 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
         SpearLike spear = SpearLikeSupport.of(itemStack);
         if (spear == null) return;
 
+        // 挥手攻击时，槊 / 三尖两刃刀交给原版物品层渲染（普通剑的挥动）；
+        // 蓄力/格挡等使用姿态仍走下面的自定义姿势。
+        if (spear.slashing() && this.getParentModel().attackTime > 0.0F) {
+            return;
+        }
+
         poseStack.pushPose();
         ((ArmedModel) this.getParentModel()).translateToHand(humanoidArm, poseStack);
         poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
@@ -51,11 +57,7 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
 
         float attackTime = this.getParentModel().attackTime;
         if (attackTime > 0.0F && livingEntity.getMainArm() == humanoidArm) {
-            if (spear.slashing()) {
-                SpearAnimations.thirdPersonSlashItem(attackTime, poseStack, livingEntity);
-            } else {
-                SpearAnimations.thirdPersonAttackItem(attackTime, poseStack, livingEntity);
-            }
+            SpearAnimations.thirdPersonAttackItem(attackTime, poseStack, livingEntity);
         }
 
         float useTicks = livingEntity.getTicksUsingItem();

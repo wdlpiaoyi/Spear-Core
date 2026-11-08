@@ -19,25 +19,25 @@
             "y": 18
         },
         {
+            "key": "spear/fuller",
+            "major": false,
+            "required": false,
+            "x": -12,
+            "y": -1
+        },
+        {
             "key": "spear/binding",
             "major": false,
             "required": false,
-            "x": -18,
-            "y": 0
+            "x": -21,
+            "y": 12
         },
         {
             "key": "spear/butt",
             "major": false,
             "required": false,
-            "x": -18,
-            "y": 18
-        },
-        {
-            "key": "spear/fuller",
-            "major": false,
-            "required": false,
-            "x": -18,
-            "y": -18
+            "x": -12,
+            "y": 25
         }
     ]
 }

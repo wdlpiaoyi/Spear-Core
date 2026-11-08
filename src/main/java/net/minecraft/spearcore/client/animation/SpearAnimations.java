@@ -31,28 +31,6 @@ public class SpearAnimations {
         poseStack.translate(0.0, 0.0, -0.25 * (double)(f4 - f3));
     }
 
-    /**
-     * 第一人称挥砍：横向弧线（槊头 / 三尖两刃刀）。
-     *
-     * <p>和 {@link #firstPersonAttack} 的前刺不同：起手向右后收，随后向左前横抡，
-     * 最后收回。方向用 {@code dir} 兼容左右手。</p>
-     */
-    public static void firstPersonSlash(float f, PoseStack poseStack, int dir, HumanoidArm humanoidArm) {
-        float windup = easeInQuad(progress(f, 0.0f, 0.18f));
-        float slash = easeOutCubic(progress(f, 0.10f, 0.38f));
-        float recover = easeInOutExpo(progress(f, 0.45f, 1.0f));
-        poseStack.translate(
-                (float) dir * (0.32f * (windup - slash) + 0.08f * recover),
-                -0.08f * (windup - recover),
-                0.25f * (windup - slash)
-        );
-        poseStack.mulPose(Axis.YP.rotationDegrees(
-                (float) dir * (55.0f * windup - 150.0f * slash + 95.0f * recover)));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(
-                (float) dir * (25.0f * windup - 65.0f * slash + 40.0f * recover)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-18.0f * (windup - slash) - 10.0f * recover));
-    }
-
     // ==================== 第一人称举矛 ====================
 
     public static void firstPersonUse(float f, PoseStack poseStack, float f2, HumanoidArm humanoidArm, ItemStack itemStack) {
@@ -95,18 +73,6 @@ public class SpearAnimations {
         float f5 = easeInOutExpo(progress(attackTime, 0.4f, 1.0f));
         poseStack.rotateAround(Axis.XN.rotationDegrees(70.0f * (f4 - f5)), 0.0f, -0.125f, 0.125f);
         poseStack.translate(0.0f, f * (f4 - f5), 0.0f);
-    }
-
-    /** 第三人称挥砍：横向扫击，避免继续用前刺动画。 */
-    public static void thirdPersonSlashItem(float attackTime, PoseStack poseStack, LivingEntity livingEntity) {
-        if (attackTime <= 0.0f) return;
-        float windup = easeInQuad(progress(attackTime, 0.05f, 0.2f));
-        float slash = easeOutCubic(progress(attackTime, 0.12f, 0.4f));
-        float recover = easeInOutExpo(progress(attackTime, 0.5f, 1.0f));
-        poseStack.rotateAround(Axis.YP.rotationDegrees(
-                -120.0f * slash + 80.0f * recover), 0.0f, -0.125f, 0.125f);
-        poseStack.rotateAround(Axis.XN.rotationDegrees(
-                35.0f * (windup - slash)), 0.0f, -0.125f, 0.125f);
     }
 
     // ==================== 第三人称使用物品 ====================

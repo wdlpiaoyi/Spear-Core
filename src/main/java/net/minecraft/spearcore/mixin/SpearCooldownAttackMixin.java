@@ -8,7 +8,6 @@ import net.minecraft.spearcore.init.SpearSounds;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
-import net.minecraft.spearcore.network.SpearSlashAttackPacket;
 import net.minecraft.spearcore.network.SpearStabAttackPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -35,6 +34,12 @@ public class SpearCooldownAttackMixin {
         SpearLike spear = SpearLikeSupport.of(stack);
         if (spear == null) return;
 
+        // 挥砍矛（槊 / 三尖两刃刀）：左键完全交给原版 startAttack（包括蓄力、挥动、冷却），
+        // 不拦、不取消、不发自定义包；服务端 AttackEntityEvent 的 slashing 分支只补横扫。
+        if (spear.slashing()) {
+            return;
+        }
+
         boolean ready = spear.usesJabCooldown()
                 ? !player.getCooldowns().isOnCooldown(stack.getItem())
                 : player.getAttackStrengthScale(0.0F) >= 0.95F;
@@ -46,24 +51,6 @@ public class SpearCooldownAttackMixin {
                 cir.setReturnValue(false);
                 cir.cancel();
             }
-            return;
-        }
-
-        // 挥砍矛：不管准星是否锁到实体，都统一走挥砍包。
-        // 原版只在 3.0 格内把攻击发给实体，而矛的射程远大于它；如果交给原版，
-        // 3~4.5 格会变成 MISS、3 格内又走另一条路径，观感和结算不一致。
-        if (spear.slashing()) {
-            if (spear.style() == SpearStyle.MODULAR_3D) {
-                player.swing(InteractionHand.MAIN_HAND);
-                player.level().playLocalSound(player.getX(), player.getY(), player.getZ(),
-                        SpearSounds.ITEM_SPEAR_ATTACK.get(), SoundSource.PLAYERS, 0.9F,
-                        1.0F + player.getRandom().nextFloat() * 0.1F, false);
-            }
-            SpearStabAttackPacket.CHANNEL.sendToServer(new SpearSlashAttackPacket());
-            SpearItem.jerotesLungeForwardMaybe(player);
-            // 原版 startAttack 不再发包/走原版攻击；伤害由服务端挥砍包统一结算。
-            cir.setReturnValue(true);
-            cir.cancel();
             return;
         }
 
