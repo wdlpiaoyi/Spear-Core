@@ -1302,8 +1302,8 @@ public final class TetraCompatGameTests {
         double shuoSpeed = shuo.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         helper.assertTrue(threeSpeed > headSpeed,
                 "三尖两刃刀攻速必须高于普通矛头（" + threeSpeed + " > " + headSpeed + "）");
-        helper.assertTrue(shuoSpeed < headSpeed,
-                "槊攻速必须低于普通矛头（" + shuoSpeed + " < " + headSpeed + "）");
+        helper.assertTrue(shuoSpeed > headSpeed,
+                "槊攻速必须高于普通矛头（" + shuoSpeed + " > " + headSpeed + "）");
         double headDamage = head.getAsJsonObject("extract").getAsJsonObject("primaryAttributes")
                 .get("generic.attack_damage").getAsDouble();
         double threeDamage = three.getAsJsonObject("extract").getAsJsonObject("primaryAttributes")

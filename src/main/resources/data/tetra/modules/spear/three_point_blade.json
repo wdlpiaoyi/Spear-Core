@@ -1,6 +1,8 @@
 {
     "type": "tetra:basic_major_module",
-    "slots": [ "spear/head" ],
+    "slots": [
+        "spear/head"
+    ],
     "improvements": [
         "tetra:single/spearhead/",
         "tetra:single/shared_head/",
@@ -13,10 +15,16 @@
     ],
     "variants": [
         {
-            "materials": [ "tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/", "tetra:bone/" ],
+            "materials": [
+                "tetra:wood/",
+                "tetra:stone/",
+                "tetra:metal/",
+                "tetra:gem/",
+                "tetra:bone/"
+            ],
             "key": "spear_three_point/",
             "attributes": {
-                "generic.attack_speed": -0.65,
+                "generic.attack_speed": -0.15,
                 "forge:entity_reach": 0.3
             },
             "aspects": {
@@ -43,8 +51,16 @@
                     "textureX": 208,
                     "textureY": 32
                 },
-                "availableTextures": [ "metal", "shiny", "pristine" ],
-                "models": [ { "location": "tetra:item/module/single/head/spearhead/" } ]
+                "availableTextures": [
+                    "metal",
+                    "shiny",
+                    "pristine"
+                ],
+                "models": [
+                    {
+                        "location": "tetra:item/module/single/head/spearhead/"
+                    }
+                ]
             }
         }
     ]
