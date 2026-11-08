@@ -139,13 +139,6 @@
     "tetra/schematic/spear/head/tempered_3.name": "打磨：回火 III",
     "tetra/schematic/spear/head/tempered_3.description": "进一步回火矛头，再次提高护甲穿透比例。",
     "tetra/schematic/spear/head/tempered_3.slot1": "回火",
-    "tetra.slot.spear/fuller": "强化附层",
-    "tetra.module.spear/fuller.name": "强化附层",
-    "tetra.module.spear/fuller.material_name": "%s强化附层",
-    "tetra.module.spear/fuller.description": "在矛身外侧加一道加固层：提高耐久、降低损坏概率，但让矛更重、攻速略降。",
-    "tetra/schematic/spear/fuller.name": "强化附层",
-    "tetra/schematic/spear/fuller.description": "用给定材料制作强化附层：提高耐久与完整度，代价是攻速略降。",
-    "tetra/schematic/spear/fuller.slot1": "附层",
     "tetra.improvement.spear_composite/stage.name": "复合矛杆·加固",
     "tetra.improvement.spear_composite/stage.description": "给复合矛杆缠上竹片、藤条，提升攻速、射程与耐久；三级后完成。"
 }

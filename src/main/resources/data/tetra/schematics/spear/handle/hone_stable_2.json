@@ -15,8 +15,14 @@
         "requirements": [
             {
                 "type": "tetra:module",
-                "module": "spear/composite_shaft",
-                "variant": "spear_composite_shaft/stage3"
+                "module": "spear/composite_shaft"
+            },
+            {
+                "type": "tetra:improvement",
+                "improvement": "spear_composite/stage",
+                "level": {
+                    "min": 2
+                }
             },
             {
                 "type": "tetra:improvement",

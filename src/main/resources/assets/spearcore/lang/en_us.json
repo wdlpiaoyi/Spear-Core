@@ -139,13 +139,6 @@
     "tetra/schematic/spear/head/tempered_3.name": "Hone: Tempered III",
     "tetra/schematic/spear/head/tempered_3.description": "Further temper the spearhead, increasing armor penetration again.",
     "tetra/schematic/spear/head/tempered_3.slot1": "Tempered",
-    "tetra.slot.spear/fuller": "Reinforcement",
-    "tetra.module.spear/fuller.name": "Reinforcement layer",
-    "tetra.module.spear/fuller.material_name": "%s reinforcement layer",
-    "tetra.module.spear/fuller.description": "Adds a reinforcing layer along the spear: more durability and a lower chance to take damage, but heavier and slightly slower.",
-    "tetra/schematic/spear/fuller.name": "Reinforcement layer",
-    "tetra/schematic/spear/fuller.description": "Make a reinforcing layer from the given material: durability and integrity up, attack speed slightly down.",
-    "tetra/schematic/spear/fuller.slot1": "Layer",
     "tetra.improvement.spear_composite/stage.name": "Composite shaft reinforcement",
     "tetra.improvement.spear_composite/stage.description": "Wrap the composite shaft in bamboo strips and vines to improve speed, reach and durability; the third stage completes it."
 }

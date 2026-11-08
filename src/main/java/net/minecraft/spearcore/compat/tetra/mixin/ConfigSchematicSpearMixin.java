@@ -36,6 +36,9 @@ public abstract class ConfigSchematicSpearMixin {
             return;
         }
         try {
+            if (!spearcore$isThirdPartySpearImprovement(stack)) {
+                return;
+            }
             SchematicDefinition definition = spearcore$definition((ConfigSchematic) (Object) this);
             if (definition == null || definition.slots == null) {
                 return;

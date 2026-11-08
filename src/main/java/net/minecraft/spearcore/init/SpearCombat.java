@@ -386,6 +386,42 @@ public final class SpearCombat {
         SpearLikeSupport.tetraSlashSweep(player, stack, living, 3);
     }
 
+    /**
+     * 原版剑式横扫：只在满蓄力、站在地面、没有疾跑时触发，伤害按原版
+     * {@code 1 + 横扫之刃加成} 计算，并补原版横扫粒子和音效。
+     *
+     * <p>不能用 Tetra 的 {@code sweeping} 效果代替：那套按攻击力全额结算，会绕开原版
+     * 蓄力/冷却缩放，0 蓄力也能打出高伤。这里只复刻原版 {@code Player#attack} 的横扫分支，
+     * 主目标仍由原版攻击结算，横扫只打周围的其它目标。</p>
+     */
+    public static void vanillaSlashSweep(Player player, Entity target) {
+        if (player == null || target == null || player.level().isClientSide) {
+            return;
+        }
+        if (player.getAttackStrengthScale(0.5F) <= 0.9F
+                || !player.onGround() || player.isSprinting()) {
+            return;
+        }
+        float ratio = 1.0F + EnchantmentHelper.getSweepingDamageRatio(player);
+        double yaw = Math.toRadians(player.getYRot());
+        double dx = -Math.sin(yaw);
+        double dz = Math.cos(yaw);
+        for (LivingEntity living : player.level().getEntitiesOfClass(LivingEntity.class,
+                target.getBoundingBox().inflate(1.0D, 0.25D, 1.0D))) {
+            if (living == player || living == target || player.isAlliedTo(living)
+                    || living instanceof net.minecraft.world.entity.decoration.ArmorStand armorStand
+                    && armorStand.isMarker()
+                    || player.distanceToSqr(living) >= 9.0D) {
+                continue;
+            }
+            living.knockback(0.4F, dx, dz);
+            living.hurt(player.damageSources().playerAttack(player), ratio);
+        }
+        player.sweepAttack();
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
     /** 当前是否处于「虚拟原版攻击」里；{@code SpearAttackHandler} 用它避免重复结算。 */
     public static boolean inVirtualAttack() {
         return VIRTUAL_ATTACK.get();
