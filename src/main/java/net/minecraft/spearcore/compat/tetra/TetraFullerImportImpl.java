@@ -1,6 +1,5 @@
 package net.minecraft.spearcore.compat.tetra;
 
-import com.google.gson.Gson;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,9 +77,11 @@ public final class TetraFullerImportImpl {
                     if (foreignVariant == null) {
                         continue;
                     }
-                    String variantKey = outcome.moduleVariant;
+                    // 直接复用第三方的 VariantData 对象，但要按它自己的 key 安装；
+                    // outcome 的 moduleVariant 可能是前缀/拼接过导致对不上，用自己的 key 最稳。
+                    String variantKey = foreignVariant.key != null ? foreignVariant.key : outcome.moduleVariant;
                     if (!hasVariant(variants, variantKey)) {
-                        variants.add(copyVariant(foreignVariant, variantKey));
+                        variants.add(foreignVariant);
                     }
                     if (!hasOutcome(outcomes, variantKey)) {
                         OutcomeDefinition importedOutcome = new OutcomeDefinition();
@@ -133,13 +134,6 @@ public final class TetraFullerImportImpl {
             }
         }
         return module.getVariantData().length == 1 ? module.getVariantData()[0] : null;
-    }
-
-    private static VariantData copyVariant(VariantData source, String key) {
-        Gson gson = se.mickelus.tetra.data.DataManager.gson;
-        VariantData copy = gson.fromJson(gson.toJsonTree(source), VariantData.class);
-        copy.key = key;
-        return copy;
     }
 
     private static boolean hasVariant(List<VariantData> variants, String key) {

@@ -57,21 +57,33 @@ public enum TetraSpearHead {
      * （{@code spear/shuo_head} / {@code spear/three_point_blade}），更可靠。</p>
      */
     public static TetraSpearHead ofVariantAndModule(@Nullable String variantKey, @Nullable String moduleKey) {
-        if (moduleKey != null) {
-            if ("spear/shuo_head".equals(moduleKey)) {
+        String modulePath = stripNamespace(moduleKey);
+        if (modulePath != null) {
+            if (modulePath.endsWith("spear/shuo_head")) {
                 return SHUO;
             }
-            if ("spear/three_point_blade".equals(moduleKey)) {
+            if (modulePath.endsWith("spear/three_point_blade")) {
                 return THREE;
             }
         }
         return ofVariant(variantKey);
     }
 
+    @Nullable
+    private static String stripNamespace(@Nullable String key) {
+        if (key == null) {
+            return null;
+        }
+        int colon = key.indexOf(':');
+        return colon >= 0 ? key.substring(colon + 1) : key;
+    }
+
     private static TetraSpearHead ofVariant(@Nullable String variantKey) {
-        if (variantKey != null) {
+        String key = stripNamespace(variantKey);
+        if (key != null) {
             for (TetraSpearHead head : values()) {
-                if (head != PLAIN && variantKey.startsWith(head.variantPrefix)) {
+                if (head != PLAIN && (key.startsWith(head.variantPrefix)
+                        || key.startsWith(head.variantPrefix.replace("spear_", "")))) {
                     return head;
                 }
             }

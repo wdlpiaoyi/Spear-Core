@@ -1187,7 +1187,7 @@ public final class TetraCompatGameTests {
                 "积竹木柲完整度必须固定 2.5（用户要求不动）");
 
         JsonElement stageRoot = spearcore$readJson(helper, "tetra",
-                "improvements/spear/composite/stage.json");
+                "improvements/spear/handle/stage.json");
         if (stageRoot == null) {
             return;
         }

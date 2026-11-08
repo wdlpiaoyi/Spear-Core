@@ -2,6 +2,7 @@ package net.minecraft.spearcore.compat.tetra;
 
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraftforge.event.TagsUpdatedEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -20,6 +21,16 @@ public final class TetraFullerImportEvent {
 
     @SubscribeEvent
     public static void onTagsUpdated(TagsUpdatedEvent event) {
+        importFullers();
+    }
+
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        // TagsUpdatedEvent 有时早于 Tetra 的 SchematicRegistry 初始化；世界启动后再补一次（幂等）。
+        importFullers();
+    }
+
+    private static void importFullers() {
         if (!ModList.get().isLoaded("tetra")) {
             return;
         }
