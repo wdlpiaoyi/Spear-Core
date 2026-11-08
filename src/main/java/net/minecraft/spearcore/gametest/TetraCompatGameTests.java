@@ -543,8 +543,8 @@ public final class TetraCompatGameTests {
                     String requirement = json.get("requirement").toString();
                     if (moduleGated) {
                         helper.assertTrue(requirement.contains("spear/composite_shaft")
-                                        && requirement.contains("spear_composite/stage"),
-                                file + " 的「稳定」线应只作用于已到 3/3（stage 2）的复合矛杆");
+                                        && requirement.contains("spear_composite_shaft/stage3"),
+                                file + " 的「稳定」线应只作用于已到 3/3 的复合矛杆");
                     } else {
                         helper.assertFalse(requirement.contains("tetra:module"),
                                 file + " 的 requirement 不能按模块 key 过滤，否则换到新矛头后整条打磨线会消失");
@@ -1167,120 +1167,89 @@ public final class TetraCompatGameTests {
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearCompositeStagesAreDataDefined(GameTestHelper helper) {
-        // 积竹木柲：一个模块 + 三级原地改进（类似剑的缠柄），后续升级不换模块。
-        // 1/3 数值故意很低，逼玩家加竹/缠藤；完整度固定 2.5，不随升级变化。
+        // 积竹木柲是「换模块变体」的四阶段升级，不是 improvement：
+        // 1/3 -> 加竹 2/3 -> 缠藤 3/3 -> 稳定 V -> 完成。
+        // 之前写成 displayType=improvement 只加改进，工作台点合成不会换变体，所以看起来没变化。
         JsonObject module = spearcore$readJson(helper, "tetra", "modules/spear/composite_shaft.json")
                 .getAsJsonObject();
         helper.assertTrue("spear/handle".equals(module.getAsJsonArray("slots").get(0).getAsString()),
                 "积竹木柲必须占 spear/handle");
-        JsonObject variant = module.getAsJsonArray("variants").get(0).getAsJsonObject();
-        helper.assertTrue(variant.getAsJsonArray("materials").size() == 1
-                        && "tetra:wood/".equals(variant.getAsJsonArray("materials").get(0).getAsString()),
-                "积竹木柲只接受木板（tetra:wood/）");
-        double baseSpeed = variant.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
-        double baseReach = variant.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
-        double baseDamage = variant.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
-        // 1/3 是未完成品：攻速/伤害/射程都要比普通矛杆（-1.1 / 0 / +0.5）差。
-        // 注意负值本身没问题，只要总攻速没被属性下限夹到 0 即可；不要再用「非负」限制。
-        helper.assertTrue(baseSpeed < -1.1D,
-                "1/3 矛杆攻速必须慢于普通矛杆（< -1.1），实际: " + baseSpeed);
-        helper.assertTrue(baseReach < 0.5D,
-                "1/3 矛杆射程必须小于普通矛杆（< 0.5），实际: " + baseReach);
-        helper.assertTrue(baseDamage < 0.0D,
-                "1/3 矛杆伤害必须低于普通矛杆（< 0），实际: " + baseDamage);
-        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.5D,
-                "积竹木柲完整度必须固定 2.5（用户要求不动）");
-
-        JsonElement stageRoot = spearcore$readJson(helper, "tetra",
-                "improvements/spear/handle/stage.json");
-        if (stageRoot == null) {
-            return;
+        JsonArray variants = module.getAsJsonArray("variants");
+        helper.assertTrue(variants.size() == 4, "积竹木柲应有 1/3、2/3、3/3、完成四个变体");
+        String[] keys = {"spear_composite_shaft/", "spear_composite_shaft/stage2",
+                "spear_composite_shaft/stage3", "spear_composite_shaft/final"};
+        double[] speeds = new double[4];
+        double[] damages = new double[4];
+        double[] reaches = new double[4];
+        for (int i = 0; i < 4; i++) {
+            JsonObject variant = variants.get(i).getAsJsonObject();
+            helper.assertTrue(keys[i].equals(variant.get("key").getAsString()),
+                    "第 " + (i + 1) + " 个变体 key 不符: " + variant.get("key"));
+            JsonObject attributes = variant.getAsJsonObject("attributes");
+            speeds[i] = attributes.get("generic.attack_speed").getAsDouble();
+            damages[i] = attributes.get("generic.attack_damage").getAsDouble();
+            reaches[i] = attributes.get("forge:entity_reach").getAsDouble();
+            helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.5D,
+                    "积竹木柲完整度必须固定 2.5（用户要求不动）");
         }
-        JsonArray levels = stageRoot.getAsJsonArray();
-        helper.assertTrue(levels.size() == 3, "积竹木柲应有 3 级原地加固改进");
-        double totalSpeed = baseSpeed;
-        double totalReach = baseReach;
-        double totalDamage = baseDamage;
-        for (int i = 0; i < levels.size(); i++) {
-            JsonObject entry = levels.get(i).getAsJsonObject();
-            helper.assertTrue("spear_composite/stage".equals(entry.get("key").getAsString()),
-                    "改进 key 必须是 spear_composite/stage");
-            helper.assertTrue(entry.get("level").getAsInt() == i + 1,
-                    "改进等级必须依次为 1..3");
-            helper.assertFalse(entry.has("integrity"),
-                    "加固改进不能改完整度（用户要求不动）");
-            double speed = entry.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
-            double reach = entry.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
-            double damage = entry.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
-            helper.assertTrue(speed > 0.0D,
-                    "加固 " + (i + 1) + " 必须让攻速继续变快（正修正），实际: " + speed);
-            helper.assertTrue(reach >= 0.0D,
-                    "加固 " + (i + 1) + " 的射程修正不应是负数，实际: " + reach);
-            helper.assertTrue(damage > 0.0D,
-                    "加固 " + (i + 1) + " 必须补回一部分伤害，实际: " + damage);
-            totalSpeed += speed;
-            totalReach += reach;
-            totalDamage += damage;
-        }
-        helper.assertTrue(totalSpeed > baseSpeed, "三级加固后攻速应比 1/3 更快（完成版不能比初坯还慢）");
-        helper.assertTrue(totalReach > baseReach, "三级加固后射程应比 1/3 更远");
-        helper.assertTrue(totalDamage > baseDamage, "三级加固后伤害应比 1/3 更高");
-        // 完成版相对普通矛杆（-1.1 / 0 / +0.5）必须是净提升，但仍然允许模块自身
-        // 用负值起手——真正要保证的是「不会掉到 0 攻速」和「不弱于普通杆」。
-        helper.assertTrue(totalSpeed > -1.1D,
-                "完成版攻速必须快于普通矛杆（> -1.1），实际: " + totalSpeed);
-        helper.assertTrue(totalDamage >= 0.0D,
-                "完成版伤害不应低于普通矛杆（>= 0），实际: " + totalDamage);
-        helper.assertTrue(totalReach > 0.9D, "最终射程加成应回到 +1 左右，实际: " + totalReach);
+        // 1/3 必须比普通矛杆（-1.1 / 0 / +0.5）更慢、伤害更低、射程更短。
+        helper.assertTrue(speeds[0] < -1.1D, "1/3 攻速必须慢于普通矛杆，实际: " + speeds[0]);
+        helper.assertTrue(damages[0] < 0.0D, "1/3 伤害必须低于普通矛杆，实际: " + damages[0]);
+        helper.assertTrue(reaches[0] < 0.5D, "1/3 射程必须小于普通矛杆，实际: " + reaches[0]);
+        // 2/3 略高于普通杆；3/3、完成继续提升。
+        helper.assertTrue(speeds[1] > -1.1D && damages[1] > 0.0D && reaches[1] > 0.5D,
+                "2/3 应略高于普通矛杆");
+        helper.assertTrue(speeds[2] > speeds[1] && damages[2] > damages[1] && reaches[2] > reaches[1],
+                "3/3 应强于 2/3");
+        helper.assertTrue(speeds[3] > speeds[2] && damages[3] > damages[2] && reaches[3] > reaches[2],
+                "完成版应强于 3/3");
+        helper.assertTrue(speeds[3] > -1.1D && damages[3] >= 1.0D && reaches[3] >= 1.5D,
+                "完成版应相对普通杆净 +0.4 攻速 / +1.0 伤害 / +1.0 射程");
 
-        // 2/3、3/3、完成都必须是 improvement 类型，且只给改进、不写 moduleKey/moduleVariant。
+        // 阶段配方必须是 major（换模块变体），而不是 improvement。
         String[][] staged = {
-                {"composite_shaft_2", "1", "bamboo"},
-                {"composite_shaft_3", "2", "vines"},
-                {"composite_shaft_finish", "3", null},
+                {"composite_shaft_2", "spear_composite_shaft/", "spear_composite_shaft/stage2", "bamboo"},
+                {"composite_shaft_3", "spear_composite_shaft/stage2", "spear_composite_shaft/stage3", "vines"},
+                {"composite_shaft_finish", "spear_composite_shaft/stage3", "spear_composite_shaft/final", null},
         };
         for (String[] stage : staged) {
             JsonObject schematic = spearcore$readJson(helper, "tetra",
                     "schematics/spear/" + stage[0] + ".json").getAsJsonObject();
-            helper.assertTrue("improvement".equals(schematic.get("displayType").getAsString()),
-                    stage[0] + " 必须是 displayType=improvement（原地改装）");
-            if (stage[2] != null) {
-                helper.assertTrue(schematic.get("materialSlotCount").getAsInt() == 1,
-                        stage[0] + " 必须留 1 个材料槽，否则玩家放不进竹子/藤条");
-            }
+            helper.assertTrue("major".equals(schematic.get("displayType").getAsString()),
+                    stage[0] + " 必须是 displayType=major（换模块变体），不能是 improvement");
+            String requirement = schematic.get("requirement").toString();
+            helper.assertTrue(requirement.contains(stage[1]),
+                    stage[0] + " 必须要求当前变体 " + stage[1] + "，实际: " + requirement);
             JsonObject outcome = schematic.getAsJsonArray("outcomes").get(0).getAsJsonObject();
-            helper.assertFalse(outcome.has("moduleKey"), stage[0] + " 不能换模块（不写 moduleKey）");
-            helper.assertFalse(outcome.has("moduleVariant"), stage[0] + " 不能换变体（不写 moduleVariant）");
-            helper.assertTrue(outcome.getAsJsonObject("improvements")
-                            .get("spear_composite/stage").getAsInt() == Integer.parseInt(stage[1]),
-                    stage[0] + " 必须给 spear_composite/stage 等级 " + stage[1]);
-            if (stage[2] != null) {
-                helper.assertTrue(outcome.getAsJsonObject("material").getAsJsonArray("items")
-                                .get(0).getAsString().contains(stage[2]),
+            helper.assertTrue("spear/composite_shaft".equals(outcome.get("moduleKey").getAsString()),
+                    stage[0] + " 必须替换为 spear/composite_shaft");
+            helper.assertTrue(stage[2].equals(outcome.get("moduleVariant").getAsString()),
+                    stage[0] + " 的目标变体必须是 " + stage[2]);
+            if (stage[3] != null) {
+                helper.assertTrue(schematic.get("materialSlotCount").getAsInt() == 1,
+                        stage[0] + " 必须留 1 个材料槽");
+                JsonObject material = outcome.getAsJsonObject("material");
+                helper.assertTrue(material.get("count").getAsInt() == 64,
+                        stage[0] + " 的材料数量保持 64（不要改用户的合成数量）");
+                helper.assertTrue(material.getAsJsonArray("items").toString().contains(stage[3]),
                         stage[0] + " 的固定材料不符");
                 helper.assertTrue(outcome.getAsJsonObject("requiredTools").has("cut"),
                         stage[0] + " 需要 Tetra 的切具（cut），不是 sword_dig");
                 helper.assertFalse(outcome.getAsJsonObject("requiredTools").has("sword_dig"),
                         stage[0] + " 不能再写 sword_dig（工作台会显示问号）");
             }
-            helper.assertTrue(schematic.get("requirement").toString().contains("spear/composite_shaft"),
-                    stage[0] + " 必须要求积竹木柲模块");
         }
-        helper.assertTrue(spearcore$readJson(helper, "tetra", "schematics/spear/composite_shaft_2.json")
-                        .getAsJsonObject().get("requirement").toString().contains("tetra:not"),
-                "2/3 应要求「还没有加固改进」");
 
-        // 稳定 I~V 只作用于已经到 3/3（stage level 2）的积竹木柲。
+        // 稳定 I~V 只作用于 3/3，完成要求稳定满级 + 3/3。
         for (int level = 1; level <= 5; level++) {
             JsonObject stable = spearcore$readJson(helper, "tetra",
                     "schematics/spear/handle/hone_stable_" + level + ".json").getAsJsonObject();
             String requirement = stable.get("requirement").toString();
             helper.assertTrue(stable.has("hone") && stable.get("hone").getAsBoolean(),
                     "稳定 " + level + " 必须是 hone=true");
-            helper.assertTrue(requirement.contains("spear/composite_shaft"),
-                    "稳定 " + level + " 必须作用于积竹木柲");
-            helper.assertTrue(requirement.contains("spear_composite/stage"),
-                    "稳定 " + level + " 必须要求加固等级 2（3/3）");
+            helper.assertTrue(requirement.contains("spear/composite_shaft")
+                            && requirement.contains("spear_composite_shaft/stage3"),
+                    "稳定 " + level + " 必须作用于 3/3 变体，实际: " + requirement);
         }
         JsonObject finish = spearcore$readJson(helper, "tetra",
                 "schematics/spear/composite_shaft_finish.json").getAsJsonObject();
@@ -1288,9 +1257,8 @@ public final class TetraCompatGameTests {
         helper.assertTrue(finishRequirement.contains("spear_hone/stable")
                         && finishRequirement.contains("\"min\":5"),
                 "完成必须要求稳定满级");
-        helper.assertTrue(finish.getAsJsonArray("outcomes").get(0).getAsJsonObject()
-                        .getAsJsonObject("improvements").has("spear_composite/stage"),
-                "完成必须给最终加固等级");
+        helper.assertTrue(finishRequirement.contains("spear_composite_shaft/stage3"),
+                "完成必须在 3/3 变体上进行");
         helper.succeed();
     }
 

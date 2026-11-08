@@ -3,7 +3,7 @@
         "spear/handle"
     ],
     "materialSlotCount": 1,
-    "displayType": "improvement",
+    "displayType": "major",
     "applicableMaterials": [
         "minecraft:bamboo"
     ],
@@ -11,31 +11,19 @@
         "textureX": 16
     },
     "requirement": {
-        "type": "tetra:and",
-        "requirements": [
-            {
-                "type": "tetra:module",
-                "module": "spear/composite_shaft"
-            },
-            {
-                "type": "tetra:not",
-                "requirement": {
-                    "type": "tetra:improvement",
-                    "improvement": "spear_composite/stage"
-                }
-            }
-        ]
+        "type": "tetra:module",
+        "module": "spear/composite_shaft",
+        "variant": "spear_composite_shaft/"
     },
     "outcomes": [
         {
-            "improvements": {
-                "spear_composite/stage": 1
-            },
+            "moduleKey": "spear/composite_shaft",
+            "moduleVariant": "spear_composite_shaft/stage2",
             "material": {
                 "items": [
                     "minecraft:bamboo"
                 ],
-                "count": 8
+                "count": 64
             },
             "requiredTools": {
                 "cut": "minecraft:stone"
