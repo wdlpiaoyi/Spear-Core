@@ -2,7 +2,7 @@
     "slots": [
         "spear/handle"
     ],
-    "materialSlotCount": 0,
+    "materialSlotCount": 1,
     "displayType": "improvement",
     "glyph": {
         "textureX": 16

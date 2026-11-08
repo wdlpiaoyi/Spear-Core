@@ -28,13 +28,10 @@ public class SpearAttackHandler {
             return;
         }
 
-        // 槊头 / 三尖两刃刀：左键是挥砍，不取消原版攻击（主目标、附魔、其它 mod 钩子都交给原版），
-        // 额外补一次横扫，等于自带横扫之刃 III。
+        // 槊头 / 三尖两刃刀：左键就是普通剑的左键，完全不碰原版攻击。
+        // 不加自定义横扫——横扫若按攻击力全额结算，会绕开原版的蓄力/冷却缩放，
+        // 0 蓄力也能打出很高伤害（3.4.0 实机踩过）。
         if (spear.slashing()) {
-            Entity target = event.getTarget();
-            if (target != null) {
-                SpearCombat.slashSweep(player, stack, target, spear);
-            }
             return;
         }
 

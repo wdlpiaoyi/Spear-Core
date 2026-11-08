@@ -1180,9 +1180,9 @@ public final class TetraCompatGameTests {
         double baseSpeed = variant.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         double baseReach = variant.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
         double baseDamage = variant.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(baseSpeed < -0.4D, "1/3 矛杆攻速必须很慢，实际: " + baseSpeed);
-        helper.assertTrue(baseReach <= 0.0D, "1/3 矛杆不能加射程（可以更短），实际: " + baseReach);
-        helper.assertTrue(baseDamage < 0.0D, "1/3 矛杆必须减伤害，实际: " + baseDamage);
+        helper.assertTrue(baseSpeed > 0.0D, "1/3 矛杆的攻速必须是正值，实际: " + baseSpeed);
+        helper.assertTrue(baseReach > 0.0D, "1/3 矛杆的射程必须是正值，实际: " + baseReach);
+        helper.assertTrue(baseDamage > 0.0D, "1/3 矛杆的伤害必须是正值，实际: " + baseDamage);
         helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.5D,
                 "积竹木柲完整度必须固定 2.5（用户要求不动）");
 
@@ -1208,7 +1208,7 @@ public final class TetraCompatGameTests {
             double reach = entry.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
             double damage = entry.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
             helper.assertTrue(speed > 0.0D,
-                    "加固 " + (i + 1) + " 必须让攻速变快（正修正），实际: " + speed);
+                    "加固 " + (i + 1) + " 必须让攻速继续变快（正修正），实际: " + speed);
             helper.assertTrue(reach >= 0.0D,
                     "加固 " + (i + 1) + " 的射程修正不应是负数，实际: " + reach);
             helper.assertTrue(damage > 0.0D,
@@ -1237,6 +1237,10 @@ public final class TetraCompatGameTests {
                     "schematics/spear/" + stage[0] + ".json").getAsJsonObject();
             helper.assertTrue("improvement".equals(schematic.get("displayType").getAsString()),
                     stage[0] + " 必须是 displayType=improvement（原地改装）");
+            if (stage[2] != null) {
+                helper.assertTrue(schematic.get("materialSlotCount").getAsInt() == 1,
+                        stage[0] + " 必须留 1 个材料槽，否则玩家放不进竹子/藤条");
+            }
             JsonObject outcome = schematic.getAsJsonArray("outcomes").get(0).getAsJsonObject();
             helper.assertFalse(outcome.has("moduleKey"), stage[0] + " 不能换模块（不写 moduleKey）");
             helper.assertFalse(outcome.has("moduleVariant"), stage[0] + " 不能换变体（不写 moduleVariant）");
