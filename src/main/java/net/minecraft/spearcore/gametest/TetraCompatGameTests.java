@@ -439,7 +439,7 @@ public final class TetraCompatGameTests {
                     "honeIntegrityMultiplier 必须大于 0，否则刚性成本不参与打磨进度");
 
             JsonArray slots = json.getAsJsonArray("slots");
-            helper.assertTrue(slots != null && slots.size() == 4, "模块化长矛应有 4 个槽位");
+            helper.assertTrue(slots != null && slots.size() == 5, "模块化长矛应有 5 个槽位（矛头/矛杆/绑定/枪纂/强化附层）");
             Set<String> keys = new HashSet<>();
             boolean headMajor = false;
             boolean handleMajor = false;
@@ -450,9 +450,11 @@ public final class TetraCompatGameTests {
             // 写成 0/40/80 这种大数会让模块框散到物品外面。
             // 方位按设计稿：↗矛头、↘矛杆、↖绑定/涂层、↙枪尾（配重）。
             Map<String, Integer> expectedX = Map.of(
-                    "spear/head", 4, "spear/handle", 4, "spear/binding", -18, "spear/butt", -18);
+                    "spear/head", 4, "spear/handle", 4, "spear/binding", -18, "spear/butt", -18,
+                    "spear/fuller", -18);
             Map<String, Integer> expectedY = Map.of(
-                    "spear/head", 0, "spear/handle", 18, "spear/binding", 0, "spear/butt", 18);
+                    "spear/head", 0, "spear/handle", 18, "spear/binding", 0, "spear/butt", 18,
+                    "spear/fuller", 36);
             for (JsonElement element : slots) {
                 JsonObject slot = element.getAsJsonObject();
                 String key = slot.get("key").getAsString();
@@ -474,8 +476,18 @@ public final class TetraCompatGameTests {
                 helper.assertTrue(expectedY.getOrDefault(key, y) == y,
                         "槽位 " + key + " 的 y 应与 Tetra 默认布局一致，实际: " + y);
             }
-            helper.assertTrue(keys.equals(Set.of("spear/head", "spear/handle", "spear/binding", "spear/butt")),
-                    "槽位必须是矛的四个槽: " + keys);
+            helper.assertTrue(keys.equals(Set.of("spear/head", "spear/handle", "spear/binding",
+                            "spear/butt", "spear/fuller")),
+                    "槽位必须是矛的五个槽: " + keys);
+            for (JsonElement element : slots) {
+                JsonObject slot = element.getAsJsonObject();
+                if ("spear/fuller".equals(slot.get("key").getAsString())) {
+                    helper.assertFalse(slot.has("major") && slot.get("major").getAsBoolean(),
+                            "强化附层必须是 minor 槽位");
+                    helper.assertFalse(slot.has("required") && slot.get("required").getAsBoolean(),
+                            "强化附层不能是 required，否则旧矛转换后会缺部件");
+                }
+            }
             helper.assertTrue(headMajor && handleMajor, "矛头与矛杆必须是 major 槽位");
             helper.assertTrue(headRequired && handleRequired, "矛头与矛杆必须是 required 槽位");
         } catch (RuntimeException exception) {
@@ -683,6 +695,7 @@ public final class TetraCompatGameTests {
                 Map.entry("handle", new String[]{"tetra:rod/"}),
                 Map.entry("binding", new String[]{"tetra:fibre/", "tetra:fabric/"}),
                 Map.entry("socket", new String[]{"tetra:socket/"}),
+                Map.entry("fuller", new String[]{"tetra:metal/", "tetra:wood/", "tetra:bone/", "tetra:misc/forged_beam"}),
                 Map.entry("shuo_head", new String[]{"tetra:metal/"}),
                 Map.entry("composite_shaft", new String[]{"tetra:wood/"}),
                 Map.entry("three_point_blade",
@@ -876,7 +889,27 @@ public final class TetraCompatGameTests {
                 "tetra/schematic/spear/handle/hone_stable_2.name",
                 "tetra/schematic/spear/handle/hone_stable_3.name",
                 "tetra/schematic/spear/handle/hone_stable_4.name",
-                "tetra/schematic/spear/handle/hone_stable_5.name"};
+                "tetra/schematic/spear/handle/hone_stable_5.name",
+                // 本轮新增：强化附层、矛头锯齿/回火的矛头文案（不再复用剑刃 key）
+                "tetra.slot.spear/fuller",
+                "tetra.module.spear/fuller.name",
+                "tetra.module.spear/fuller.material_name",
+                "tetra.module.spear/fuller.description",
+                "tetra/schematic/spear/fuller.name",
+                "tetra/schematic/spear/fuller.description",
+                "tetra/schematic/spear/fuller.slot1",
+                "tetra/schematic/spear/head/serrated_1.name",
+                "tetra/schematic/spear/head/serrated_1.description",
+                "tetra/schematic/spear/head/serrated_2.name",
+                "tetra/schematic/spear/head/serrated_2.description",
+                "tetra/schematic/spear/head/serrated_3.name",
+                "tetra/schematic/spear/head/serrated_3.description",
+                "tetra/schematic/spear/head/tempered_1.name",
+                "tetra/schematic/spear/head/tempered_1.description",
+                "tetra/schematic/spear/head/tempered_2.name",
+                "tetra/schematic/spear/head/tempered_2.description",
+                "tetra/schematic/spear/head/tempered_3.name",
+                "tetra/schematic/spear/head/tempered_3.description"};
         // 只维护中英两份语言文件（ja_jp 已删除、日文回退英文，见 AGENTS.md），只校验中英。
         for (String language : new String[]{"en_us", "zh_cn"}) {
             JsonElement root = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
@@ -886,6 +919,11 @@ public final class TetraCompatGameTests {
             JsonObject json = root.getAsJsonObject();
             for (String key : keys) {
                 helper.assertTrue(json.has(key), language + " 缺少 Tetra 部件翻译 " + key);
+            }
+            if ("zh_cn".equals(language)) {
+                String handleName = json.get("tetra.module.spear/handle.material_name").getAsString();
+                helper.assertFalse(handleName.contains("制"),
+                        "矛杆 material_name 模板不能带「制」，否则会显示成「脆弱的制长矛杆」");
             }
         }
         helper.succeed();
@@ -910,12 +948,25 @@ public final class TetraCompatGameTests {
                 return;
             }
             JsonObject requirement = root.getAsJsonObject().getAsJsonObject("requirement");
-            helper.assertTrue(requirement != null && requirement.has("type")
-                            && "tetra:locked".equals(requirement.get("type").getAsString()),
-                    schematicId + " 必须用 tetra:locked 需求，否则卷轴不起作用");
-            helper.assertTrue(requirement != null && requirement.has("key")
-                            && schematicId.equals(requirement.get("key").getAsString()),
-                    schematicId + " 的 locked key 必须与卷轴声明一致");
+            helper.assertTrue(requirement != null && requirement.has("type"),
+                    schematicId + " 必须有 requirement");
+            String requirementType = requirement.get("type").getAsString();
+            if ("tetra:locked".equals(requirementType)) {
+                helper.assertTrue(schematicId.equals(requirement.get("key").getAsString()),
+                        schematicId + " 的 locked key 必须与卷轴声明一致");
+            } else {
+                // 积竹木柲 1/3 用 or(新卷轴, 旧卷轴)，兼容 3.4.0 之前发出去的旧卷轴。
+                helper.assertTrue("tetra:or".equals(requirementType),
+                        schematicId + " 的需求必须是 tetra:locked 或 tetra:or，实际: " + requirementType);
+                boolean declared = false;
+                for (JsonElement element : requirement.getAsJsonArray("requirements")) {
+                    JsonObject child = element.getAsJsonObject();
+                    declared |= "tetra:locked".equals(child.get("type").getAsString())
+                            && schematicId.equals(child.get("key").getAsString());
+                }
+                helper.assertTrue(declared,
+                        schematicId + " 的 or 需求里必须包含与卷轴声明一致的 locked key");
+            }
             if (definition.intricate()) {
                 intricateCount++;
             }
@@ -957,6 +1008,7 @@ public final class TetraCompatGameTests {
         map.put("binding", "spear/binding");
         map.put("butt", "spear/butt");
         map.put("socket", "spear/binding");
+        map.put("fuller", "spear/fuller");
         map.put("shuo_head", "spear/head");
         map.put("composite_shaft", "spear/handle");
         map.put("composite_shaft_1", "spear/handle");
@@ -974,6 +1026,7 @@ public final class TetraCompatGameTests {
         map.put("binding", "spear_binding/");
         map.put("butt", "spear_butt/");
         map.put("socket", "spear_socket/");
+        map.put("fuller", "spear_fuller/");
         map.put("shuo_head", "spear_shuo_head/");
         map.put("composite_shaft", "spear_composite_shaft/");
         map.put("composite_shaft_1", "spear_composite_1/");
@@ -993,14 +1046,13 @@ public final class TetraCompatGameTests {
         // single/spearhead，本模组矛头不在其中，所以要自带一份；同样不能按模块 key 过滤，否则
         // 换上槊头 / 三尖两刃刀之后这两条升级就用不了（和打磨配方踩过的是同一个坑）。
         String[][] upgrades = {
-                // 文件名前缀, 改进 key, localizationKey 前缀
-                {"serrated", "spearhead/serrated", "sword/shared_blade/serrated_"},
-                {"tempered", "spearhead/tempered", "sword/shared_blade/tempered_"},
+                // 文件名前缀, 改进 key
+                {"serrated", "spearhead/serrated"},
+                {"tempered", "spearhead/tempered"},
         };
         for (String[] upgrade : upgrades) {
             String kind = upgrade[0];
             String improvementKey = upgrade[1];
-            String localizationPrefix = upgrade[2];
             for (int level = 1; level <= 3; level++) {
                 String file = "schematics/spear/head/" + kind + "_" + level + ".json";
                 JsonElement root = spearcore$readJson(helper, "tetra", file);
@@ -1011,9 +1063,17 @@ public final class TetraCompatGameTests {
                     JsonObject json = root.getAsJsonObject();
                     helper.assertTrue("improvement".equals(json.get("displayType").getAsString()),
                             file + " 必须是 displayType=improvement，才会出现在工作台的升级列表");
-                    helper.assertTrue(localizationPrefix.concat(Integer.toString(level))
-                                    .equals(json.get("localizationKey").getAsString()),
-                            file + " 必须复用 Tetra 的 localizationKey，才会跟着 Tetra 的翻译走");
+                    helper.assertFalse(json.has("localizationKey"),
+                            file + " 不应复用 Tetra 剑刃的 localizationKey（描述会写成「剑刃」）");
+                    String nameKey = "tetra/schematic/spear/head/" + kind + "_" + level + ".name";
+                    for (String language : new String[]{"en_us", "zh_cn"}) {
+                        JsonElement langRoot = spearcore$readJson(helper, SpearcoreMod.MODID, "lang/" + language + ".json");
+                        if (langRoot == null) {
+                            return;
+                        }
+                        helper.assertTrue(langRoot.getAsJsonObject().has(nameKey),
+                                language + " 缺少矛头升级翻译 " + nameKey);
+                    }
                     JsonArray slots = json.getAsJsonArray("slots");
                     helper.assertTrue(slots != null && slots.size() == 1
                                     && "spear/head".equals(slots.get(0).getAsString()),
@@ -1133,11 +1193,12 @@ public final class TetraCompatGameTests {
             return;
         }
         JsonObject one = stage1.getAsJsonObject();
-        helper.assertTrue("tetra:spear/composite_shaft_1".equals(
-                        one.getAsJsonObject("requirement").get("key").getAsString()),
-                "1/3 必须由积竹木柲卷轴解锁（locked key = schematic id）");
-        helper.assertTrue(one.getAsJsonObject("requirement").toString().contains("tetra:locked"),
-                "1/3 必须用 locked 需求");
+        String stage1Requirement = one.getAsJsonObject("requirement").toString();
+        helper.assertTrue(stage1Requirement.contains("tetra:locked")
+                        && stage1Requirement.contains("tetra:spear/composite_shaft_1"),
+                "1/3 必须由新的积竹木柲卷轴解锁（locked key = tetra:spear/composite_shaft_1）");
+        helper.assertTrue(stage1Requirement.contains("tetra:spear/composite_shaft\""),
+                "1/3 还要兼容旧卷轴的 locked key（tetra:spear/composite_shaft）");
         JsonObject stage2 = spearcore$readJson(helper, "tetra", "schematics/spear/composite_shaft_2.json")
                 .getAsJsonObject();
         helper.assertTrue(stage2.getAsJsonObject("requirement").toString().contains("spear/composite_shaft_1"),
@@ -1300,6 +1361,106 @@ public final class TetraCompatGameTests {
             helper.fail("读取 assets/spearcore/" + path + " 失败: " + exception);
             return null;
         }
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearFullerIsDataDefined(GameTestHelper helper) {
+        // 第五槽「强化附层」（数据抄 Tetra 剑的 reinforced_fuller）：archetype 必须开槽（minor、非 required），模块与配方共用 spear/fuller 槽。
+        JsonElement moduleRoot = spearcore$readJson(helper, "tetra", "modules/spear/fuller.json");
+        if (moduleRoot == null) {
+            return;
+        }
+        JsonObject module = moduleRoot.getAsJsonObject();
+        JsonArray moduleSlots = module.getAsJsonArray("slots");
+        helper.assertTrue(moduleSlots != null && moduleSlots.size() == 1
+                        && "spear/fuller".equals(moduleSlots.get(0).getAsString()),
+                "强化附层模块必须占 spear/fuller");
+        JsonObject variant = module.getAsJsonArray("variants").get(0).getAsJsonObject();
+        helper.assertTrue("spear_fuller/".equals(variant.get("key").getAsString()),
+                "强化附层变体前缀必须是 spear_fuller/");
+        Set<String> materials = new HashSet<>();
+        for (JsonElement element : variant.getAsJsonArray("materials")) {
+            materials.add(element.getAsString());
+        }
+        for (String material : new String[]{"tetra:metal/", "tetra:wood/", "tetra:bone/", "tetra:misc/forged_beam"}) {
+            helper.assertTrue(materials.contains(material),
+                    "强化附层必须接受 " + material + "，实际: " + materials);
+        }
+        JsonElement schematicRoot = spearcore$readJson(helper, "tetra", "schematics/spear/fuller.json");
+        if (schematicRoot == null) {
+            return;
+        }
+        JsonObject schematic = schematicRoot.getAsJsonObject();
+        helper.assertTrue(schematic.getAsJsonArray("slots").get(0).getAsString().equals("spear/fuller"),
+                "强化附层配方必须写 slots=spear/fuller");
+        helper.assertTrue(schematic.get("materialSlotCount").getAsInt() == 1,
+                "强化附层配方应占用一个材料槽");
+        JsonObject outcome = schematic.getAsJsonArray("outcomes").get(0).getAsJsonObject();
+        helper.assertTrue("spear/fuller".equals(outcome.get("moduleKey").getAsString()),
+                "强化附层 outcome 的 moduleKey 必须是 spear/fuller");
+        helper.assertTrue(outcome.get("moduleVariant").getAsString().startsWith("spear_fuller/"),
+                "强化附层 outcome 的 moduleVariant 必须是 spear_fuller/ 前缀");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void spearButtAddsAttackDamage(GameTestHelper helper) {
+        JsonElement root = spearcore$readJson(helper, "tetra", "modules/spear/butt.json");
+        if (root == null) {
+            return;
+        }
+        JsonObject variant = root.getAsJsonObject().getAsJsonArray("variants").get(0).getAsJsonObject();
+        JsonObject attributes = variant.getAsJsonObject("attributes");
+        helper.assertTrue(attributes != null && attributes.has("generic.attack_damage"),
+                "枪纂必须给 generic.attack_damage，才不会只是纯配重");
+        double damage = attributes.get("generic.attack_damage").getAsDouble();
+        helper.assertTrue(damage == 0.5D, "枪纂攻击力加值应为 +0.5，实际: " + damage);
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraCraftingEffectModuleMappingMatchesSpearSlots(GameTestHelper helper) {
+        // crafting effect 的 tetra:module 条件与 schematic requirement 是两个类；这里校验纯映射函数，
+        // 保证 RevelationFix 的神灵金锭（sword/* 模块条件）能命中矛的刃/柄/护手/配重。
+        helper.assertTrue(TetraModuleGateMapping.matches("spear/head", "sword/basic_blade"),
+                "剑刃条件应映射到矛头槽");
+        helper.assertTrue(TetraModuleGateMapping.matches("spear/handle", "sword/basic_hilt"),
+                "剑柄条件应映射到矛杆槽");
+        helper.assertTrue(TetraModuleGateMapping.matchesAnySpearSlot("sword/basic_blade"),
+                "anySlot 条件下剑刃应命中矛的任一槽位");
+        helper.assertTrue(TetraModuleGateMapping.matchesAnySpearSlot("sword/basic_guard"),
+                "anySlot 条件下护手应命中矛的任一槽位");
+        helper.assertTrue(TetraModuleGateMapping.matchesAnySpearSlot("sword/counterweight"),
+                "anySlot 条件下配重应命中矛的任一槽位");
+        helper.assertFalse(TetraModuleGateMapping.matchesAnySpearSlot("tetra:random_module"),
+                "非 Tetra 武器模块不应被映射");
+        helper.assertFalse(TetraModuleGateMapping.matches("spear/head", "sword/basic_hilt"),
+                "剑柄条件不能匹配矛头槽");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void spearScrollsTabIsRegistered(GameTestHelper helper) {
+        // 卷轴的正常来源是交易/战利品；创造栏那份是验收入口。这里钉住类本身，
+        // 防止以后清理时又把「测试时拿不到积竹木柲卷轴」当成数据坏了。
+        try {
+            Class<?> tab = Class.forName("net.minecraft.spearcore.compat.tetra.TetraSpearScrollsTab");
+            boolean found = false;
+            for (var method : tab.getDeclaredMethods()) {
+                if ("buildContents".equals(method.getName()) && method.getParameterCount() == 1) {
+                    found = true;
+                }
+            }
+            helper.assertTrue(found, "TetraSpearScrollsTab 必须保留 BuildCreativeModeTabContentsEvent 订阅方法");
+        } catch (ClassNotFoundException exception) {
+            helper.fail("缺少 TetraSpearScrollsTab（卷轴验收入口）: " + exception);
+            return;
+        }
+        helper.succeed();
     }
 
     /** 从 classpath 读 Tetra 命名空间下的 assets（全息球条目等）。 */

@@ -8,8 +8,17 @@
         "textureX": 16
     },
     "requirement": {
-        "type": "tetra:locked",
-        "key": "tetra:spear/composite_shaft_1"
+        "type": "tetra:or",
+        "requirements": [
+            {
+                "type": "tetra:locked",
+                "key": "tetra:spear/composite_shaft_1"
+            },
+            {
+                "type": "tetra:locked",
+                "key": "tetra:spear/composite_shaft"
+            }
+        ]
     },
     "outcomes": [
         {

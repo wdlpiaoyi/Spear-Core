@@ -47,7 +47,7 @@ tetraDamageScale = 1.0
 本模组**不再劫持 Tetra 自带的单头工具**。取而代之的是一个**独立的模块化长矛**：
 
 - 把本模组七把贴图长矛中的任意一把放进 Tetra 工作台，数据包里的 replacement 会把它替换成 `tetra:dynamic_handheld`，并写入 archetype `modular_spear` 与四个模块槽位。
-- 四个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定 `spear/binding`（↖）、**枪纂** `spear/butt`（↙，与 Tetra 剑配重同机制）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件；绑定槽还能换成**镶嵌**（`spear/socket`，任何 `tetra:socket/*` 材料都能装，不限于宝石），矛头可在打磨面板里选伤害/耐久/速度任一条（各 I~V），五级后可再磨「尖锐」）。
+- 五个槽位是**本模组自己的矛部件**：矛头 `spear/head`（↗）、矛杆 `spear/handle`（↘）、绑定 `spear/binding`（↖）、**枪纂** `spear/butt`（↙，+0.5 攻击力）、**强化附层** `spear/fuller`（可选，抄 Tetra 剑强化血槽：金属/木/骨/结构梁）。七种材质映射到 oak / stone / copper / iron / gold / diamond / netherite（木矛 → oak），矛杆固定木棍、绑定固定线；之后可以在工作台里用材料换任意部件；绑定槽还能换成**镶嵌**（`spear/socket`，任何 `tetra:socket/*` 材料都能装，不限于宝石），矛头可在打磨面板里选伤害/耐久/速度任一条（各 I~V），五级后可再磨「尖锐」）。
 - 还有三件**必须先用卷轴解锁**的替换部件（`data/tetra/schematics/spear/{shuo_head,composite_shaft,three_point_blade}.json`，`requirement` 是 `tetra:locked`）：
   - **槊头**（占 `spear/head`）：更沉更长的矛头，伤害与射程更高、攻速更低；
   - **积竹木柲**（占 `spear/handle`）：复合矛杆，更结实也更长；

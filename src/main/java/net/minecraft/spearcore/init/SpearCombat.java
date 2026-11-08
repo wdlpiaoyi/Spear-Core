@@ -276,7 +276,7 @@ public final class SpearCombat {
                                             boolean playSound) {
         if (attacker.level().isClientSide || stack.isEmpty()) return false;
         SpearLike spear = SpearLikeSupport.of(stack);
-        if (spear == null) return false;
+        if (spear == null || spear.slashing()) return false;
         if (attacker instanceof Player player && !canPlayerPerformStab(player, stack, spear)) return false;
 
         Vec3 look = attacker.getLookAngle();
@@ -384,6 +384,34 @@ public final class SpearCombat {
             return;
         }
         SpearLikeSupport.tetraSlashSweep(player, stack, living, 3);
+    }
+
+    /**
+     * 挥砍矛在「准星不是实体」时由服务端沿矛的射程找最近目标。
+     *
+     * <p>客户端拾取距离只有 3.0，矛的射程远大于它；用同一套
+     * {@link SpearItem#getHitEntitiesAlong} 射线 + 判定箱，保证服务端与戳刺路径的命中口径一致。</p>
+     */
+    public static LivingEntity findSlashTarget(Player player, SpearLike spear) {
+        if (player == null || spear == null || player.level().isClientSide) {
+            return null;
+        }
+        List<EntityHitResult> hits = SpearItem.getHitEntitiesAlong(player, spear, spear.getHitboxMargin2(),
+                entity -> SpearItem.canHitEntity(player, entity));
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (EntityHitResult hit : hits) {
+            LivingEntity living = resolveLivingTarget(hit.getEntity());
+            if (living == null || !living.isAlive() || living == player) {
+                continue;
+            }
+            double distance = hit.getLocation().distanceToSqr(player.getEyePosition());
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = living;
+            }
+        }
+        return best;
     }
 
     /** 当前是否处于「虚拟原版攻击」里；{@code SpearAttackHandler} 用它避免重复结算。 */

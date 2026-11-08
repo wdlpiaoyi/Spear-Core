@@ -39,9 +39,13 @@ public final class SpearDebugCommand {
         }
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty() || SpearLikeSupport.of(stack) == null) {
-            source.sendFailure(Component.literal("主手不是长矛"));
+            source.sendFailure(Component.literal(
+                    "请手持一把模块化长矛（Tetra 矛）：/spearcore tetra 会输出它的模块、属性与拟合数值，"
+                            + "用来排查攻速/伤害/挥砍等问题。该命令只读，不会修改物品。"));
             return 0;
         }
+        source.sendSuccess(() -> Component.literal(
+                "【Spear Core】模块化长矛诊断（把下面内容发给作者即可；只读，不会改物品）"), false);
         // 反射调用 TetraSpearDebug（它 import 了 Tetra 类）：这个 @EventBusSubscriber 类会在启动时被 FML
         // 主动加载，直接引用会让未装 Tetra 的 GameTest 服务端在类校验阶段崩掉。
         try {
@@ -56,6 +60,8 @@ public final class SpearDebugCommand {
             source.sendFailure(Component.literal("读取 Tetra 属性失败: " + throwable));
             return 0;
         }
+        source.sendSuccess(() -> Component.literal(
+                "提示：换不同矛头/材料再运行一次，可以对比「攻速为什么变慢」「挥砍是否识别」这类问题。"), false);
         return 1;
     }
 }

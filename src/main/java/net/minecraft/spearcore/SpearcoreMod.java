@@ -5,6 +5,7 @@ import net.minecraft.spearcore.init.SpearAttributes;
 import net.minecraft.spearcore.init.SpearCoreItems;
 import net.minecraft.spearcore.init.SpearEnchantments;
 import net.minecraft.spearcore.init.SpearSounds;
+import net.minecraft.spearcore.network.SpearSlashAttackPacket;
 import net.minecraft.spearcore.network.SpearStabAttackPacket;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -36,6 +37,7 @@ public class SpearcoreMod {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         SpearStabAttackPacket.register();
+        SpearSlashAttackPacket.register();
         // Start of user code block mod init
         SpearSounds.REGISTRY.register(modEventBus);
         SpearCoreItems.REGISTRY.register(modEventBus);

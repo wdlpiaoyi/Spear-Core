@@ -38,6 +38,23 @@ public final class TetraModuleGateMapping {
         return targetRole != null && targetRole.equals(requiredRole);
     }
 
+    /**
+     * crafting effect 的 {@code anySlot} 条件：只要模块角色对应到矛的任一槽位即可。
+     *
+     * <p>这类条件不携带槽位字符串，无法判断具体是刃/柄/护手/配重，只能按角色放行。</p>
+     */
+    public static boolean matchesAnySpearSlot(@Nullable String requiredModuleKey) {
+        if (requiredModuleKey == null) {
+            return false;
+        }
+        if (!requiredModuleKey.startsWith("sword/")
+                && !requiredModuleKey.startsWith("single/")
+                && !requiredModuleKey.startsWith("double/")) {
+            return false;
+        }
+        return roleOfModuleKey(requiredModuleKey) != null;
+    }
+
     @Nullable
     static String roleOfSlot(String slot) {
         int index = slot.lastIndexOf('/');

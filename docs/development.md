@@ -111,6 +111,7 @@ StartupEvents.registry('item', event => {
 | `data/tetra/archetypes/modular_spear.json` | 四个槽位：`spear/head`、`spear/handle`（major + required）、`spear/binding`、`spear/butt` |
 | `data/tetra/modules/spear/{head,handle,binding,butt,socket}.json` | 五个基础矛部件模块（变体前缀 `spear_head/` / `spear_handle/` / `spear_binding/` / `spear_butt/` / `spear_socket/`；`models` 复用 Tetra 自带模块模型）。`spear/socket` 与绑定共用 `spear/binding` 槽，只吃 `tetra:socket/*` 材料（描述里叫「镶嵌」，不限于宝石） |
 | `data/tetra/modules/spear/{shuo_head,three_point_blade}.json` | 两个**卷轴解锁**的矛头：槊头（变体 `spear_shuo_head/`，只吃金属，左键挥砍 + 自带横扫，慢速高伤）、三尖两刃刀（变体 `spear_three_point/`，全材料，左键挥砍 + 横扫，攻速/伤害/耐久/射程全面高于普通头） |
+| `data/tetra/modules/spear/fuller.json` | 第五槽「强化附层」，数据抄 Tetra 剑的 `sword/reinforced_fuller`：材料 `tetra:metal/`、`tetra:wood/`、`tetra:bone/`、`tetra:misc/forged_beam`；攻速 -0.1、耐久 +100、`durabilityMultiplier` 1.1、extract 耐久 0.25/完整度 0.5；配方 `schematics/spear/fuller.json` 直接可见。枪纂变体另带 `generic.attack_damage 0.5` |
 | `data/tetra/modules/spear/{composite_shaft,composite_shaft_1,composite_shaft_2,composite_shaft_3}.json` | 积竹木柲四阶段（最终形态 + 1/3、2/3、3/3）：只吃 `tetra:wood/`，属性倍率 2.0/0.6/1.15/1.5，完整度 5.0/2.5/3.0/4.0 |
 | `data/tetra/schematics/spear/{head,handle,binding,butt,socket}.json` | 五个基础换部件配方（工作台只显示 `slots` 命中当前物品槽位的 schematic；socket 与 binding 同为 `spear/binding`，互相替换） |
 | `data/tetra/schematics/spear/{shuo_head,three_point_blade}.json` | 两个卷轴解锁的换矛头配方，`requirement` 是 `{"type": "tetra:locked", "key": "tetra:spear/<part>"}` |
@@ -119,7 +120,7 @@ StartupEvents.registry('item', event => {
 | `data/tetra/schematics/spear/handle/hone_{speed,durability}_{1..5}.json` | 矛杆速度 / 耐久打磨（速度复用 `handle_hone/speed`；耐久是新改进 `handle_hone/durability`，数据在 `data/tetra/improvements/spear/handle/hone_durability.json`） |
 | `data/tetra/schematics/spear/handle/hone_stable_{1..5}.json` | 积竹木柲 3/3 的「稳定」打磨（改进 `spear_hone/stable`，每级 +0.04 攻速；五级后出现「完成」） |
 | `data/tetra/schematics/spear/head/hone_sharp.json` | 矛头任一条五级打磨后解锁的「尖锐」：蓄力伤害系数 +5%（改进 `spearhead_hone/sharp` 在 `improvements/spear/head/sharp.json`，Java 侧读 key） |
-| `data/tetra/schematics/spear/{serrated,tempered}_{1..3}.json` | 矛头锯齿（流血）/ 淬火（穿甲）升级，`displayType: improvement`；Tetra 原版那 6 份写死 `single/spearhead`，所以自带一份 |
+| `data/tetra/schematics/spear/head/{serrated,tempered}_{1..3}.json` | 矛头锯齿（流血）/ 回火（穿甲）升级，`displayType: improvement`；不再复用 Tetra 剑刃的 localizationKey，名称/描述/槽位标签用自己的矛头文案 |
 | `data/tetra/improvements/spear/{head/sharp,handle/hone_durability,handle/stable}.json` | 本模组自己的改进：尖锐（蓄力系数）、矛杆耐久、稳定（攻速）；`improvements` 目录名写在对应模块里 |
 | `assets/spearcore/models/item/tetra_spear{,_shuo,_three}.json` | 模块化矛外观：默认 / 槊头 / 三尖两刃刀。三套只换头部那一层贴图（`tetra_spear_head*`），杆贴图共用；新增矛头时复制一份 `tetra_spear_head*` 改画再补一组模型即可 |
 | `data/tetra/replacements/spearcore_spears.json` | 七条替换规则：七把**本模组的矛** → `tetra:dynamic_handheld` + 四模块（矛头/枪纂按 oak…netherite，矛杆 `spear_handle/stick`，绑定 `spear_binding/string`） |

@@ -1,0 +1,24 @@
+{
+    "replace": true,
+    "slots": [
+        "spear/fuller"
+    ],
+    "materialSlotCount": 1,
+    "displayType": "minor",
+    "glyph": {
+        "textureX": 72,
+        "textureY": 112
+    },
+    "outcomes": [
+        {
+            "materials": [
+                "tetra:wood/",
+                "tetra:metal/",
+                "tetra:bone/",
+                "tetra:misc/forged_beam"
+            ],
+            "moduleKey": "spear/fuller",
+            "moduleVariant": "spear_fuller/"
+        }
+    ]
+}

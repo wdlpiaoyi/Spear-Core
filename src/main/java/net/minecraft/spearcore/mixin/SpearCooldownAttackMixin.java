@@ -8,6 +8,7 @@ import net.minecraft.spearcore.init.SpearSounds;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
+import net.minecraft.spearcore.network.SpearSlashAttackPacket;
 import net.minecraft.spearcore.network.SpearStabAttackPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -59,7 +60,12 @@ public class SpearCooldownAttackMixin {
                         SpearSounds.ITEM_SPEAR_ATTACK.get(), SoundSource.PLAYERS, 0.9F,
                         1.0F + player.getRandom().nextFloat() * 0.1F, false);
             }
-            SpearStabAttackPacket.CHANNEL.sendToServer(new SpearStabAttackPacket());
+            // 挥砍矛走挥砍包（服务端沿矛的射程找最近目标）；普通矛头仍走戳刺包。
+            if (spear.slashing()) {
+                SpearStabAttackPacket.CHANNEL.sendToServer(new SpearSlashAttackPacket());
+            } else {
+                SpearStabAttackPacket.CHANNEL.sendToServer(new SpearStabAttackPacket());
+            }
             SpearItem.jerotesLungeForwardMaybe(player);
         }
     }

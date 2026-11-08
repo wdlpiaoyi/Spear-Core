@@ -11,11 +11,13 @@
     "ModularItemTetraEnchantMixin",
     "ModuleRequirementSpearMixin",
     "ItemModuleRepairMixin",
-    "ModularItemSynergyMixin"
+    "ModularItemSynergyMixin",
+    "ModuleConditionSpearMixin"
   ],
   "client": [
     "ItemRendererTetraModelMixin",
-    "ItemRenderPropertiesTetraMixin"
+    "ItemRenderPropertiesTetraMixin",
+    "ModularSpearReequipMixin"
   ],
   "injectors": {
     "defaultRequire": 0
