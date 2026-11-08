@@ -4,9 +4,9 @@
         "level": 1,
         "group": "composite",
         "attributes": {
-            "generic.attack_speed": 0.03,
+            "generic.attack_speed": 0.05,
             "generic.attack_damage": 0.1,
-            "forge:entity_reach": 0.08
+            "forge:entity_reach": 0.1
         },
         "durability": 2,
         "magicCapacity": 1
@@ -17,8 +17,8 @@
         "group": "composite",
         "attributes": {
             "generic.attack_speed": 0.05,
-            "generic.attack_damage": 0.15,
-            "forge:entity_reach": 0.15
+            "generic.attack_damage": 0.2,
+            "forge:entity_reach": 0.2
         },
         "durability": 3,
         "magicCapacity": 1
@@ -28,9 +28,9 @@
         "level": 3,
         "group": "composite",
         "attributes": {
-            "generic.attack_speed": 0.3,
-            "generic.attack_damage": 0.7,
-            "forge:entity_reach": 0.75
+            "generic.attack_speed": 0.7,
+            "generic.attack_damage": 1.0,
+            "forge:entity_reach": 1.2
         },
         "durability": 3,
         "magicCapacity": 2

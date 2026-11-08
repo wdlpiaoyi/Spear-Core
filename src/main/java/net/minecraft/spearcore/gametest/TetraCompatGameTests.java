@@ -705,7 +705,7 @@ public final class TetraCompatGameTests {
                 Map.entry("binding", new String[]{"tetra:fibre/", "tetra:fabric/"}),
                 Map.entry("socket", new String[]{"tetra:socket/"}),
                 Map.entry("fuller", new String[]{"tetra:metal/", "tetra:wood/", "tetra:bone/",
-                        "tetra:misc/forged_beam", "tetra:fuller/"}),
+                        "tetra:misc/forged_beam"}),
                 Map.entry("shuo_head", new String[]{"tetra:metal/"}),
                 Map.entry("three_point_blade",
                         new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/", "tetra:bone/"}),
@@ -1180,9 +1180,14 @@ public final class TetraCompatGameTests {
         double baseSpeed = variant.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         double baseReach = variant.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
         double baseDamage = variant.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(baseSpeed > 0.0D, "1/3 矛杆的攻速必须是正值，实际: " + baseSpeed);
-        helper.assertTrue(baseReach > 0.0D, "1/3 矛杆的射程必须是正值，实际: " + baseReach);
-        helper.assertTrue(baseDamage > 0.0D, "1/3 矛杆的伤害必须是正值，实际: " + baseDamage);
+        // 1/3 是未完成品：攻速/伤害/射程都要比普通矛杆（-1.1 / 0 / +0.5）差。
+        // 注意负值本身没问题，只要总攻速没被属性下限夹到 0 即可；不要再用「非负」限制。
+        helper.assertTrue(baseSpeed < -1.1D,
+                "1/3 矛杆攻速必须慢于普通矛杆（< -1.1），实际: " + baseSpeed);
+        helper.assertTrue(baseReach < 0.5D,
+                "1/3 矛杆射程必须小于普通矛杆（< 0.5），实际: " + baseReach);
+        helper.assertTrue(baseDamage < 0.0D,
+                "1/3 矛杆伤害必须低于普通矛杆（< 0），实际: " + baseDamage);
         helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.5D,
                 "积竹木柲完整度必须固定 2.5（用户要求不动）");
 
@@ -1220,10 +1225,12 @@ public final class TetraCompatGameTests {
         helper.assertTrue(totalSpeed > baseSpeed, "三级加固后攻速应比 1/3 更快（完成版不能比初坯还慢）");
         helper.assertTrue(totalReach > baseReach, "三级加固后射程应比 1/3 更远");
         helper.assertTrue(totalDamage > baseDamage, "三级加固后伤害应比 1/3 更高");
-        helper.assertTrue(totalSpeed >= 0.0D,
-                "完成版不应再有攻速负面效果，实际: " + totalSpeed);
+        // 完成版相对普通矛杆（-1.1 / 0 / +0.5）必须是净提升，但仍然允许模块自身
+        // 用负值起手——真正要保证的是「不会掉到 0 攻速」和「不弱于普通杆」。
+        helper.assertTrue(totalSpeed > -1.1D,
+                "完成版攻速必须快于普通矛杆（> -1.1），实际: " + totalSpeed);
         helper.assertTrue(totalDamage >= 0.0D,
-                "完成版不应再有伤害负面效果，实际: " + totalDamage);
+                "完成版伤害不应低于普通矛杆（>= 0），实际: " + totalDamage);
         helper.assertTrue(totalReach > 0.9D, "最终射程加成应回到 +1 左右，实际: " + totalReach);
 
         // 2/3、3/3、完成都必须是 improvement 类型，且只给改进、不写 moduleKey/moduleVariant。
@@ -1438,11 +1445,12 @@ public final class TetraCompatGameTests {
         for (JsonElement element : variant.getAsJsonArray("materials")) {
             materials.add(element.getAsString());
         }
-        for (String material : new String[]{"tetra:metal/", "tetra:wood/", "tetra:bone/",
-                "tetra:misc/forged_beam", "tetra:fuller/"}) {
-            helper.assertTrue(materials.contains(material),
-                    "强化附层必须接受 " + material + "，实际: " + materials);
-        }
+        // 与 Tetra 剑的 sword/reinforced_fuller 完全一致：只吃四种基础材料。
+        // 不洁之血这类第三方材料由运行期导入的专用 outcome/variant 处理，不靠材料前缀兜底。
+        helper.assertTrue(materials.size() == 4
+                        && materials.contains("tetra:metal/") && materials.contains("tetra:wood/")
+                        && materials.contains("tetra:bone/") && materials.contains("tetra:misc/forged_beam"),
+                "强化附层材料必须与 Tetra 剑完全一致，实际: " + materials);
         JsonElement schematicRoot = spearcore$readJson(helper, "tetra", "schematics/spear/fuller.json");
         if (schematicRoot == null) {
             return;

@@ -56,7 +56,7 @@ public final class TetraModuleGateMapping {
     }
 
     @Nullable
-    static String roleOfSlot(String slot) {
+    public static String roleOfSlot(String slot) {
         int index = slot.lastIndexOf('/');
         String suffix = index >= 0 ? slot.substring(index + 1) : slot;
         return switch (suffix) {
@@ -69,7 +69,7 @@ public final class TetraModuleGateMapping {
     }
 
     @Nullable
-    static String roleOfModuleKey(String moduleKey) {
+    public static String roleOfModuleKey(String moduleKey) {
         int index = moduleKey.lastIndexOf('/');
         String name = index >= 0 ? moduleKey.substring(index + 1) : moduleKey;
         if (name.contains("blade") || name.contains("head") || name.contains("point")

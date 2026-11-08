@@ -20,9 +20,9 @@
             ],
             "key": "spear_composite_shaft/",
             "attributes": {
-                "generic.attack_speed": 0.02,
-                "generic.attack_damage": 0.05,
-                "forge:entity_reach": 0.02
+                "generic.attack_speed": -1.5,
+                "generic.attack_damage": -0.3,
+                "forge:entity_reach": 0.0
             },
             "aspects": {
                 "block_breaker": 1,

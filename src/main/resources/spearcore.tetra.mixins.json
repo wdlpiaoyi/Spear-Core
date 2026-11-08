@@ -12,7 +12,10 @@
     "ModuleRequirementSpearMixin",
     "ItemModuleRepairMixin",
     "ModularItemSynergyMixin",
-    "ModuleConditionSpearMixin"
+    "ModuleConditionSpearMixin",
+    "ConfigSchematicSpearMixin",
+    "SchematicRegistryTetraMixin",
+    "PlayerSweepTetraMixin"
   ],
   "client": [
     "ItemRendererTetraModelMixin",

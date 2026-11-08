@@ -27,7 +27,13 @@ import se.mickelus.tetra.module.schematic.UpgradeSchematic;
 public final class TetraFullerImportImpl {
 
     private static final String FULLER_MODULE_KEY = "spear/fuller";
-    private static final String FULLER_SCHEMATIC_KEY = "tetra:spear/fuller";
+    /**
+     * Tetra 的 {@code SchematicRegistry.getSchematic(String)} 会自己在 key 前补
+     * {@code tetra:}，这里必须传纯 path；传 {@code tetra:spear/fuller} 会变成
+     * {@code tetra:tetra:spear/fuller} 并抛 {@code ResourceLocationException}，
+     * 整个导入因此静默失败（3.4.0 实机踩过）。
+     */
+    private static final String FULLER_SCHEMATIC_KEY = "spear/fuller";
 
     private static boolean failed;
 
@@ -61,7 +67,8 @@ public final class TetraFullerImportImpl {
                         || Arrays.stream(definition.slots).noneMatch(slot -> slot != null && slot.endsWith("/fuller"))) {
                     continue;
                 }
-                if (other.getKey().equals(FULLER_SCHEMATIC_KEY)) {
+                if (FULLER_SCHEMATIC_KEY.equals(other.getKey())
+                        || ("tetra:" + FULLER_SCHEMATIC_KEY).equals(other.getKey())) {
                     continue;
                 }
                 for (OutcomeDefinition outcome : definition.outcomes) {

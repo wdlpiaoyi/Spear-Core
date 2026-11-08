@@ -4,6 +4,11 @@
     ],
     "materialSlotCount": 1,
     "displayType": "improvement",
+    "applicableMaterials": [
+        "minecraft:twisting_vines",
+        "minecraft:weeping_vines",
+        "minecraft:vine"
+    ],
     "glyph": {
         "textureX": 16
     },
@@ -34,7 +39,7 @@
                     "minecraft:weeping_vines",
                     "minecraft:vine"
                 ],
-                "count": 64
+                "count": 8
             },
             "requiredTools": {
                 "cut": "minecraft:stone"

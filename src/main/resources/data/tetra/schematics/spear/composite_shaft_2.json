@@ -4,6 +4,9 @@
     ],
     "materialSlotCount": 1,
     "displayType": "improvement",
+    "applicableMaterials": [
+        "minecraft:bamboo"
+    ],
     "glyph": {
         "textureX": 16
     },
@@ -32,7 +35,7 @@
                 "items": [
                     "minecraft:bamboo"
                 ],
-                "count": 64
+                "count": 8
             },
             "requiredTools": {
                 "cut": "minecraft:stone"
