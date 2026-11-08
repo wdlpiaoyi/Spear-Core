@@ -47,6 +47,28 @@ public enum TetraSpearHead {
 
     /** 按变体 key 判定形态；未知/为空按普通矛头处理。 */
     public static TetraSpearHead of(@Nullable String variantKey) {
+        return ofVariantAndModule(variantKey, null);
+    }
+
+    /**
+     * 先按模块 key、再按变体 key 判定形态。
+     *
+     * <p>只靠变体前缀在第三方改写变体 key 时会失效；模块 key 是槽位里真正安装的模块
+     * （{@code spear/shuo_head} / {@code spear/three_point_blade}），更可靠。</p>
+     */
+    public static TetraSpearHead ofVariantAndModule(@Nullable String variantKey, @Nullable String moduleKey) {
+        if (moduleKey != null) {
+            if ("spear/shuo_head".equals(moduleKey)) {
+                return SHUO;
+            }
+            if ("spear/three_point_blade".equals(moduleKey)) {
+                return THREE;
+            }
+        }
+        return ofVariant(variantKey);
+    }
+
+    private static TetraSpearHead ofVariant(@Nullable String variantKey) {
         if (variantKey != null) {
             for (TetraSpearHead head : values()) {
                 if (head != PLAIN && variantKey.startsWith(head.variantPrefix)) {

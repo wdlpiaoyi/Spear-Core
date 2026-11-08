@@ -2,17 +2,32 @@
     "slots": [
         "spear/handle"
     ],
-    "materialSlotCount": 1,
-    "displayType": "major",
+    "materialSlotCount": 0,
+    "displayType": "improvement",
     "glyph": {
         "textureX": 16
     },
     "requirement": {
-        "type": "tetra:module",
-        "module": "spear/composite_shaft_2"
+        "type": "tetra:and",
+        "requirements": [
+            {
+                "type": "tetra:module",
+                "module": "spear/composite_shaft"
+            },
+            {
+                "type": "tetra:improvement",
+                "improvement": "spear_composite/stage",
+                "level": {
+                    "min": 1
+                }
+            }
+        ]
     },
     "outcomes": [
         {
+            "improvements": {
+                "spear_composite/stage": 2
+            },
             "material": {
                 "items": [
                     "minecraft:twisting_vines",
@@ -21,8 +36,6 @@
                 ],
                 "count": 64
             },
-            "moduleKey": "spear/composite_shaft_3",
-            "moduleVariant": "spear_composite_3/",
             "requiredTools": {
                 "sword_dig": "minecraft:stone"
             }

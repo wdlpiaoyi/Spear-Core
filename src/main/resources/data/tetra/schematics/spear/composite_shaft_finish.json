@@ -3,7 +3,7 @@
         "spear/handle"
     ],
     "materialSlotCount": 0,
-    "displayType": "major",
+    "displayType": "improvement",
     "glyph": {
         "textureX": 16
     },
@@ -12,7 +12,14 @@
         "requirements": [
             {
                 "type": "tetra:module",
-                "module": "spear/composite_shaft_3"
+                "module": "spear/composite_shaft"
+            },
+            {
+                "type": "tetra:improvement",
+                "improvement": "spear_composite/stage",
+                "level": {
+                    "min": 2
+                }
             },
             {
                 "type": "tetra:improvement",
@@ -25,11 +32,9 @@
     },
     "outcomes": [
         {
-            "materials": [
-                "tetra:wood/"
-            ],
-            "moduleKey": "spear/composite_shaft",
-            "moduleVariant": "spear_composite_shaft/"
+            "improvements": {
+                "spear_composite/stage": 3
+            }
         }
     ]
 }

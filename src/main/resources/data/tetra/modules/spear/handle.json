@@ -41,7 +41,7 @@
                     "forge:entity_reach": 0.2
                 },
                 "durability": 0.25,
-                "integrity": 1,
+                "integrity": 1.3,
                 "magicCapacity": 1,
                 "glyph": {
                     "textureX": 16

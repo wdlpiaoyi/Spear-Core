@@ -49,8 +49,25 @@ public class SpearCooldownAttackMixin {
             return;
         }
 
-        // 准星锁到实体时由服务端 AttackEntityEvent 接手，这里只补「MISS / 命中方块」两种情况：
-        // 玩家交互距离是 3.0，长矛能戳到 4.5，3~4.5 格的目标在原版拾取里会变成 MISS 或命中它身后的方块。
+        // 挥砍矛：不管准星是否锁到实体，都统一走挥砍包。
+        // 原版只在 3.0 格内把攻击发给实体，而矛的射程远大于它；如果交给原版，
+        // 3~4.5 格会变成 MISS、3 格内又走另一条路径，观感和结算不一致。
+        if (spear.slashing()) {
+            if (spear.style() == SpearStyle.MODULAR_3D) {
+                player.swing(InteractionHand.MAIN_HAND);
+                player.level().playLocalSound(player.getX(), player.getY(), player.getZ(),
+                        SpearSounds.ITEM_SPEAR_ATTACK.get(), SoundSource.PLAYERS, 0.9F,
+                        1.0F + player.getRandom().nextFloat() * 0.1F, false);
+            }
+            SpearStabAttackPacket.CHANNEL.sendToServer(new SpearSlashAttackPacket());
+            SpearItem.jerotesLungeForwardMaybe(player);
+            // 原版 startAttack 不再发包/走原版攻击；伤害由服务端挥砍包统一结算。
+            cir.setReturnValue(true);
+            cir.cancel();
+            return;
+        }
+
+        // 普通矛头：准星锁到实体时由服务端 AttackEntityEvent 接手，这里只补「MISS / 命中方块」两种情况。
         if (this.hitResult == null || this.hitResult.getType() != HitResult.Type.ENTITY) {
             // 3D 模型（Tetra）在创造模式下 canAttackBlock 返回 false，原版 startAttack 直接空转，
             // 既没有挥动也没有音效；这里补一次客户端挥动与挥空音。
@@ -60,12 +77,7 @@ public class SpearCooldownAttackMixin {
                         SpearSounds.ITEM_SPEAR_ATTACK.get(), SoundSource.PLAYERS, 0.9F,
                         1.0F + player.getRandom().nextFloat() * 0.1F, false);
             }
-            // 挥砍矛走挥砍包（服务端沿矛的射程找最近目标）；普通矛头仍走戳刺包。
-            if (spear.slashing()) {
-                SpearStabAttackPacket.CHANNEL.sendToServer(new SpearSlashAttackPacket());
-            } else {
-                SpearStabAttackPacket.CHANNEL.sendToServer(new SpearStabAttackPacket());
-            }
+            SpearStabAttackPacket.CHANNEL.sendToServer(new SpearStabAttackPacket());
             SpearItem.jerotesLungeForwardMaybe(player);
         }
     }

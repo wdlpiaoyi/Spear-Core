@@ -1,0 +1,35 @@
+[
+    {
+        "key": "spear_composite/stage",
+        "level": 1,
+        "group": "composite",
+        "attributes": {
+            "generic.attack_speed": -0.2,
+            "forge:entity_reach": 0.1
+        },
+        "durability": 2,
+        "magicCapacity": 1
+    },
+    {
+        "key": "spear_composite/stage",
+        "level": 2,
+        "group": "composite",
+        "attributes": {
+            "generic.attack_speed": -0.4,
+            "forge:entity_reach": 0.2
+        },
+        "durability": 3,
+        "magicCapacity": 1
+    },
+    {
+        "key": "spear_composite/stage",
+        "level": 3,
+        "group": "composite",
+        "attributes": {
+            "generic.attack_speed": -1.3,
+            "forge:entity_reach": 0.65
+        },
+        "durability": 3,
+        "magicCapacity": 2
+    }
+]

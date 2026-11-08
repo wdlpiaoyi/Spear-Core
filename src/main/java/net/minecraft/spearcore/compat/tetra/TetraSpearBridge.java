@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.ForgeMod;
 import se.mickelus.tetra.items.modular.IModularItem;
 import se.mickelus.tetra.items.modular.impl.dynamic.DynamicModularItem;
+import se.mickelus.tetra.module.ItemModule;
 
 /**
  * Tetra 运行时桥接：识别本模组的模块化长矛 + 读取属性。
@@ -50,9 +51,17 @@ final class TetraSpearBridge {
                 head.slashing(), sharpBonus(modular, stack));
     }
 
-    /** 矛头形态（渲染、命名、行为共用）；读不到按普通矛头处理。 */
+    /** 矛头形态（渲染、命名、行为共用）；优先模块 key，读不到再按变体前缀。 */
     static TetraSpearHead head(ItemStack stack) {
-        return TetraSpearHead.of(TetraSpearColors.headVariantKey(stack));
+        String moduleKey = null;
+        try {
+            IModularItem modular = (IModularItem) stack.getItem();
+            ItemModule module = modular.getModuleFromSlot(stack, "spear/head");
+            moduleKey = module == null ? null : module.getKey();
+        } catch (Throwable ignored) {
+            // 读不到模块 key 时退回变体前缀。
+        }
+        return TetraSpearHead.ofVariantAndModule(TetraSpearColors.headVariantKey(stack), moduleKey);
     }
 
     /**

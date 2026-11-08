@@ -10,7 +10,8 @@
                 "tetra:metal/",
                 "tetra:wood/",
                 "tetra:bone/",
-                "tetra:misc/forged_beam"
+                "tetra:misc/forged_beam",
+                "tetra:fuller/"
             ],
             "key": "spear_fuller/",
             "attributes": {

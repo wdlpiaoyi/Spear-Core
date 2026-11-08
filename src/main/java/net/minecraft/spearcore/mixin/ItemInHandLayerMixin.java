@@ -51,7 +51,11 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
 
         float attackTime = this.getParentModel().attackTime;
         if (attackTime > 0.0F && livingEntity.getMainArm() == humanoidArm) {
-            SpearAnimations.thirdPersonAttackItem(attackTime, poseStack, livingEntity);
+            if (spear.slashing()) {
+                SpearAnimations.thirdPersonSlashItem(attackTime, poseStack, livingEntity);
+            } else {
+                SpearAnimations.thirdPersonAttackItem(attackTime, poseStack, livingEntity);
+            }
         }
 
         float useTicks = livingEntity.getTicksUsingItem();

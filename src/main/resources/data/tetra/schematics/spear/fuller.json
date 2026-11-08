@@ -15,7 +15,8 @@
                 "tetra:wood/",
                 "tetra:metal/",
                 "tetra:bone/",
-                "tetra:misc/forged_beam"
+                "tetra:misc/forged_beam",
+                "tetra:fuller/"
             ],
             "moduleKey": "spear/fuller",
             "moduleVariant": "spear_fuller/"

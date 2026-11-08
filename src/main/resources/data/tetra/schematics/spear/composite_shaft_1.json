@@ -25,8 +25,8 @@
             "materials": [
                 "tetra:wood/"
             ],
-            "moduleKey": "spear/composite_shaft_1",
-            "moduleVariant": "spear_composite_1/",
+            "moduleKey": "spear/composite_shaft",
+            "moduleVariant": "spear_composite_shaft/",
             "requiredTools": {
                 "axe_dig": "minecraft:iron"
             }

@@ -20,27 +20,27 @@
             ],
             "key": "spear_composite_shaft/",
             "attributes": {
-                "generic.attack_speed": -2.2,
-                "forge:entity_reach": 1.0
+                "generic.attack_speed": -0.15,
+                "forge:entity_reach": 0.05
             },
             "aspects": {
                 "block_breaker": 1,
                 "breakable": 3
             },
-            "durability": 10,
+            "durability": 6,
             "extract": {
                 "primaryAttributes": {
-                    "forge:entity_reach": 0.2
+                    "forge:entity_reach": 0.01
                 },
                 "secondaryAttributes": {
-                    "generic.attack_speed": -0.5
+                    "generic.attack_speed": -0.03
                 },
                 "tertiaryAttributes": {
-                    "forge:entity_reach": 0.4
+                    "forge:entity_reach": 0.02
                 },
-                "durability": 0.5,
-                "integrity": 5.0,
-                "magicCapacity": 2,
+                "durability": 0.05,
+                "integrity": 2.5,
+                "magicCapacity": 0.4,
                 "glyph": {
                     "textureX": 16
                 },
