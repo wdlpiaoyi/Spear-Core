@@ -1207,8 +1207,8 @@ public final class TetraCompatGameTests {
             double speed = entry.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
             double reach = entry.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
             double damage = entry.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
-            helper.assertTrue(speed <= 0.0D,
-                    "加固 " + (i + 1) + " 的攻速修正不应是正数，实际: " + speed);
+            helper.assertTrue(speed > 0.0D,
+                    "加固 " + (i + 1) + " 必须让攻速变快（正修正），实际: " + speed);
             helper.assertTrue(reach >= 0.0D,
                     "加固 " + (i + 1) + " 的射程修正不应是负数，实际: " + reach);
             helper.assertTrue(damage > 0.0D,
@@ -1217,9 +1217,13 @@ public final class TetraCompatGameTests {
             totalReach += reach;
             totalDamage += damage;
         }
-        helper.assertTrue(totalSpeed < baseSpeed, "三级加固后攻速应比 1/3 更慢（更重）");
+        helper.assertTrue(totalSpeed > baseSpeed, "三级加固后攻速应比 1/3 更快（完成版不能比初坯还慢）");
         helper.assertTrue(totalReach > baseReach, "三级加固后射程应比 1/3 更远");
         helper.assertTrue(totalDamage > baseDamage, "三级加固后伤害应比 1/3 更高");
+        helper.assertTrue(totalSpeed >= 0.0D,
+                "完成版不应再有攻速负面效果，实际: " + totalSpeed);
+        helper.assertTrue(totalDamage >= 0.0D,
+                "完成版不应再有伤害负面效果，实际: " + totalDamage);
         helper.assertTrue(totalReach > 0.9D, "最终射程加成应回到 +1 左右，实际: " + totalReach);
 
         // 2/3、3/3、完成都必须是 improvement 类型，且只给改进、不写 moduleKey/moduleVariant。
