@@ -21,7 +21,11 @@
             },
             {
                 "type": "tetra:improvement",
-                "improvement": "spear_composite/stage"
+                "improvement": "spear_composite/stage",
+                "level": {
+                    "min": 1,
+                    "max": 1
+                }
             }
         ]
     },

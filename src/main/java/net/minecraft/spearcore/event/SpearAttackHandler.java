@@ -32,9 +32,13 @@ public class SpearAttackHandler {
         // 不加自定义横扫——横扫若按攻击力全额结算，会绕开原版的蓄力/冷却缩放，
         // 0 蓄力也能打出很高伤害（3.4.0 实机踩过）。
         if (spear.slashing()) {
-            // 满蓄力时补一次原版剑式横扫（粒子和音效由 Player#sweepAttack 负责）；
-            // 主目标仍交给原版攻击，0 蓄力不会触发。
-            SpearCombat.vanillaSlashSweep(player, event.getTarget());
+            // 槊/刃也保留和普通矛一样的近距限制：贴脸时不触发原版攻击。
+            if (player.distanceToSqr(event.getTarget()) < Math.pow(spear.effectiveMinRange(player), 2.0D)) {
+                event.setCanceled(true);
+                return;
+            }
+            // 满蓄力时补一次原版剑式横扫，剑气以命中实体为中心。
+            SpearCombat.vanillaSlashSweep(player, event.getTarget(), spear);
             return;
         }
 

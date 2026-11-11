@@ -1,79 +1,163 @@
 [
     {
-        "predicate": { "items": [ "spearcore:wooden_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:wooden_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/oak" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/oak" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/oak"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     },
     {
-        "predicate": { "items": [ "spearcore:stone_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:stone_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/stone" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/stone" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/stone"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     },
     {
-        "predicate": { "items": [ "spearcore:copper_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:copper_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/copper" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/copper" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/copper"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     },
     {
-        "predicate": { "items": [ "spearcore:iron_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:iron_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/iron" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/iron" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/iron"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     },
     {
-        "predicate": { "items": [ "spearcore:golden_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:golden_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/gold" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/gold" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/gold"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     },
     {
-        "predicate": { "items": [ "spearcore:diamond_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:diamond_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/diamond" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/diamond" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/diamond"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     },
     {
-        "predicate": { "items": [ "spearcore:netherite_spear" ] },
+        "predicate": {
+            "items": [
+                "spearcore:netherite_spear"
+            ]
+        },
         "item": "tetra:dynamic_handheld",
         "archetype": "modular_spear",
         "modules": {
-            "spear/head":    [ "spear/head", "spear_head/netherite" ],
-            "spear/handle":  [ "spear/handle", "spear_handle/stick" ],
-            "spear/binding": [ "spear/binding", "spear_binding/string" ],
-            "spear/butt":    [ "spear/butt", "spear_butt/netherite" ]
+            "spear/head": [
+                "spear/head",
+                "spear_head/netherite"
+            ],
+            "sword/guard": [
+                "sword/binding",
+                "sword_binding/string"
+            ],
+            "spear/handle": [
+                "spear/handle",
+                "spear_handle/stick"
+            ]
         }
     }
 ]

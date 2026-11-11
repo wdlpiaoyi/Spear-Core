@@ -30,10 +30,10 @@
                     {
                         "location": "tetra:item/module/sword/pommel/counterweight/"
                     }
-                ]
-            },
-            "attributes": {
-                "generic.attack_damage": 0.5
+                ],
+                "primaryAttributes": {
+                    "generic.attack_damage": 0.0333333
+                }
             }
         }
     ]

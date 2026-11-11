@@ -4,7 +4,7 @@
         "level": 1,
         "integrity": -1,
         "attributes": {
-            "**generic.attack_speed": 0.04
+            "forge:entity_reach": 0.02
         }
     },
     {
@@ -12,7 +12,7 @@
         "level": 2,
         "integrity": -1,
         "attributes": {
-            "**generic.attack_speed": 0.08
+            "forge:entity_reach": 0.04
         }
     },
     {
@@ -20,7 +20,7 @@
         "level": 3,
         "integrity": -1,
         "attributes": {
-            "**generic.attack_speed": 0.12
+            "forge:entity_reach": 0.06
         }
     },
     {
@@ -28,7 +28,7 @@
         "level": 4,
         "integrity": -1,
         "attributes": {
-            "**generic.attack_speed": 0.16
+            "forge:entity_reach": 0.08
         }
     },
     {
@@ -36,7 +36,7 @@
         "level": 5,
         "integrity": -1,
         "attributes": {
-            "**generic.attack_speed": 0.2
+            "forge:entity_reach": 0.1
         }
     }
 ]

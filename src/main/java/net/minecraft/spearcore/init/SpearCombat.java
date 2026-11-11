@@ -297,9 +297,15 @@ public final class SpearCombat {
                     spear.getAttackSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
         }
 
+        double minRange = spear.effectiveMinRange(attacker);
         for (EntityHitResult hit : SpearItem.getHitEntitiesAlong(attacker, spear, spear.getHitboxMargin2(),
                 entity -> SpearItem.canHitEntity(attacker, entity))) {
             Entity target = hit.getEntity();
+            // 近距限制：射线起点已经在 minRange，但目标判定箱可能伸进起点里；这里再按实体中心补一道，
+            // 避免贴脸也能戳中（用户实测 Tetra 矛 jab 没有这个限制）。
+            if (attacker.distanceToSqr(target) < minRange * minRange) {
+                continue;
+            }
             LivingEntity living = resolveLivingTarget(target);
             if (living == null) continue;
             if (SpearRules.hasJabRepeatCooldown()
@@ -394,32 +400,45 @@ public final class SpearCombat {
      * 蓄力/冷却缩放，0 蓄力也能打出高伤。这里只复刻原版 {@code Player#attack} 的横扫分支，
      * 主目标仍由原版攻击结算，横扫只打周围的其它目标。</p>
      */
-    public static void vanillaSlashSweep(Player player, Entity target) {
-        if (player == null || target == null || player.level().isClientSide) {
+    public static void vanillaSlashSweep(Player player, Entity target, SpearLike spear) {
+        if (player == null || target == null || spear == null || player.level().isClientSide) {
             return;
         }
         if (player.getAttackStrengthScale(0.5F) <= 0.9F
                 || !player.onGround() || player.isSprinting()) {
             return;
         }
+        // 剑气以命中实体为中心，半径随长矛攻击距离略微放大；原版剑是 1.0，长矛 4.5 射程约 2.0。
+        float radius = Mth.clamp((float) spear.effectiveMaxRange(player) * 0.45F, 1.5F, 3.0F);
         float ratio = 1.0F + EnchantmentHelper.getSweepingDamageRatio(player);
         double yaw = Math.toRadians(player.getYRot());
         double dx = -Math.sin(yaw);
         double dz = Math.cos(yaw);
+        double maxDistanceSqr = (radius + 2.0D) * (radius + 2.0D);
         for (LivingEntity living : player.level().getEntitiesOfClass(LivingEntity.class,
-                target.getBoundingBox().inflate(1.0D, 0.25D, 1.0D))) {
+                target.getBoundingBox().inflate(radius, 0.35D, radius))) {
             if (living == player || living == target || player.isAlliedTo(living)
                     || living instanceof net.minecraft.world.entity.decoration.ArmorStand armorStand
                     && armorStand.isMarker()
-                    || player.distanceToSqr(living) >= 9.0D) {
+                    || player.distanceToSqr(living) >= maxDistanceSqr) {
                 continue;
             }
             living.knockback(0.4F, dx, dz);
             living.hurt(player.damageSources().playerAttack(player), ratio);
         }
-        player.sweepAttack();
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.0F);
+        if (player.level() instanceof ServerLevel server) {
+            // 粒子放在命中实体周围，而不是角色面前；多方向各补一枚，肉眼看起来就是一圈剑气。
+            for (int i = 0; i < 6; i++) {
+                double angle = Math.PI * 2.0D * i / 6.0D;
+                server.sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
+                        target.getX() + Math.cos(angle) * radius * 0.65D,
+                        target.getY(0.5D),
+                        target.getZ() + Math.sin(angle) * radius * 0.65D,
+                        1, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+        player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
+                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F, 1.0F);
     }
 
     /** 当前是否处于「虚拟原版攻击」里；{@code SpearAttackHandler} 用它避免重复结算。 */

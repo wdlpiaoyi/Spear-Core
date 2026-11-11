@@ -451,10 +451,10 @@ public final class TetraCompatGameTests {
             // 方位按设计稿：↗矛头、↘矛杆、↖绑定/涂层、↙枪尾（配重）。
             // 抄 Tetra 剑 3 minor 的默认交错布局：附层 (-12,-1)、护手 (-21,12)、柄头 (-12,25)。
             Map<String, Integer> expectedX = Map.of(
-                    "spear/head", 4, "spear/handle", 4, "spear/binding", -21, "spear/butt", -12,
+                    "spear/head", 4, "spear/handle", 4, "sword/guard", -21, "spear/butt", -12,
                     "sword/fuller", -12);
             Map<String, Integer> expectedY = Map.of(
-                    "spear/head", 0, "spear/handle", 18, "spear/binding", 12, "spear/butt", 25,
+                    "spear/head", 0, "spear/handle", 18, "sword/guard", 12, "spear/butt", 25,
                     "sword/fuller", -1);
             for (JsonElement element : slots) {
                 JsonObject slot = element.getAsJsonObject();
@@ -477,7 +477,7 @@ public final class TetraCompatGameTests {
                 helper.assertTrue(expectedY.getOrDefault(key, y) == y,
                         "槽位 " + key + " 的 y 应与 Tetra 默认布局一致，实际: " + y);
             }
-            helper.assertTrue(keys.equals(Set.of("spear/head", "spear/handle", "spear/binding",
+            helper.assertTrue(keys.equals(Set.of("spear/head", "spear/handle", "sword/guard",
                             "spear/butt", "sword/fuller")),
                     "槽位必须是矛的五个槽: " + keys);
             for (JsonElement element : slots) {
@@ -653,14 +653,13 @@ public final class TetraCompatGameTests {
 
                 JsonObject modules = entry.getAsJsonObject("modules");
                 helper.assertTrue(modules != null, "替换规则必须带 modules");
-                for (String slot : new String[]{"spear/head", "spear/handle", "spear/binding", "spear/butt"}) {
+                for (String slot : new String[]{"spear/head", "spear/handle", "sword/guard"}) {
                     helper.assertTrue(modules.has(slot), "缺少槽位模块: " + slot);
                     JsonArray pair = modules.getAsJsonArray(slot);
                     helper.assertTrue(pair != null && pair.size() == 2,
                             "每个槽位必须写 [模块 key, 变体 key]: " + slot);
-                    helper.assertTrue(slot.equals(pair.get(0).getAsString()),
-                            "槽位必须挂本模组同名的矛模块: " + slot + " -> " + pair.get(0).getAsString());
                 }
+                helper.assertFalse(modules.has("spear/butt"), "原始矛转换不应带枪纂");
 
                 JsonArray items = entry.getAsJsonObject("predicate").getAsJsonArray("items");
                 helper.assertTrue(items != null && items.size() == 1, "每条规则只应匹配一个物品");
@@ -674,13 +673,11 @@ public final class TetraCompatGameTests {
                 helper.assertTrue(("spear_head/" + material)
                                 .equals(modules.getAsJsonArray("spear/head").get(1).getAsString()),
                         "矛头材质映射不符: " + itemId);
-                helper.assertTrue(("spear_butt/" + material)
-                                .equals(modules.getAsJsonArray("spear/butt").get(1).getAsString()),
-                        "枪尾材质映射不符: " + itemId);
                 helper.assertTrue("spear_handle/stick".equals(modules.getAsJsonArray("spear/handle").get(1).getAsString()),
                         "矛杆固定用 spear_handle/stick");
-                helper.assertTrue("spear_binding/string".equals(modules.getAsJsonArray("spear/binding").get(1).getAsString()),
-                        "绑定固定用 spear_binding/string");
+                helper.assertTrue("sword/binding".equals(modules.getAsJsonArray("sword/guard").get(0).getAsString())
+                                && "sword_binding/string".equals(modules.getAsJsonArray("sword/guard").get(1).getAsString()),
+                        "绑定直接用 Tetra 剑的 sword/binding + sword_binding/string");
             }
             helper.assertTrue(covered.equals(expectedMaterials.keySet()),
                     "替换规则必须覆盖七把矛，实际覆盖: " + covered);
@@ -702,8 +699,6 @@ public final class TetraCompatGameTests {
                 Map.entry("head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"}),
                 Map.entry("butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"}),
                 Map.entry("handle", new String[]{"tetra:rod/"}),
-                Map.entry("binding", new String[]{"tetra:fibre/", "tetra:fabric/"}),
-                Map.entry("socket", new String[]{"tetra:socket/"}),
                 Map.entry("shuo_head", new String[]{"tetra:metal/"}),
                 Map.entry("three_point_blade",
                         new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/", "tetra:bone/"}),
@@ -830,14 +825,11 @@ public final class TetraCompatGameTests {
         // 槽位名、模块名、换部件配方名都走 Tetra 的 I18n key（注意配方用的是 tetra/schematic/ 斜杠前缀），
         // 缺一个就会在工具提示里直接显示原始 key。
         String[] keys = {
-                "tetra.slot.spear/head", "tetra.slot.spear/handle",
-                "tetra.slot.spear/binding", "tetra.slot.spear/butt",
+                "tetra.slot.spear/head", "tetra.slot.spear/handle", "tetra.slot.spear/butt",
                 "tetra.module.spear/head.name", "tetra.module.spear/handle.name",
-                "tetra.module.spear/binding.name", "tetra.module.spear/butt.name",
-                "tetra.module.spear/socket.name", "tetra.module.spear/socket.material_name",
+                "tetra.module.spear/butt.name",
                 "tetra/schematic/spear/head.name", "tetra/schematic/spear/handle.name",
-                "tetra/schematic/spear/binding.name", "tetra/schematic/spear/butt.name",
-                "tetra/schematic/spear/socket.name", "tetra/schematic/spear/socket.slot1",
+                "tetra/schematic/spear/butt.name",
                 // 卷轴解锁的三件新部件：模块名、配方名、解锁提示、卷轴显示名
                 "tetra.module.spear/shuo_head.name", "tetra.module.spear/shuo_head.material_name",
                 "tetra.module.spear/composite_shaft.name",
@@ -859,8 +851,6 @@ public final class TetraCompatGameTests {
                 // 本轮新增：名字、螺栓绑定、积竹木柲阶段、尖锐/耐久/稳定、镶嵌描述
                 "item.spearcore.modular_spear.named_shuo",
                 "item.spearcore.modular_spear.named_blade",
-                "tetra.variant.spear_binding/bolt",
-                "tetra.variant.spear_binding/bolt.description",
                 "tetra.improvement.spear_composite/stage.name",
                 "tetra.improvement.spear_composite/stage.description",
                 "tetra/schematic/spear/composite_shaft_1.name",
@@ -996,9 +986,7 @@ public final class TetraCompatGameTests {
         Map<String, String> map = new java.util.LinkedHashMap<>();
         map.put("head", "spear/head");
         map.put("handle", "spear/handle");
-        map.put("binding", "spear/binding");
         map.put("butt", "spear/butt");
-        map.put("socket", "spear/binding");
         map.put("shuo_head", "spear/head");
         map.put("composite_shaft", "spear/handle");
         map.put("three_point_blade", "spear/head");
@@ -1010,9 +998,7 @@ public final class TetraCompatGameTests {
         Map<String, String> map = new java.util.LinkedHashMap<>();
         map.put("head", "spear_head/");
         map.put("handle", "spear_handle/");
-        map.put("binding", "spear_binding/");
         map.put("butt", "spear_butt/");
-        map.put("socket", "spear_socket/");
         map.put("shuo_head", "spear_shuo_head/");
         map.put("composite_shaft", "spear_composite_shaft/");
         map.put("three_point_blade", "spear_three_point/");
@@ -1236,12 +1222,14 @@ public final class TetraCompatGameTests {
                         stage[0] + " 不能再写 sword_dig（工作台会显示问号）");
             }
         }
-        // 缠藤不能再用 level.min 限制（之前就是这段条件导致缠藤不出现）；只要求已有 stage 改进。
-        String vinesRequirement = spearcore$readJson(helper, "tetra",
-                "schematics/spear/composite_shaft_3.json").getAsJsonObject().get("requirement").toString();
+        // 缠藤只在 stage 1 出现；stage 2 之后必须隐藏，否则会一直挂在那里。
+        JsonObject vines = spearcore$readJson(helper, "tetra",
+                "schematics/spear/composite_shaft_3.json").getAsJsonObject();
+        String vinesRequirement = vines.get("requirement").toString();
         helper.assertTrue(vinesRequirement.contains("spear_composite/stage")
-                        && !vinesRequirement.contains("\"level\""),
-                "缠藤只要求已有 stage 改进，不要再写 level 限制");
+                        && vinesRequirement.contains("\"min\":1")
+                        && vinesRequirement.contains("\"max\":1"),
+                "缠藤的 stage 条件必须是 min=1,max=1，恰好卡在 stage 1");
 
         for (int level = 1; level <= 5; level++) {
             JsonObject stable = spearcore$readJson(helper, "tetra",
@@ -1335,7 +1323,7 @@ public final class TetraCompatGameTests {
                 "剑柄门禁应映射到矛杆槽");
         helper.assertTrue(TetraModuleGateMapping.matches("spear/handle", "single/long_handle"),
                 "单头工具手柄门禁应映射到矛杆槽");
-        helper.assertTrue(TetraModuleGateMapping.matches("spear/binding", "sword/basic_guard"),
+        helper.assertTrue(TetraModuleGateMapping.matches("sword/guard", "sword/basic_guard"),
                 "护手门禁应映射到绑定槽");
         helper.assertTrue(TetraModuleGateMapping.matches("spear/butt", "sword/counterweight"),
                 "配重门禁应映射到枪纂槽");
@@ -1443,11 +1431,13 @@ public final class TetraCompatGameTests {
             return;
         }
         JsonObject variant = root.getAsJsonObject().getAsJsonArray("variants").get(0).getAsJsonObject();
-        JsonObject attributes = variant.getAsJsonObject("attributes");
-        helper.assertTrue(attributes != null && attributes.has("generic.attack_damage"),
-                "枪纂必须给 generic.attack_damage，才不会只是纯配重");
-        double damage = attributes.get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(damage == 0.5D, "枪纂攻击力加值应为 +0.5，实际: " + damage);
+        helper.assertFalse(variant.has("attributes"), "枪纂不能用固定 attributes，伤害必须随材料变化");
+        JsonObject primary = variant.getAsJsonObject("extract").getAsJsonObject("primaryAttributes");
+        helper.assertTrue(primary != null && primary.has("generic.attack_damage"),
+                "枪纂必须通过 extract.primaryAttributes 提供随材料变化的攻击力");
+        double perPrimary = primary.get("generic.attack_damage").getAsDouble();
+        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.1D) < 1.0E-4D,
+                "木制（primary=3）枪纂攻击力应为 +0.1，实际: " + (perPrimary * 3.0D));
         helper.succeed();
     }
 

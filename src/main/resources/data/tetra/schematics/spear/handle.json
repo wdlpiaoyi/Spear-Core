@@ -1,5 +1,7 @@
 {
-    "slots": [ "spear/handle" ],
+    "slots": [
+        "spear/handle"
+    ],
     "materialSlotCount": 1,
     "translation": {
         "primaryAttributes": {
@@ -22,7 +24,12 @@
     },
     "outcomes": [
         {
-            "materials": [ "tetra:wood/", "tetra:metal/", "tetra:bone/", "tetra:rod/" ],
+            "materials": [
+                "tetra:wood/",
+                "tetra:metal/",
+                "tetra:bone/",
+                "tetra:rod/"
+            ],
             "moduleKey": "spear/handle",
             "moduleVariant": "spear_handle/"
         }
