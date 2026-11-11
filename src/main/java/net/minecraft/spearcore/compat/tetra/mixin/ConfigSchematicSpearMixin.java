@@ -28,8 +28,58 @@ public abstract class ConfigSchematicSpearMixin {
             cir.setReturnValue(false);
             return;
         }
+        // Tetra 自带的打磨配方在「打磨」面板里是**按物品**列出来的（不看当前槽位），
+        // 同一个改进在 Tetra 里可能有多套来源（single/handle 与 double/basic_handle 都给
+        // handle_hone/speed，single/head 与 double/shared_head 都给 head_hone/*），
+        // 不在这里过滤就会看到两条一样的「打磨：速度」。
+        if (spearcore$isHiddenNativeSpearHone((ConfigSchematic) (Object) this, stack)) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (spearcore$isThirdPartySpearImprovement(stack)) {
             cir.setReturnValue(true);
+        }
+    }
+
+    /**
+     * 本模组的矛上，只保留 {@link #NATIVE_SPEAR_HONES} 里点名的那几套 Tetra 打磨；
+     * 其余 Tetra 原生的 hone 配方（double/basic_handle、double/shared_head、shield/* 等）
+     * 在矛的「打磨」面板里隐藏，避免同一改进重复出现。
+     */
+    private boolean spearcore$isHiddenNativeSpearHone(ConfigSchematic schematic, ItemStack stack) {
+        try {
+            if (stack == null || stack.isEmpty()
+                    || !(stack.getItem() instanceof DynamicModularItem)
+                    || !TetraSpearProfile.isModularSpearArchetype(DynamicModularItem.getArchetypeKey(stack))) {
+                return false;
+            }
+            SchematicDefinition definition = spearcore$definition(schematic);
+            if (definition == null || !definition.hone) {
+                return false;
+            }
+            // 本模组自己的打磨（spear/head 尖锐、spear/handle 稳定）不在隐藏范围。
+            if (definition.slots != null && definition.slots.length == 1
+                    && definition.slots[0].startsWith("spear/")) {
+                return false;
+            }
+            if (definition.slots == null || definition.slots.length != 1 || definition.outcomes == null) {
+                return true;
+            }
+            String sourceSlot = definition.slots[0];
+            for (OutcomeDefinition outcome : definition.outcomes) {
+                if (outcome == null || outcome.moduleKey != null || outcome.improvements == null
+                        || outcome.improvements.isEmpty()) {
+                    return true;
+                }
+                for (String improvement : outcome.improvements.keySet()) {
+                    if (!NATIVE_SPEAR_HONES.containsKey(sourceSlot + "|" + improvement)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 
