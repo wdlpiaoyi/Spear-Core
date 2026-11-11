@@ -46,10 +46,16 @@ public final class TetraSpearModel {
             new ModelResourceLocation(new ResourceLocation("spearcore", "tetra_spear_shuo"), "inventory");
     public static final ModelResourceLocation LOCATION_THREE =
             new ModelResourceLocation(new ResourceLocation("spearcore", "tetra_spear_three"), "inventory");
+    public static final ModelResourceLocation LOCATION_LONGINUS =
+            new ModelResourceLocation(new ResourceLocation("spearcore", "tetra_spear_longinus"), "inventory");
+    public static final ModelResourceLocation LOCATION_AEGLOS =
+            new ModelResourceLocation(new ResourceLocation("spearcore", "tetra_spear_aeglos"), "inventory");
 
     private static BakedModel model;
     private static BakedModel shuoModel;
     private static BakedModel threeModel;
+    private static BakedModel longinusModel;
+    private static BakedModel aeglosModel;
 
     private TetraSpearModel() {
     }
@@ -59,6 +65,8 @@ public final class TetraSpearModel {
         event.register(LOCATION);
         event.register(LOCATION_SHUO);
         event.register(LOCATION_THREE);
+        event.register(LOCATION_LONGINUS);
+        event.register(LOCATION_AEGLOS);
     }
 
     @SubscribeEvent
@@ -66,6 +74,8 @@ public final class TetraSpearModel {
         model = flattenGui3d(event.getModels().get(LOCATION));
         shuoModel = flattenGui3d(event.getModels().get(LOCATION_SHUO));
         threeModel = flattenGui3d(event.getModels().get(LOCATION_THREE));
+        longinusModel = flattenGui3d(event.getModels().get(LOCATION_LONGINUS));
+        aeglosModel = flattenGui3d(event.getModels().get(LOCATION_AEGLOS));
     }
 
     /** 默认矛头（以及烘焙完成前的回退，调用方需处理 null）。 */
@@ -81,6 +91,16 @@ public final class TetraSpearModel {
     /** 三尖两刃刀外观。 */
     public static BakedModel getThree() {
         return threeModel;
+    }
+
+    /** RevelationFix 朗基努斯之枪的矛尖外观。 */
+    public static BakedModel getLonginus() {
+        return longinusModel;
+    }
+
+    /** RevelationFix 艾格洛斯之枪的矛尖外观。 */
+    public static BakedModel getAeglos() {
+        return aeglosModel;
     }
 
     /** 平面贴图模型必须报 {@code isGui3d = false}，否则 Tetra 工作台会把矛竖起来放。 */

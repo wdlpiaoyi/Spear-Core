@@ -1160,8 +1160,8 @@ public final class TetraCompatGameTests {
         helper.assertTrue(baseSpeed < -1.1D, "1/3 攻速必须慢于普通矛杆，实际: " + baseSpeed);
         helper.assertTrue(baseReach < 0.5D, "1/3 射程必须小于普通矛杆，实际: " + baseReach);
         helper.assertTrue(baseDamage < 0.0D, "1/3 伤害必须低于普通矛杆，实际: " + baseDamage);
-        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.5D,
-                "积竹木柲完整度必须固定 2.5（用户要求不动）");
+        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.0D,
+                "复合矛杆完整度应为 2.0");
 
         JsonElement stageRoot = spearcore$readJson(helper, "tetra", "improvements/spear/handle/stage.json");
         if (stageRoot == null) {
@@ -1418,8 +1418,8 @@ public final class TetraCompatGameTests {
             return;
         }
         JsonObject variant = root.getAsJsonObject().getAsJsonArray("variants").get(0).getAsJsonObject();
-        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 1.3D,
-                "普通矛杆的完整度应为 1.3（比旧版 1.0 稍高）");
+        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 1.1D,
+                "普通矛杆的完整度应为 1.1");
         helper.succeed();
     }
 

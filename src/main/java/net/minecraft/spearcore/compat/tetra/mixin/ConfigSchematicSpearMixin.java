@@ -121,9 +121,16 @@ public abstract class ConfigSchematicSpearMixin {
             // Tetra 自带的剑刃改进用 sword/* / single/* / double/* 本地化 key；第三方
             // （RevelationFix 的 longinus/aeglos）用自己模组的命名空间。只放行后者，
             // 避免把 Tetra 自带的剑刃打磨/锯齿再复制一份到矛头。
+            boolean hiltSlot = false;
+            for (String slot : definition.slots) {
+                if ("sword/hilt".equals(slot)) {
+                    hiltSlot = true;
+                    break;
+                }
+            }
             String localizationKey = definition.localizationKey;
-            if (localizationKey == null || localizationKey.startsWith("sword/")
-                    || localizationKey.startsWith("single/") || localizationKey.startsWith("double/")) {
+            if (!hiltSlot && (localizationKey == null || localizationKey.startsWith("sword/")
+                    || localizationKey.startsWith("single/") || localizationKey.startsWith("double/"))) {
                 return false;
             }
             for (OutcomeDefinition outcome : definition.outcomes) {

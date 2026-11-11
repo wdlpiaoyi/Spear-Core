@@ -59,7 +59,10 @@ public final class TetraSpearNaming {
         try {
             IModularItem modular = (IModularItem) stack.getItem();
             for (var improvement : modular.getImprovements(stack)) {
-                if (improvement == null || improvement.key == null) {
+                if (improvement == null || improvement.key == null
+                        || (improvement.prefixPriority != se.mickelus.tetra.module.Priority.HIGH
+                        && improvement.prefixPriority != se.mickelus.tetra.module.Priority.HIGHER
+                        && improvement.prefixPriority != se.mickelus.tetra.module.Priority.HIGHEST)) {
                     continue;
                 }
                 Component prefix = Component.translatableWithFallback(

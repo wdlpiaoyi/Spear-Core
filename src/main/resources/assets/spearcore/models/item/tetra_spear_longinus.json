@@ -1,0 +1,22 @@
+{
+    "credit": "Spear Core Forked - RevelationFix longinus tip overlay",
+    "loader": "forge:separate_transforms",
+    "gui_light": "front",
+    "textures": {
+        "particle": "spearcore:item/tetra_spear_handle"
+    },
+    "base": {
+        "parent": "spearcore:item/tetra_spear_longinus_in_hand"
+    },
+    "perspectives": {
+        "gui": {
+            "parent": "spearcore:item/tetra_spear_longinus_icon"
+        },
+        "fixed": {
+            "parent": "spearcore:item/tetra_spear_longinus_icon"
+        },
+        "ground": {
+            "parent": "spearcore:item/tetra_spear_longinus_icon"
+        }
+    }
+}

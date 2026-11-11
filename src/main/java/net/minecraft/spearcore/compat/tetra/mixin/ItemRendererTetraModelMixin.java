@@ -11,7 +11,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import se.mickelus.tetra.items.modular.IModularItem;
-import se.mickelus.tetra.module.Priority;
 import se.mickelus.tetra.module.data.ImprovementData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,22 +39,21 @@ public class ItemRendererTetraModelMixin {
         if (spear == null || spear.style() != SpearStyle.MODULAR_3D) {
             return;
         }
-        // 第三方「会改外观」的高优先级改进（如 longinus / aeglos）带自己的模型；
-        // 这时不要再套本模组的贴图矛模型，交给 Tetra 按模块+改进模型渲染。
-        try {
-            if (stack.getItem() instanceof IModularItem modular) {
-                for (ImprovementData improvement : modular.getImprovements(stack)) {
-                    if (improvement != null && improvement.key != null
-                            && improvement.models != null && improvement.models.length > 0
-                            && (improvement.prefixPriority == Priority.HIGH
-                            || improvement.prefixPriority == Priority.HIGHER
-                            || improvement.prefixPriority == Priority.HIGHEST)) {
-                        return;
-                    }
-                }
+        // RevelationFix 的 longinus / aeglos 只是给原贴图叠一个枪尖图标；
+        // 这里直接用它们旋转好的矛尖贴图模型，保持本模组长矛的握持/攻击角度。
+        if (spearcore$hasImprovement(stack, "blade/longinus")) {
+            BakedModel longinus = TetraSpearModel.getLonginus();
+            if (longinus != null) {
+                cir.setReturnValue(longinus);
+                return;
             }
-        } catch (Throwable ignored) {
-            // 读不到改进时继续用本模组模型。
+        }
+        if (spearcore$hasImprovement(stack, "blade/aeglos")) {
+            BakedModel aeglos = TetraSpearModel.getAeglos();
+            if (aeglos != null) {
+                cir.setReturnValue(aeglos);
+                return;
+            }
         }
         String headVariant = TetraSpearColors.headVariantKey(stack);
         BakedModel replacement;
@@ -69,5 +67,20 @@ public class ItemRendererTetraModelMixin {
         if (replacement != null) {
             cir.setReturnValue(replacement);
         }
+    }
+
+    private static boolean spearcore$hasImprovement(ItemStack stack, String key) {
+        try {
+            if (stack.getItem() instanceof IModularItem modular) {
+                for (ImprovementData improvement : modular.getImprovements(stack)) {
+                    if (improvement != null && key.equals(improvement.key)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 读不到改进时按普通矛头处理。
+        }
+        return false;
     }
 }
