@@ -71,17 +71,26 @@ public abstract class ConfigSchematicSpearMixin {
     }
 
     /**
-     * Tetra 自带的打磨配方里，允许直接打磨矛的条目（改进 key → 矛槽位角色）。
+     * Tetra 自带、允许直接打磨矛的配方（源槽位 + 改进 key → 矛槽位角色）。
      *
-     * <p>这些改进在 Tetra 里都有现成的 hone 配方（{@code sword/shared_blade}、{@code double/shared_head}、
-     * {@code single/handle}），本模组以前自造过同名同改进的配方，工作台里会出现重复的「打磨：X」；
-     * 现在删掉自造那份、直接复用 Tetra 的，只保留 Tetra 没有对应项的尖锐与稳定。</p>
+     * <p>同一个改进在 Tetra 里可能有多套配方（例如 {@code head_hone/durability} 同时有
+     * {@code single/head} 和 {@code double/shared_head} 两个版本），所以这里**按源槽位**精确点名，
+     * 只放行其中一套；否则工作台会把同一改进列成好几条重复的「打磨：X」。</p>
+     *
+     * <ul>
+     *   <li>{@code single/head}：单头工具的头部耐久/速度（{@code head_hone/durability|speed}）；</li>
+     *   <li>{@code sword/blade}：剑刃伤害打磨（{@code blade_hone/damage}）；</li>
+     *   <li>{@code single/handle}：单手柄速度（{@code handle_hone/speed}）。</li>
+     * </ul>
+     *
+     * <p>Tetra **没有手柄耐久**打磨（只有单头/盾握把的耐久），所以矛杆耐久仍由本模组自造，
+     * 与尖锐、稳定一起是本模组自己的三条线。</p>
      */
     private static final java.util.Map<String, String> NATIVE_SPEAR_HONES = java.util.Map.of(
-            "head_hone/durability", "head",
-            "head_hone/speed", "head",
-            "blade_hone/damage", "head",
-            "handle_hone/speed", "handle");
+            "single/head|head_hone/durability", "head",
+            "single/head|head_hone/speed", "head",
+            "sword/blade|blade_hone/damage", "head",
+            "single/handle|handle_hone/speed", "handle");
 
     private boolean spearcore$allowsNativeSpearHone(ConfigSchematic schematic, String slot, ItemStack stack) {
         try {
@@ -92,21 +101,22 @@ public abstract class ConfigSchematicSpearMixin {
             }
             SchematicDefinition definition = spearcore$definition(schematic);
             if (definition == null || !definition.hone
-                    || definition.slots == null || definition.outcomes == null
-                    || definition.outcomes.length == 0) {
+                    || definition.slots == null || definition.slots.length != 1
+                    || definition.outcomes == null || definition.outcomes.length == 0) {
                 return false;
             }
             String targetRole = TetraModuleGateMapping.roleOfSlot(slot);
             if (targetRole == null || !slot.startsWith("spear/")) {
                 return false;
             }
+            String sourceSlot = definition.slots[0];
             for (OutcomeDefinition outcome : definition.outcomes) {
                 if (outcome == null || outcome.moduleKey != null || outcome.improvements == null
                         || outcome.improvements.isEmpty()) {
                     return false;
                 }
                 for (String improvement : outcome.improvements.keySet()) {
-                    if (!targetRole.equals(NATIVE_SPEAR_HONES.get(improvement))) {
+                    if (!targetRole.equals(NATIVE_SPEAR_HONES.get(sourceSlot + "|" + improvement))) {
                         return false;
                     }
                 }

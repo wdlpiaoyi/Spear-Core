@@ -25,13 +25,6 @@
                 "requirements": [
                     {
                         "type": "tetra:improvement",
-                        "improvement": "spearhead_hone/damage",
-                        "level": {
-                            "min": 5
-                        }
-                    },
-                    {
-                        "type": "tetra:improvement",
                         "improvement": "blade_hone/damage",
                         "level": {
                             "min": 5

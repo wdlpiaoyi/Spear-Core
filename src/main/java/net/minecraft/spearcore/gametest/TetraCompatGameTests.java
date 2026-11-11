@@ -502,9 +502,10 @@ public final class TetraCompatGameTests {
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearHoneSchematicsAreDataDefined(GameTestHelper helper) {
         // 打磨配方：**除尖锐与稳定外，一律复用 Tetra 自带的 hone 配方**
-        // （剑刃伤害 sword/shared_blade、头部耐久/速度 double/shared_head、杆速度 single/handle），
-        // 由 ConfigSchematicSpearMixin 的 NATIVE_SPEAR_HONES 按改进 key → 槽位角色放行；
+        // （剑刃伤害 sword/shared_blade、头部耐久/速度 single/head、杆速度 single/handle），
+        // 由 ConfigSchematicSpearMixin 的 NATIVE_SPEAR_HONES 按「源槽位 + 改进 key」→ 槽位角色放行；
         // 本模组只保留 Tetra 没有对应项的两条：尖锐（矛头）与稳定（复合矛杆 3/3）。
+        // 矛杆耐久打磨在 Tetra 里没有对应项，已直接移除（不再自造）。
         String[][] hones = {
                 // 槽位, 改进 key, 文件名前缀, localizationKey 前缀, 是否允许模块 gate（稳定线挂在 3/3 加固等级上）
                 {"spear/handle", "spear_hone/stable", "handle/hone_stable_", "", "1"},
@@ -516,7 +517,7 @@ public final class TetraCompatGameTests {
                 "data/tetra/schematics/spear/handle/hone_durability_1.json",
                 "data/tetra/schematics/spear/handle/hone_speed_1.json"}) {
             helper.assertTrue(!spearcore$assetExists(stale),
-                    "打磨必须复用 Tetra 自带的对应配方，不要再自造（会重复）: " + stale);
+                    "打磨必须复用 Tetra 自带的对应配方（或直接移除），不要再自造: " + stale);
         }
         for (String[] hone : hones) {
             String slot = hone[0];
@@ -608,7 +609,7 @@ public final class TetraCompatGameTests {
         helper.assertTrue(handleAccepted.contains("tetra:single/shared_handle/"),
                 "矛杆必须接受 tetra:single/shared_handle/ 下的改进（含 handle_hone/speed）");
         helper.assertTrue(handleAccepted.contains("tetra:spear/handle/"),
-                "矛杆必须接受 tetra:spear/handle/（含 handle_hone/durability、spear_hone/stable）");
+                "矛杆必须接受 tetra:spear/handle/（含 spear_hone/stable）");
         // 尖锐：矛头任一条五级打磨后解锁，单级 +5% 蓄力系数
         JsonElement sharpRoot = spearcore$readJson(helper, "tetra", "schematics/spear/head/hone_sharp.json");
         if (sharpRoot == null) {
@@ -617,7 +618,7 @@ public final class TetraCompatGameTests {
         JsonObject sharp = sharpRoot.getAsJsonObject();
         helper.assertTrue(sharp.has("hone") && sharp.get("hone").getAsBoolean(), "尖锐必须是 hone=true");
         String sharpRequirement = sharp.get("requirement").toString();
-        for (String key : new String[]{"spearhead_hone/damage", "blade_hone/damage",
+        for (String key : new String[]{"blade_hone/damage",
                 "head_hone/durability", "head_hone/speed"}) {
             helper.assertTrue(sharpRequirement.contains(key),
                     "尖锐必须由「" + key + " 五级」解锁，实际 requirement=" + sharpRequirement);
@@ -1288,8 +1289,8 @@ public final class TetraCompatGameTests {
         helper.assertTrue(baseSpeed < -1.1D, "1/3 攻速必须慢于普通矛杆，实际: " + baseSpeed);
         helper.assertTrue(baseReach < 0.5D, "1/3 射程必须小于普通矛杆，实际: " + baseReach);
         helper.assertTrue(baseDamage < 0.0D, "1/3 伤害必须低于普通矛杆，实际: " + baseDamage);
-        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 2.0D,
-                "复合矛杆完整度应为 2.0");
+        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 1.5D,
+                "复合矛杆完整度应为 1.5");
 
         JsonElement stageRoot = spearcore$readJson(helper, "tetra", "improvements/spear/handle/stage.json");
         if (stageRoot == null) {
@@ -1546,8 +1547,8 @@ public final class TetraCompatGameTests {
             return;
         }
         JsonObject variant = root.getAsJsonObject().getAsJsonArray("variants").get(0).getAsJsonObject();
-        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 1.1D,
-                "普通矛杆的完整度应为 1.1");
+        helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 1.0D,
+                "普通矛杆的完整度应为 1.0");
         helper.succeed();
     }
 
