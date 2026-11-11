@@ -14,7 +14,8 @@
     "ModularItemSynergyMixin",
     "ModuleConditionSpearMixin",
     "ConfigSchematicSpearMixin",
-    "SchematicRegistrySpearMixin"
+    "SchematicRegistrySpearMixin",
+    "BaseSchematicSpearMixin"
   ],
   "client": [
     "ItemRendererTetraModelMixin",

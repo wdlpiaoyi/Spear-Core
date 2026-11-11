@@ -10,6 +10,9 @@ import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import se.mickelus.tetra.items.modular.IModularItem;
+import se.mickelus.tetra.module.Priority;
+import se.mickelus.tetra.module.data.ImprovementData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,6 +39,23 @@ public class ItemRendererTetraModelMixin {
         SpearLike spear = SpearLikeSupport.of(stack);
         if (spear == null || spear.style() != SpearStyle.MODULAR_3D) {
             return;
+        }
+        // 第三方「会改外观」的高优先级改进（如 longinus / aeglos）带自己的模型；
+        // 这时不要再套本模组的贴图矛模型，交给 Tetra 按模块+改进模型渲染。
+        try {
+            if (stack.getItem() instanceof IModularItem modular) {
+                for (ImprovementData improvement : modular.getImprovements(stack)) {
+                    if (improvement != null && improvement.key != null
+                            && improvement.models != null && improvement.models.length > 0
+                            && (improvement.prefixPriority == Priority.HIGH
+                            || improvement.prefixPriority == Priority.HIGHER
+                            || improvement.prefixPriority == Priority.HIGHEST)) {
+                        return;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 读不到改进时继续用本模组模型。
         }
         String headVariant = TetraSpearColors.headVariantKey(stack);
         BakedModel replacement;

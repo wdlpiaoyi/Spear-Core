@@ -186,12 +186,10 @@ public final class SpearCombat {
                     SpearItem.SlotUtil.slotForHand(user, user.getUsedItemHand()),
                     target, damage, canDamage, canKnockback, canDismount, user,
                     SpearDamageEvent.AttackType.CHARGE, spear);
-            // 无论这次 hurt 是否真正落地都记下目标：目标处于受伤无敌帧时 applied=false，
-            // 如果只在 applied 时记录，下一 tick 无敌帧一过就会再打一次，表现为顶住方块也能持续输出。
-            if (user instanceof SpearCooldownAccessor accessor) {
-                accessor.RememberStabbedEntity(living);
-            }
             if (applied) {
+                if (user instanceof SpearCooldownAccessor accessor) {
+                    accessor.RememberStabbedEntity(living);
+                }
                 if (spear.style() == SpearStyle.MODULAR_3D) {
                     SpearLikeSupport.tetraOnHit(stack, user, living);
                 }
@@ -419,8 +417,8 @@ public final class SpearCombat {
             return;
         }
         LAST_SWEEP_TICK.put(player, now);
-        // 剑气以命中实体为中心，半径随长矛攻击距离略微放大；原版剑是 1.0，长矛 4.5 射程约 2.0。
-        float radius = Mth.clamp((float) spear.effectiveMaxRange(player) * 0.45F, 1.5F, 3.0F);
+        // 剑气以命中实体为中心，半径随长矛攻击距离放大；原版剑是 1.0，长矛 4.5 射程约 2.7。
+        float radius = Mth.clamp((float) spear.effectiveMaxRange(player) * 0.6F, 2.0F, 4.0F);
         float ratio = 1.0F + EnchantmentHelper.getSweepingDamageRatio(player);
         double yaw = Math.toRadians(player.getYRot());
         double dx = -Math.sin(yaw);

@@ -32,8 +32,8 @@ public class SpearAttackHandler {
         // 不加自定义横扫——横扫若按攻击力全额结算，会绕开原版的蓄力/冷却缩放，
         // 0 蓄力也能打出很高伤害（3.4.0 实机踩过）。
         if (spear.slashing()) {
-            // 槊/刃左键必须是满蓄力，非满蓄力直接取消。
-            if (player.getAttackStrengthScale(0.5F) < 0.99F) {
+            // 只有槊头要求左键满蓄力；三尖两刃刀不限制，保持高上限。
+            if (spear.requiresFullCharge() && player.getAttackStrengthScale(0.5F) < 0.99F) {
                 event.setCanceled(true);
                 return;
             }

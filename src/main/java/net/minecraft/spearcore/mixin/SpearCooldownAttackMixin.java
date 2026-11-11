@@ -37,6 +37,11 @@ public class SpearCooldownAttackMixin {
         // 挥砍矛（槊 / 三尖两刃刀）：左键完全交给原版 startAttack（包括蓄力、挥动、冷却），
         // 不拦、不取消、不发自定义包；服务端 AttackEntityEvent 的 slashing 分支只补横扫。
         if (spear.slashing()) {
+            // 槊头：点早了直接不进入原版 startAttack，避免白白重置攻击冷却。
+            if (spear.requiresFullCharge() && player.getAttackStrengthScale(0.5F) < 0.99F) {
+                cir.setReturnValue(false);
+                cir.cancel();
+            }
             return;
         }
 

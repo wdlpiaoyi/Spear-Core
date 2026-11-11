@@ -1,6 +1,7 @@
 package net.minecraft.spearcore.compat.tetra;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.world.item.ItemStack;
 import se.mickelus.tetra.items.modular.IModularItem;
@@ -51,7 +52,27 @@ public final class TetraSpearNaming {
                 "tetra.material." + materialKey + ".prefix",
                 "tetra.material." + materialKey);
         TetraSpearHead head = TetraSpearHead.of(TetraSpearColors.headVariantKey(stack));
-        return Component.translatable(head.nameKey(), material);
+        Component name = Component.translatable(head.nameKey(), material);
+        // 通用兼容第三方的「会改物品名」的改进（例如 RevelationFix 的 longinus / aeglos）：
+        // Tetra 的改进把显示前缀写在 tetra.improvement.<key>.prefix，这里不认具体 modid，
+        // 有翻译就拼到名字前面，没有就回退空串。
+        try {
+            IModularItem modular = (IModularItem) stack.getItem();
+            for (var improvement : modular.getImprovements(stack)) {
+                if (improvement == null || improvement.key == null) {
+                    continue;
+                }
+                Component prefix = Component.translatableWithFallback(
+                        "tetra.improvement." + improvement.key + ".prefix", "");
+                MutableComponent combined = Component.empty().append(prefix);
+                combined.append(" ");
+                combined.append(name);
+                name = combined;
+            }
+        } catch (Throwable ignored) {
+            // 读不到改进时保留原名字。
+        }
+        return name;
     }
 
     /** 矛头槽位当前部件的材料 key：{@code basic_blade/netherite} → {@code netherite}。 */

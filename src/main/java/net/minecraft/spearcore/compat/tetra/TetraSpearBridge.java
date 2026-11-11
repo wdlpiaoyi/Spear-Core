@@ -48,7 +48,8 @@ final class TetraSpearBridge {
         }
         TetraSpearHead head = head(stack);
         return TetraSpearStats.fit(attackDamage, attackSpeed, tetraReachBonus,
-                head.slashing(), sharpBonus(modular, stack));
+                head.slashing(), sharpBonus(modular, stack),
+                head == TetraSpearHead.SHUO, head == TetraSpearHead.THREE);
     }
 
     /** 矛头形态（渲染、命名、行为共用）；优先模块 key，读不到再按变体前缀。 */

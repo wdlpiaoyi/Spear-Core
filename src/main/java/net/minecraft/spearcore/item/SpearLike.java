@@ -94,6 +94,13 @@ public interface SpearLike {
         return false;
     }
 
+    /**
+     * 是否要求左键必须满蓄力（槊头）。三尖两刃刀不要求，保持高上限。
+     */
+    default boolean requiresFullCharge() {
+        return false;
+    }
+
     default float effectiveMinRange(Entity entity) {
         return SpearCombat.effectiveMinRange(this, entity);
     }

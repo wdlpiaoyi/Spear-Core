@@ -76,12 +76,19 @@ public final class TetraSpearStats implements SpearLike {
     /** 左键是否走「挥砍 + 横扫」（槊头 / 三尖两刃刀）。 */
     private final boolean slashing;
 
+    /** 槊头必须满蓄力才允许左键；三尖两刃刀不限制。 */
+    private final boolean requiresFullCharge;
+
+    /** 三尖两刃刀允许贴脸；槊头保留长矛的 2 格最小距离。 */
+    private final boolean allowsCloseRange;
+
     private TetraSpearStats(float attackDuration, float damageMultiplier,
                             int delayTicks,
                             Optional<SpearCondition> dismountConditions,
                             Optional<SpearCondition> knockbackConditions,
                             Optional<SpearCondition> damageConditions,
-                            double tetraReachBonus, boolean slashing) {
+                            double tetraReachBonus, boolean slashing,
+                            boolean requiresFullCharge, boolean allowsCloseRange) {
         this.attackDuration = attackDuration;
         this.damageMultiplier = damageMultiplier;
         this.delayTicks = delayTicks;
@@ -90,6 +97,8 @@ public final class TetraSpearStats implements SpearLike {
         this.damageConditions = damageConditions;
         this.tetraReachBonus = tetraReachBonus;
         this.slashing = slashing;
+        this.requiresFullCharge = requiresFullCharge;
+        this.allowsCloseRange = allowsCloseRange;
         this.dismountEndTick = delayTicks + dismountConditions.map(SpearCondition::maxDurationTicks).orElse(0);
         this.knockbackEndTick = delayTicks + knockbackConditions.map(SpearCondition::maxDurationTicks).orElse(0);
         this.damageEndTick = delayTicks + damageConditions.map(SpearCondition::maxDurationTicks).orElse(0);
@@ -127,6 +136,12 @@ public final class TetraSpearStats implements SpearLike {
      */
     public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus,
                                       boolean slashing, float sharpBonus) {
+        return fit(attackDamage, attackSpeed, tetraReachBonus, slashing, sharpBonus, false, false);
+    }
+
+    public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus,
+                                      boolean slashing, float sharpBonus,
+                                      boolean requiresFullCharge, boolean allowsCloseRange) {
         float duration = clamp(1.10F + 0.10F * ((float) attackSpeed + 2.0F), MIN_DURATION, MAX_DURATION);
 
         float damage = (float) attackDamage;
@@ -147,7 +162,7 @@ public final class TetraSpearStats implements SpearLike {
                 SpearCondition.ofAttackerSpeed(Math.round(BASE_DISMOUNT_SEC * scale * 20.0F), dismountSpeed),
                 SpearCondition.ofAttackerSpeed(Math.round(BASE_KNOCKBACK_SEC * scale * 20.0F), 5.1F),
                 SpearCondition.ofRelativeSpeed(Math.round(BASE_DAMAGE_SEC * scale * 20.0F), 4.6F),
-                Math.max(0.0D, tetraReachBonus), slashing
+                Math.max(0.0D, tetraReachBonus), slashing, requiresFullCharge, allowsCloseRange
         );
     }
 
@@ -234,7 +249,7 @@ public final class TetraSpearStats implements SpearLike {
 
     @Override
     public float getMinRange() {
-        return 2.0F;
+        return allowsCloseRange ? 0.0F : 2.0F;
     }
 
     @Override
@@ -264,7 +279,7 @@ public final class TetraSpearStats implements SpearLike {
 
     @Override
     public float getMinCreativeRange() {
-        return 2.0F;
+        return allowsCloseRange ? 0.0F : 2.0F;
     }
 
     @Override
@@ -315,5 +330,10 @@ public final class TetraSpearStats implements SpearLike {
     @Override
     public boolean slashing() {
         return slashing;
+    }
+
+    @Override
+    public boolean requiresFullCharge() {
+        return requiresFullCharge;
     }
 }
