@@ -25,6 +25,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -208,6 +209,39 @@ public final class SpearCombat {
     // ========== 起手蓄力 ==========
 
     /**
+     * 矛盾共持：潜行 + 副手盾时，右键是否应该让给副手盾牌。
+     *
+     * <p>{@code BEDROCK} 与 {@code MODDED} 都在潜行时把右键让给盾（{@code BEDROCK} 还会自动举盾），
+     * 两者的区别只在「要不要右键」，见 {@link #autoRaisesOffhandShield}。返回 {@code true} 时
+     * {@link #tryStartCharging} 返回 {@code PASS}，客户端 {@code Minecraft#startUseItem} 会继续尝试副手，
+     * 由原版 {@code ShieldItem#use} 进入格挡（减伤/击退/音效/动画全部走原版）。</p>
+     */
+    public static boolean offhandShieldTakesPriority(boolean sneaking, boolean offhandShield) {
+        return SpearRules.shieldCoWield() != SpearRules.ShieldCoWield.JAVA && sneaking && offhandShield;
+    }
+
+    /**
+     * 矛盾共持 {@code BEDROCK} 档：潜行即自动举盾，不需要右键。
+     *
+     * <p>对应原版基岩版的盾牌机制（潜行/下蹲会激活盾牌）。{@code MODDED} 档不自动举盾，需要右键。</p>
+     */
+    public static boolean autoRaisesOffhandShield(boolean sneaking, boolean offhandShield) {
+        return SpearRules.shieldCoWield() == SpearRules.ShieldCoWield.BEDROCK && sneaking && offhandShield;
+    }
+
+    /**
+     * 矛盾共持：起身收盾（{@code BEDROCK} / {@code MODDED} 都适用）。
+     *
+     * <p>玩家用副手盾格挡时直接站起来（不再潜行），原版不会自动收盾；这里判定为应当中断，
+     * 由 {@code SpearShieldStanceHandler} 在主手仍是矛时调用 {@code stopUsingItem}。</p>
+     */
+    public static boolean shouldReleaseOffhandShield(boolean sneaking, boolean usingOffhandShield,
+                                                     boolean mainHandSpear) {
+        return SpearRules.shieldCoWield() != SpearRules.ShieldCoWield.JAVA
+                && mainHandSpear && usingOffhandShield && !sneaking;
+    }
+
+    /**
      * 右键起手蓄力。本模组贴图矛与 Tetra 模块化长矛共用同一份判定，避免两边手感漂移。
      *
      * <p>Tetra 的 {@code use()} 只有在它自己算出 {@code getUseDuration > 0} 时才会
@@ -217,6 +251,12 @@ public final class SpearCombat {
     public static InteractionResultHolder<ItemStack> tryStartCharging(Level level, Player player,
                                                                      InteractionHand hand, ItemStack stack,
                                                                      SpearLike spear) {
+        // 矛盾共持 BEDROCK：潜行 + 副手盾时把右键让给盾牌（返回 PASS，客户端会继续尝试副手）。
+        if (hand == InteractionHand.MAIN_HAND
+                && offhandShieldTakesPriority(player.isShiftKeyDown(),
+                        player.getOffhandItem().getItem() instanceof ShieldItem)) {
+            return InteractionResultHolder.pass(stack);
+        }
         // 冷却期间不能起手蓄力（基岩版戳刺后的后摇，以及基岩版的使用冷却本身）。
         if (player.getCooldowns().isOnCooldown(stack.getItem())) {
             return InteractionResultHolder.pass(stack);

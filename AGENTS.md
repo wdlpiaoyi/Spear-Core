@@ -41,13 +41,14 @@
 
 ## 5. 行为配置体系（改玩法前必读）
 
-- `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`、`resourcepackCompat`、`tetraExtraReachScale`、`tetraDamageScale`；Tetra 兼容强制开启，3.4.0 起删除了 `tetraCompat`）+ `[behavior]` 段的 17 个行为开关。
-- `util/SpearRules.java`：17 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
+- `config/SpearConfig.java`：Forge `COMMON` 配置。主开关（`enableVanillaSpears`、`enableCopperSpear`、`punchyStageBridge`、`resourcepackCompat`、`tetraExtraReachScale`、`tetraDamageScale`；Tetra 兼容强制开启，3.4.0 起删除了 `tetraCompat`）+ `[behavior]` 段的 18 个行为开关。
+- `util/SpearRules.java`：18 个行为枚举的唯一读取入口（带异常兜底，配置文件没加载时回退 JAVA）。**任何行为判定都必须走 `SpearRules`，不要在业务代码里直接读配置或写死常量。**
 - 约定：每个开关的默认值是 `JAVA`（= 原版 Java 行为）；**某版本取值和 Java 一样时，不要为它提供重复选项**（例如「戳刺速度加成」只有 `JAVA`/`MODDED` 两个值）。新增开关时同步改：`SpearConfig`（带中文注释）+ `SpearRules` + `README.md`（中文）与 `README.en.md`（英文）+ `kjs-guide.md`。
 - 多部件实体（末影龙等 `PartEntity`）的射线命中：`SpearCombat.resolveLivingTarget` 先解析回母 `LivingEntity`，附魔加伤 / 同 tick 免疫清理 / 命中效果 / 击退 / 仇恨 / 重复命中记忆都作用在母实体上；伤害仍落在具体部件（保留原版龙头满伤、其他部件打折）。`getHitEntitiesAlong` 返回前用 `SpearCombat.dedupeByRoot` 去重，同一次出手对同一母实体只保留最近部件；蓄力/戳刺路径都不要再用 `instanceof LivingEntity` 过滤，改走 `resolveLivingTarget`。测试：`multipartTargetsResolveToLivingParent` / `multipartHitsCollapseToNearestPart`。
 - 击落骑手的速度阈值**固定为 Java 数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界 9），见 `SpearStats.dismountSpeedFor`，不要再加开关。KubeJS 建造器的 `phases()` 只给窗口长度，阈值一律走 `SpearStats.dismountConditionFor(materialName, windowTicks)`，不要另写一个数（历史上写死过 0.3 格/秒，等于任何速度都能把人打下坐骑）。
 - **蓄力伤害基线** = `ATTACK_DAMAGE` 的基础值 + 手持长矛自己的 `ADDITION` 攻击力（`SpearCombat.chargeBaseDamage` + `weaponAttackDamage`）；`chargeStrength=BEDROCK` 时取属性总值（玩家已含武器加成，怪物不含所以要补）。别退回「只取 `getAttributeBaseValue`」——那会让七种材质的蓄力基线全等于玩家的 1.0。
 - 怪物 AI 判断出手距离必须和结算同一口径：`SpearItem.effectiveMinRange/effectiveMaxRange`（含创造射程、`mobFactor`、持有者 reach 超出 3.0 的部分），不要用 `getMaxRange()`。`SpearCollision.getHitEntitiesAlong` 与 `SpearItem#getHitEntitiesAlongInternal` 必须一致，否则怪物会在两倍于自己射程的距离上起手。
+- **矛盾共持（`behavior.shieldCoWield`）**：`JAVA` 右键永远蓄力、副手盾不格挡；`BEDROCK` 潜行即自动举盾（原版基岩版盾牌由潜行激活，见 [Blocking](https://minecraft.wiki/w/Blocking)），起身收盾；`MODDED` 还要按右键才举盾。右键让盾的判定在 `SpearCombat.offhandShieldTakesPriority`（`tryStartCharging` 返回 `PASS`，客户端 `startUseItem` 继续尝试副手，由原版 `ShieldItem#use` 负责格挡/减伤/击退/音效）；自动举盾与起身收盾在 `event/SpearShieldStanceHandler`，**只在服务端** `startUsingItem`/`stopUsingItem`（using-item 实体数据会同步给客户端，客户端直接调用不发包）。只对「主手长矛 + 副手盾」生效，不影响普通盾牌玩法。
 - 两条**不提供开关**的原版行为，别被旧说法带偏：蓄力（举矛）时**本来就能疾跑且不减速**（原版 `use_effects` 的 `speed_multiplier` 为 1.0、`can_sprint` 为 true）；命中目标时**攻击者自己会被减速**（`hitSlowDown` 的 `JAVA` 档才是原版手感）。
 - 版本事实（改动对应开关前先确认）：Java 版蓄力伤害**不吃**力量/虚弱（原版 bug MC-302778，`chargeStrength` 的 `JAVA` 档就是复刻它）；基岩版戳刺后有一段后摇才能再蓄力（MCPE-233837，对应 `jabToChargeDelay` 的 `BEDROCK`）。
 - `movingTargetAssist` 的 `MODDED` 档在**判断命中**时把目标判定箱按最近 3 tick 的位移往回挪（`SpearItem.compensatedTargetBox`），用来修 MC-310857「移动靶要预判」；只对玩家出手生效，怪物 AI 与伤害结算都不受影响，别顺手把「怪物的移动」也算进去。

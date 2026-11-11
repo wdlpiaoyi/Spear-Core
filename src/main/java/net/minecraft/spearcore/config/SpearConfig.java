@@ -122,6 +122,14 @@ public class SpearConfig {
                     "BEDROCK：不行，与原版基岩版一致。")
             .defineEnum("offhandCharging", SpearRules.OffhandCharging.JAVA);
 
+    public static final ForgeConfigSpec.EnumValue<SpearRules.ShieldCoWield> SHIELD_CO_WIELD = BUILDER
+            .comment("矛盾共持（主手长矛 + 副手盾牌）。",
+                    "JAVA（默认）：右键永远是起手蓄力，副手盾不会格挡，与原版 Java 版一致。",
+                    "BEDROCK：潜行即自动举盾（与原版基岩版盾牌机制一致，不需要右键），起身收盾；",
+                    "          潜行时右键不会蓄力——和基岩版一样，蹲下就被盾牌占用。",
+                    "MODDED：潜行之外还要按右键才举盾（本模组自己的折中，避免蹲下时右键被盾牌锁死）。")
+            .defineEnum("shieldCoWield", SpearRules.ShieldCoWield.JAVA);
+
     public static final ForgeConfigSpec.EnumValue<SpearRules.Lunge> LUNGE = BUILDER
             .comment("突进（戳刺时向前冲）的力度与饥饿门槛。",
                     "JAVA（默认）：每级 0.458 冲量，饥饿值 <6 时无法使用，与原版一致。",

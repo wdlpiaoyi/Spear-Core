@@ -141,7 +141,7 @@ tetraDamageScale = 1.0
 
 前两个开关只控制**创造物品栏与怪物携带**，关掉不影响合成、`/give` 或其他获取途径。
 
-`[behavior]` 段还有 17 个逐项行为开关（默认全部 `JAVA` = 原版行为），以及资源包兼容、Tetra、Avaritia 兼容的完整说明：**[docs/configuration.md](docs/configuration.md)**。
+`[behavior]` 段还有 18 个逐项行为开关（默认全部 `JAVA` = 原版行为），以及资源包兼容、Tetra、Avaritia 兼容的完整说明：**[docs/configuration.md](docs/configuration.md)**。
 
 ## 兼容
 

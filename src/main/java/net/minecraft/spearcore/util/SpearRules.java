@@ -51,6 +51,16 @@ public final class SpearRules {
     /** 副手蓄力：JAVA 允许；BEDROCK 禁止。 */
     public enum OffhandCharging { JAVA, BEDROCK }
 
+    /**
+     * 矛盾共持（主手矛 + 副手盾）。
+     * <ul>
+     *   <li>{@code JAVA}：右键永远蓄力，副手盾不格挡（原版 Java 版）；</li>
+     *   <li>{@code BEDROCK}：潜行即自动举盾（原版基岩版的盾牌机制），起身收盾；</li>
+     *   <li>{@code MODDED}：潜行之外还要按右键才举盾（本模组自己的折中，避免潜行时被盾锁住右键）。</li>
+     * </ul>
+     */
+    public enum ShieldCoWield { JAVA, BEDROCK, MODDED }
+
     /** 突进：JAVA 原版 0.458×等级、饥饿 <6 禁用；MODDED 0.65×等级、饥饿 ≤7 禁用。 */
     public enum Lunge { JAVA, MODDED }
 
@@ -203,6 +213,10 @@ public final class SpearRules {
 
     public static boolean blocksOffhandCharging() {
         return offhandCharging() == OffhandCharging.BEDROCK;
+    }
+
+    public static ShieldCoWield shieldCoWield() {
+        return read(SpearConfig.SHIELD_CO_WIELD, ShieldCoWield.JAVA);
     }
 
     public static Lunge lunge() {

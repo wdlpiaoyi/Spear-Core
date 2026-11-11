@@ -17,6 +17,7 @@ import net.minecraft.spearcore.util.SpearCollision;
 import net.minecraft.spearcore.util.SpearCondition;
 import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,12 +28,14 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterGameTestsEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
@@ -261,11 +264,96 @@ public final class SpearGameTests {
         helper.succeed();
     }
 
+    /**
+     * 矛盾共持（behavior.shieldCoWield）：
+     * <ul>
+     *   <li>{@code JAVA}：右键永远蓄力、副手盾不格挡（原版 Java 版）；</li>
+     *   <li>{@code BEDROCK}：潜行即自动举盾，起身收盾（原版基岩版的盾牌机制）；</li>
+     *   <li>{@code MODDED}：潜行之外还要按右键才举盾，起身收盾。</li>
+     * </ul>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void shieldCoWieldFollowsConfig(GameTestHelper helper) {
+        SpearRules.ShieldCoWield original = SpearConfig.SHIELD_CO_WIELD.get();
+        SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+        ItemStack stack = new ItemStack(iron);
+        try {
+            Player player = helper.makeMockPlayer();
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.SHIELD));
+            player.setShiftKeyDown(true);
+
+            // JAVA：老行为不变——潜行 + 副手盾时右键仍是蓄力，也不会自动举盾/收盾。
+            SpearConfig.SHIELD_CO_WIELD.set(SpearRules.ShieldCoWield.JAVA);
+            helper.assertTrue(!SpearCombat.offhandShieldTakesPriority(true, true),
+                    "JAVA 档不能让右键给副手盾");
+            helper.assertTrue(!SpearCombat.autoRaisesOffhandShield(true, true),
+                    "JAVA 档不能自动举盾");
+            helper.assertTrue(!SpearCombat.shouldReleaseOffhandShield(false, true, true),
+                    "JAVA 档不能打断原版盾牌");
+            helper.assertTrue(SpearCombat.tryStartCharging(player.level(), player,
+                            InteractionHand.MAIN_HAND, stack, iron).getResult().consumesAction(),
+                    "JAVA 档潜行时右键仍要起手蓄力");
+            player.stopUsingItem();
+
+            // MODDED：潜行 + 右键才举盾（不自动举），起身收盾。
+            SpearConfig.SHIELD_CO_WIELD.set(SpearRules.ShieldCoWield.MODDED);
+            helper.assertTrue(SpearCombat.offhandShieldTakesPriority(true, true),
+                    "MODDED 档潜行时右键要让给副手盾");
+            helper.assertTrue(!SpearCombat.offhandShieldTakesPriority(false, true),
+                    "MODDED 档不潜行时右键仍是蓄力");
+            helper.assertTrue(!SpearCombat.offhandShieldTakesPriority(true, false),
+                    "MODDED 档没有副手盾时右键仍是蓄力");
+            helper.assertTrue(!SpearCombat.autoRaisesOffhandShield(true, true),
+                    "MODDED 档不能自动举盾");
+            helper.assertTrue(SpearCombat.shouldReleaseOffhandShield(false, true, true),
+                    "MODDED 档起身要收盾");
+            helper.assertTrue(!SpearCombat.shouldReleaseOffhandShield(true, true, true),
+                    "MODDED 档蹲着不能收盾");
+            helper.assertTrue(!SpearCombat.shouldReleaseOffhandShield(false, false, true),
+                    "MODDED 档没在用盾时不用收");
+            helper.assertTrue(!SpearCombat.shouldReleaseOffhandShield(false, true, false),
+                    "MODDED 档主手不是矛时不影响原版盾牌");
+            helper.assertTrue(!SpearCombat.tryStartCharging(player.level(), player,
+                            InteractionHand.MAIN_HAND, stack, iron).getResult().consumesAction(),
+                    "MODDED 档潜行 + 副手盾时右键必须让给盾牌");
+            helper.assertTrue(!player.isUsingItem(), "让给盾牌时不能启动长矛蓄力");
+
+            // MODDED：模拟右键举起副手盾，再站起来，tick 后应自动收盾。
+            player.startUsingItem(InteractionHand.OFF_HAND);
+            helper.assertTrue(player.isUsingItem(), "测试前置：副手盾应处于使用中");
+            player.setShiftKeyDown(false);
+            MinecraftForge.EVENT_BUS.post(new TickEvent.PlayerTickEvent(TickEvent.Phase.END, player));
+            helper.assertTrue(!player.isUsingItem(), "MODDED 档起身收盾必须生效");
+
+            // BEDROCK：潜行即自动举盾（不用右键），起身自动收盾。
+            SpearConfig.SHIELD_CO_WIELD.set(SpearRules.ShieldCoWield.BEDROCK);
+            helper.assertTrue(SpearCombat.offhandShieldTakesPriority(true, true),
+                    "BEDROCK 档潜行时右键要让给副手盾");
+            helper.assertTrue(SpearCombat.autoRaisesOffhandShield(true, true),
+                    "BEDROCK 档潜行要自动举盾");
+            helper.assertTrue(!SpearCombat.autoRaisesOffhandShield(false, true),
+                    "BEDROCK 档不潜行时不能自动举盾");
+            helper.assertTrue(!SpearCombat.autoRaisesOffhandShield(true, false),
+                    "BEDROCK 档没有副手盾时不能自动举盾");
+            player.setShiftKeyDown(true);
+            MinecraftForge.EVENT_BUS.post(new TickEvent.PlayerTickEvent(TickEvent.Phase.END, player));
+            helper.assertTrue(player.isUsingItem() && player.getUsedItemHand() == InteractionHand.OFF_HAND,
+                    "BEDROCK 档潜行 tick 后必须自动举起副手盾");
+            player.setShiftKeyDown(false);
+            MinecraftForge.EVENT_BUS.post(new TickEvent.PlayerTickEvent(TickEvent.Phase.END, player));
+            helper.assertTrue(!player.isUsingItem(), "BEDROCK 档起身收盾必须生效");
+        } finally {
+            SpearConfig.SHIELD_CO_WIELD.set(original);
+        }
+        helper.succeed();
+    }
+
     /** 蓄力判定箱：JAVA 0.125 / MODDED 0.25。 */
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
-    public static void hitboxMarginFollowsConfig(GameTestHelper helper) {
-        SpearRules.ChargeHitboxMargin original = SpearConfig.CHARGE_HITBOX_MARGIN.get();
+    public static void hitboxMarginFollowsConfig(GameTestHelper helper) {        SpearRules.ChargeHitboxMargin original = SpearConfig.CHARGE_HITBOX_MARGIN.get();
         SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
         try {
             SpearConfig.CHARGE_HITBOX_MARGIN.set(SpearRules.ChargeHitboxMargin.JAVA);

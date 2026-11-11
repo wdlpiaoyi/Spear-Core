@@ -92,6 +92,7 @@ jabRepeatHit = "JAVA"
 durability = "JAVA"
 creativeMaxRange = "JAVA"
 offhandCharging = "JAVA"
+shieldCoWield = "JAVA"
 lunge = "JAVA"
 hitSlowDown = "JAVA"
 mobSpearEquipTable = "JAVA"
@@ -113,6 +114,7 @@ movingTargetAssist = "JAVA"
 | `durability` | `JAVA` / `BEDROCK` / `MODDED` | 耐久。JAVA：59/131/190/250/32/1561/2031；BEDROCK：每级 +1；MODDED：本模组原表（铜 195、金 59）。 |
 | `creativeMaxRange` | `JAVA` / `BEDROCK` | 创造模式攻击距离上限：JAVA 6.5，BEDROCK 7.5。 |
 | `offhandCharging` | `JAVA` / `BEDROCK` | 能否用副手举矛蓄力。JAVA 可以；BEDROCK 不行。 |
+| `shieldCoWield` | `JAVA` / `BEDROCK` / `MODDED` | 矛盾共持（主手矛 + 副手盾）。JAVA：右键永远蓄力、副手盾不格挡；BEDROCK：潜行即自动举盾、起身收盾（原版基岩版的盾牌机制，[Blocking](https://minecraft.wiki/w/Blocking)）；MODDED：潜行之外还要按右键才举盾。 |
 | `lunge` | `JAVA` / `MODDED` | 突进力度与饥饿门槛。JAVA：0.458 / 饥饿 <6 禁用；MODDED：0.65 / 饥饿 ≤7 禁用。 |
 | `hitSlowDown` | `JAVA` / `MODDED` | 命中后攻击者自己水平速度 ×0.6 并取消奔跑。JAVA 有（原版手感）；MODDED 没有。 |
 | `mobSpearEquipTable` | `JAVA` / `MODDED` | 怪物携带名单：JAVA 原版名单（铁/金矛），MODDED 本模组概率表 + 随机材质。 |
@@ -126,6 +128,8 @@ movingTargetAssist = "JAVA"
 
 - **击落骑手所需的速度阈值写死为 Java 版数据**（木 14 / 金 13 / 石 13 / 铜 12 / 铁 11 / 钻 10 / 下界合金 9 格每秒）——这是原版 Java 版唯一可信的一套数值，基岩版对齐后与此相同。
 - 判定层差异凡能复刻的都做成了开关（例如 `chargeRepeatHit` 对应基岩版的 0.5 秒重连间隔）；**引擎/渲染层**差异不在复刻范围（基岩版火焰附加点燃蜡烛/营火/TNT、蓄力暴击粒子）。
+
+`shieldCoWield = "BEDROCK"` 只在「主手长矛 + 副手盾」时接管：潜行会自动举盾、起身自动收盾，效果完全走原版盾牌（[Blocking](https://minecraft.wiki/w/Blocking)：基岩版的盾牌由潜行激活）；不拿长矛时不会影响普通盾牌玩法。`MODDED` 是同一个机制的右键版。
 
 `jabDamage = "BEDROCK"` 时，多出来的 1 点伤害加在攻击力属性上，因此**属性面板与戳刺会一起 +1**；蓄力是否也 +1 取决于 `chargeStrength`（`BEDROCK` 时蓄力基线也吃攻击力修饰符）。
 

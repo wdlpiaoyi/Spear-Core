@@ -141,7 +141,7 @@ tetraDamageScale = 1.0
 
 The first two switches only control the **creative tab and mob equipment**; crafting, `/give` and other ways of obtaining spears still work.
 
-There are 17 more per-behaviour switches under `[behavior]` (all default to `JAVA`, i.e. vanilla behaviour). Full tables for behaviour switches, resource-pack compatibility, Tetra and Avaritia compatibility: **[docs/configuration.md](docs/configuration.md)** (Chinese).
+There are 18 more per-behaviour switches under `[behavior]` (all default to `JAVA`, i.e. vanilla behaviour). Full tables for behaviour switches, resource-pack compatibility, Tetra and Avaritia compatibility: **[docs/configuration.md](docs/configuration.md)** (Chinese).
 
 ## Compatibility
 
