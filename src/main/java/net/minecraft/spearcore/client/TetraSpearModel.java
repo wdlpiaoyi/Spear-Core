@@ -1,16 +1,21 @@
 package net.minecraft.spearcore.client;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.FaceInfo;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockElement;
+import net.minecraft.client.renderer.block.model.BlockElementFace;
+import net.minecraft.client.renderer.block.model.FaceBakery;
+import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.model.BakedModelWrapper;
@@ -172,69 +177,79 @@ public final class TetraSpearModel {
         }
     }
 
+    /** 生成枪尖图层时用的恒等模型状态（没有旋转、没有 uv lock）。 */
+    private static final ModelState IDENTITY_STATE = new ModelState() {
+    };
+
+    private static final ResourceLocation TIP_LAYER_LOCATION =
+            new ResourceLocation("spearcore", "tetra_spear_tip");
+
     /**
-     * 按原 mod 的贴图位置现做一层枪尖四边形。
+     * 把原 mod 的枪尖贴图当成一个普通 item 图层生成。
      *
-     * <p>方块图集会用 {@code directory:item} 把**所有命名空间** {@code textures/item/**} 下的贴图都拼进去
-     * （原版 {@code minecraft:atlases/blocks.json} 的定义），所以只要对方模组在，这两张贴图就已经在图集里，
-     * 这里直接取。</p>
+     * <p>{@link ItemModelGenerator} 会给出「正面 + 背面 + 按透明度轮廓挤出的 1 模型单位厚度侧面」，
+     * 和本模组杆/矛头图层的厚度完全一致——之前手搓一张四边形，侧面看就是没有厚度的纸片。
+     * 生成结果再按 {@link TipOverlayGeometry} 摆位：**只有手持层**顺时针 90° 并缩到 0.5，
+     * 图标层原样铺满不旋转。</p>
      */
     private static List<BakedQuad> buildTipQuads(TextureAtlasSprite sprite, boolean held) {
-        float minX = held ? TipOverlayGeometry.HELD_MIN_X : TipOverlayGeometry.ICON_MIN_X;
-        float maxX = held ? TipOverlayGeometry.HELD_MAX_X : TipOverlayGeometry.ICON_MAX_X;
-        float minY = held ? TipOverlayGeometry.HELD_MIN_Y : TipOverlayGeometry.ICON_MIN_Y;
-        float maxY = held ? TipOverlayGeometry.HELD_MAX_Y : TipOverlayGeometry.ICON_MAX_Y;
-        return List.of(
-                buildTipQuad(sprite, Direction.SOUTH, minX, maxX, minY, maxY, held),
-                buildTipQuad(sprite, Direction.NORTH, minX, maxX, minY, maxY, held));
+        FaceBakery bakery = new FaceBakery();
+        List<BakedQuad> quads = new ArrayList<>();
+        try {
+            List<BlockElement> elements = new ItemModelGenerator()
+                    .processFrames(0, "layer0", sprite.contents());
+            for (BlockElement element : elements) {
+                for (Map.Entry<Direction, BlockElementFace> entry : element.faces.entrySet()) {
+                    BakedQuad quad = bakery.bakeQuad(element.from, element.to, entry.getValue(), sprite,
+                            entry.getKey(), IDENTITY_STATE, element.rotation, element.shade, TIP_LAYER_LOCATION);
+                    quads.add(transformTipQuad(quad, held));
+                }
+            }
+        } catch (Throwable throwable) {
+            // 第三方贴图/动画格式异常时宁可不叠，也不要让渲染崩掉。
+            return List.of();
+        }
+        return quads;
     }
 
     /**
-     * 造一个面。顶点顺序和 uv 分配都照 {@code FaceBakery} 的做法（用 {@link FaceInfo} 取面内顶点顺序），
-     * 这样绕序/法线不用自己推；z 比原版图层的 7.5/8.5 再让 0.0005，保证叠在原贴图上而不是打架。
+     * 把生成好的图层摆到矛头位置：手持层旋转 90°（屏幕方向对齐 comp_90）+ 缩 0.5，
+     * 图标层不动；前后各让一点，保证叠在原图层外面而不是打架。
      */
-    private static BakedQuad buildTipQuad(TextureAtlasSprite sprite, Direction direction, float minX, float maxX,
-                                          float minY, float maxY, boolean held) {
-        boolean front = direction == Direction.SOUTH;
-        float z = (front ? 8.5F : 7.5F) / 16.0F + (front ? 0.0005F : -0.0005F);
-        float[] bounds = new float[6];
-        bounds[FaceInfo.Constants.MIN_X] = minX;
-        bounds[FaceInfo.Constants.MAX_X] = maxX;
-        bounds[FaceInfo.Constants.MIN_Y] = minY;
-        bounds[FaceInfo.Constants.MAX_Y] = maxY;
-        bounds[FaceInfo.Constants.MIN_Z] = z;
-        bounds[FaceInfo.Constants.MAX_Z] = z;
-
-        float uCenter = (uAt(held, minX, minY, front) + uAt(held, maxX, maxY, front)) / 2.0F;
-        float vCenter = (vAt(held, minX, minY, front) + vAt(held, maxX, maxY, front)) / 2.0F;
-        float shrink = sprite.uvShrinkRatio();
-
-        FaceInfo info = FaceInfo.fromFacing(direction);
+    private static BakedQuad transformTipQuad(BakedQuad quad, boolean held) {
+        int[] source = quad.getVertices();
         int[] vertices = new int[32];
         for (int i = 0; i < 4; i++) {
-            FaceInfo.VertexInfo vertex = info.getVertexInfo(i);
-            float x = bounds[vertex.xFace];
-            float y = bounds[vertex.yFace];
-            float vz = bounds[vertex.zFace];
-            float u = Mth.lerp(shrink, uAt(held, x, y, front), uCenter);
-            float v = Mth.lerp(shrink, vAt(held, x, y, front), vCenter);
             int offset = i * 8;
+            float x = Float.intBitsToFloat(source[offset]);
+            float y = Float.intBitsToFloat(source[offset + 1]);
+            float z = Float.intBitsToFloat(source[offset + 2]);
+            if (held) {
+                float sourceX = x;
+                float sourceY = y;
+                x = TipOverlayGeometry.heldX(sourceX, sourceY);
+                y = TipOverlayGeometry.heldY(sourceX, sourceY);
+            }
             vertices[offset] = Float.floatToRawIntBits(x);
             vertices[offset + 1] = Float.floatToRawIntBits(y);
-            vertices[offset + 2] = Float.floatToRawIntBits(vz);
+            vertices[offset + 2] = Float.floatToRawIntBits(TipOverlayGeometry.depth(z));
             vertices[offset + 3] = -1;
-            vertices[offset + 4] = Float.floatToRawIntBits(sprite.getU(TipOverlayGeometry.texel(u)));
-            vertices[offset + 5] = Float.floatToRawIntBits(sprite.getV(TipOverlayGeometry.texel(v)));
+            vertices[offset + 4] = source[offset + 4];
+            vertices[offset + 5] = source[offset + 5];
         }
-        return new BakedQuad(vertices, -1, direction, sprite, true, false);
+        Direction direction = held ? rotateTipDirection(quad.getDirection()) : quad.getDirection();
+        return new BakedQuad(vertices, -1, direction, quad.getSprite(), quad.isShade(), false);
     }
 
-    private static float uAt(boolean held, float x, float y, boolean front) {
-        return held ? TipOverlayGeometry.heldU(y) : TipOverlayGeometry.iconU(x, front);
-    }
-
-    private static float vAt(boolean held, float x, float y, boolean front) {
-        return held ? TipOverlayGeometry.heldV(x, front) : TipOverlayGeometry.iconV(y);
+    /** 手持层几何旋转 90°，侧面法线跟着转，避免光照/剔除方向不对。 */
+    private static Direction rotateTipDirection(Direction direction) {
+        return switch (direction) {
+            case UP -> Direction.WEST;
+            case WEST -> Direction.DOWN;
+            case DOWN -> Direction.EAST;
+            case EAST -> Direction.UP;
+            case NORTH, SOUTH -> direction;
+        };
     }
 
     /** 平面贴图模型必须报 {@code isGui3d = false}，否则 Tetra 工作台会把矛竖起来放。 */

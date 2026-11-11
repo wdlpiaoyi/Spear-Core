@@ -1126,35 +1126,49 @@ public final class TetraCompatGameTests {
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearTipOverlayGeometryIsStable(GameTestHelper helper) {
         // RevelationFix 的 longinus / aeglos 枪尖只有 16x16，本模组不复制它：客户端在运行时按资源位置
-        // 取样、自己生成叠加四边形。这里钉住落点与取样方向，防止以后把「逆时针 90° + 1:1 像素」改歪。
-        float heldWidth = TipOverlayGeometry.HELD_MAX_X - TipOverlayGeometry.HELD_MIN_X;
-        float heldHeight = TipOverlayGeometry.HELD_MAX_Y - TipOverlayGeometry.HELD_MIN_Y;
+        // 取样、用 ItemModelGenerator 生成带 1 单位厚度的整层（正面/背面/轮廓侧面），
+        // 再只把**手持层**顺时针 90° 缩到 0.5 摆到矛头位置（图标层不转）。
+        // 这里钉住旋转方向、落点尺寸和前后让位，防止以后又改歪。
+        float heldWidth = TipOverlayGeometry.HELD_TARGET_MAX_X - TipOverlayGeometry.HELD_TARGET_MIN_X;
+        float heldHeight = TipOverlayGeometry.HELD_TARGET_MAX_Y - TipOverlayGeometry.HELD_TARGET_MIN_Y;
         helper.assertTrue(Math.abs(heldWidth - 6.0F / 16.0F) < 1.0E-6F,
                 "手持叠加层宽度必须是 12px / 32px * 16 = 6 模型单位，实际 " + heldWidth);
         helper.assertTrue(Math.abs(heldHeight - 6.0F / 16.0F) < 1.0E-6F,
-                "手持叠加层高度必须是 6 模型单位（1:1 像素、不缩放），实际 " + heldHeight);
-        // 显示区左上角 (minX, maxY) 取样到原图右上角 (u=1, v=0)：逆时针 90°，矛尖指向左上。
-        helper.assertTrue(Math.abs(TipOverlayGeometry.heldU(TipOverlayGeometry.HELD_MAX_Y) - 1.0F) < 1.0E-6F,
-                "手持叠加层顶部必须取到原图 u=1（原图右缘）");
-        helper.assertTrue(Math.abs(TipOverlayGeometry.heldV(TipOverlayGeometry.HELD_MIN_X, true)) < 1.0E-6F,
-                "手持叠加层左侧必须取到原图 v=0（原图上缘）");
-        helper.assertTrue(Math.abs(TipOverlayGeometry.heldU(TipOverlayGeometry.HELD_MIN_Y) - 0.25F) < 1.0E-6F,
-                "手持叠加层底部必须取到原图 u=0.25（枪尖内容区左缘）");
-        helper.assertTrue(Math.abs(TipOverlayGeometry.heldV(TipOverlayGeometry.HELD_MAX_X, true) - 0.75F) < 1.0E-6F,
-                "手持叠加层右侧必须取到原图 v=0.75（枪尖内容区下缘）");
-        // 背面镜像和原版双层物品模型一致。
-        helper.assertTrue(Math.abs(TipOverlayGeometry.heldV(0.125F, false)
-                - (0.75F - TipOverlayGeometry.heldV(0.125F, true))) < 1.0E-6F,
-                "手持叠加层背面必须水平镜像");
-        // 图标层整张 16x16 原样覆盖（图标原画本身就指向右上，不需要旋转）。
-        helper.assertTrue(TipOverlayGeometry.ICON_MIN_X == 0.0F && TipOverlayGeometry.ICON_MAX_X == 1.0F
-                && TipOverlayGeometry.ICON_MIN_Y == 0.0F && TipOverlayGeometry.ICON_MAX_Y == 1.0F,
-                "图标叠加层必须铺满整张 16x16 图标");
-        helper.assertTrue(Math.abs(TipOverlayGeometry.iconU(0.25F, true) - 0.25F) < 1.0E-6F
-                        && Math.abs(TipOverlayGeometry.iconV(0.75F) - 0.25F) < 1.0E-6F,
-                "图标叠加层正面必须原样取样");
-        helper.assertTrue(Math.abs(TipOverlayGeometry.iconU(0.25F, false) - 0.75F) < 1.0E-6F,
-                "图标叠加层背面必须水平镜像");
+                "手持叠加层高度必须是 6 模型单位，实际 " + heldHeight);
+        // 手持层旋转 90°（对齐实机确认过的 comp_90）：原图「底边」落到落点「右边」、
+        // 原图「右边」落到落点「上边」。
+        float sourceMinX = TipOverlayGeometry.HELD_SOURCE_MIN_X;
+        float sourceMaxX = TipOverlayGeometry.HELD_SOURCE_MAX_X;
+        float sourceMinY = TipOverlayGeometry.HELD_SOURCE_MIN_Y;
+        float sourceMaxY = TipOverlayGeometry.HELD_SOURCE_MAX_Y;
+        helper.assertTrue(Math.abs(TipOverlayGeometry.heldX(sourceMaxX, sourceMinY)
+                        - TipOverlayGeometry.HELD_TARGET_MAX_X) < 1.0E-6F
+                        && Math.abs(TipOverlayGeometry.heldY(sourceMaxX, sourceMinY)
+                        - TipOverlayGeometry.HELD_TARGET_MAX_Y) < 1.0E-6F,
+                "原图右下角旋转后必须落在落点右上角");
+        helper.assertTrue(Math.abs(TipOverlayGeometry.heldX(sourceMinX, sourceMinY)
+                        - TipOverlayGeometry.HELD_TARGET_MAX_X) < 1.0E-6F
+                        && Math.abs(TipOverlayGeometry.heldY(sourceMinX, sourceMinY)
+                        - TipOverlayGeometry.HELD_TARGET_MIN_Y) < 1.0E-6F,
+                "原图左下角旋转后必须落在落点右下角");
+        helper.assertTrue(Math.abs(TipOverlayGeometry.heldX(sourceMinX, sourceMaxY)
+                        - TipOverlayGeometry.HELD_TARGET_MIN_X) < 1.0E-6F
+                        && Math.abs(TipOverlayGeometry.heldY(sourceMinX, sourceMaxY)
+                        - TipOverlayGeometry.HELD_TARGET_MIN_Y) < 1.0E-6F,
+                "原图左上角旋转后必须落在落点左下角");
+        helper.assertTrue(Math.abs(TipOverlayGeometry.heldX(sourceMaxX, sourceMaxY)
+                        - TipOverlayGeometry.HELD_TARGET_MIN_X) < 1.0E-6F
+                        && Math.abs(TipOverlayGeometry.heldY(sourceMaxX, sourceMaxY)
+                        - TipOverlayGeometry.HELD_TARGET_MAX_Y) < 1.0E-6F,
+                "原图右上角旋转后必须落在落点左上角");
+        // 图标层不旋转：0..1 的图层照原位摆放，只做前后错开。
+        helper.assertTrue(Math.abs(TipOverlayGeometry.HELD_SCALE - 0.5F) < 1.0E-6F,
+                "手持层缩放必须是 0.5（12 像素 → 6 模型单位）");
+        // 图层厚度 1 模型单位：正面往前、背面往后各让一点，保证叠在原图层外面。
+        helper.assertTrue(TipOverlayGeometry.depth(8.5F / 16.0F) > 8.5F / 16.0F,
+                "正面必须比原版图层再往前一点");
+        helper.assertTrue(TipOverlayGeometry.depth(7.5F / 16.0F) < 7.5F / 16.0F,
+                "背面必须比原版图层再往后一点");
         // sprite.getU/getV 的参数是 0..16 texel 空间（内部再除以 16）；传 0..1 只会采到
         // 贴图左上角不到 1/16 的透明边，整层枪尖看起来就是「没有」。
         helper.assertTrue(Math.abs(TipOverlayGeometry.texel(0.25F) - 4.0F) < 1.0E-6F
