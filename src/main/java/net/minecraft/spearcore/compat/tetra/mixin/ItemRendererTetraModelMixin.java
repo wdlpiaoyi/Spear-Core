@@ -29,9 +29,10 @@ import se.mickelus.tetra.module.data.ImprovementData;
  * 只替换 {@link SpearStyle#MODULAR_3D} 的栈；材质颜色由物品颜色处理器（tint 0/1）提供，
  * 因此仍会按 Tetra 材料换色。Tetra 自带的工具（包括单头工具）不满足 archetype 判定，保持原样。</p>
  *
- * <p>普通矛头如果带 RevelationFix 的 {@code blade/longinus} / {@code blade/aeglos} 改进，
- * 再套一层 {@link TipOverlayModel} 把第三方枪尖图标叠上去（素材按资源位置在运行时取，不复制）。
- * 槊头/三尖两刃刀的原画矛头形状完全不同，不叠。</p>
+ * <p>只要带 RevelationFix 的 {@code blade/longinus} / {@code blade/aeglos} 改进，
+ * 就在当前矛头模型上再套一层 {@link TipOverlayModel}：把第三方枪尖图标叠上去并藏掉原矛头层
+ * （素材按资源位置在运行时取，不复制）。普通矛头、槊头、三尖两刃刀都走同一套——
+ * 三种矛头的手持原画都在左上 12×12 像素内，枪尖层正好盖住。</p>
  *
  * <p>注入点必须带 {@code require = 0}：Tetra 版本差异或其它模组的 ItemRenderer mixin 可能改签名，
  * 失败时保留原模型而不是让游戏崩。</p>
@@ -48,23 +49,18 @@ public class ItemRendererTetraModelMixin {
         }
         String headVariant = TetraSpearColors.headVariantKey(stack);
         BakedModel replacement;
-        boolean plainHead;
         if (headVariant != null && headVariant.startsWith("spear_shuo_head/")) {
             replacement = TetraSpearModel.getShuo();
-            plainHead = false;
         } else if (headVariant != null && headVariant.startsWith("spear_three_point/")) {
             replacement = TetraSpearModel.getThree();
-            plainHead = false;
         } else {
             replacement = TetraSpearModel.getDefault();
-            plainHead = true;
         }
         if (replacement == null) {
             return;
         }
-        if (plainHead) {
-            replacement = spearcore$withTip(stack, replacement);
-        }
+        // 普通矛头 / 槊头 / 三尖两刃刀同一套：枪尖层盖住原矛头那一层（三种原画都在左上 12×12 内）。
+        replacement = spearcore$withTip(stack, replacement);
         cir.setReturnValue(replacement);
     }
 

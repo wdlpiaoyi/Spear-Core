@@ -1182,6 +1182,68 @@ public final class TetraCompatGameTests {
         helper.succeed();
     }
 
+    /**
+     * 枪尖层会藏掉原矛头，所以原画必须完全落在枪尖层的覆盖范围内：
+     * 手持三种矛头都在左上 12×12 像素内，图标三种矛头都在枪尖内容 bbox (4,0)-(16,12) 内。
+     *
+     * <p>这也是「槊 / 三尖两刃刀也做兼容」的前提——藏掉一整层后如果盖不住就会留空洞。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearTipOverlayCoversAllHeadTextures(GameTestHelper helper) {
+        for (String part : new String[]{"", "_shuo", "_three"}) {
+            int[] held = spearcore$alphaBounds("tetra_spear_head" + part + "_in_hand.png");
+            if (held == null) {
+                helper.fail("缺少手持矛头贴图 tetra_spear_head" + part + "_in_hand.png");
+                return;
+            }
+            helper.assertTrue(held[0] >= 0 && held[1] >= 0 && held[2] <= 12 && held[3] <= 12,
+                    "手持矛头 " + part + " 的原画必须落在左上 12×12 内，否则枪尖层藏掉后会留空洞: "
+                            + held[0] + "," + held[1] + " - " + held[2] + "," + held[3]);
+
+            int[] icon = spearcore$alphaBounds("tetra_spear_head" + part + ".png");
+            if (icon == null) {
+                helper.fail("缺少物品栏矛头贴图 tetra_spear_head" + part + ".png");
+                return;
+            }
+            helper.assertTrue(icon[0] >= 4 && icon[1] >= 0 && icon[2] <= 16 && icon[3] <= 12,
+                    "物品栏矛头 " + part + " 的原画必须落在枪尖内容 bbox (4,0)-(16,12) 内，否则会留空洞: "
+                            + icon[0] + "," + icon[1] + " - " + icon[2] + "," + icon[3]);
+        }
+        helper.succeed();
+    }
+
+    /** 读 PNG 的 alpha 非零 bbox，返回 {minX,minY,maxX+1,maxY+1}；读不到返回 null。 */
+    private static int[] spearcore$alphaBounds(String textureFile) {
+        try (InputStream stream = TetraCompatGameTests.class
+                .getResourceAsStream("/assets/spearcore/textures/item/" + textureFile)) {
+            if (stream == null) {
+                return null;
+            }
+            java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(stream);
+            if (image == null) {
+                return null;
+            }
+            int minX = image.getWidth();
+            int minY = image.getHeight();
+            int maxX = -1;
+            int maxY = -1;
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    if ((image.getRGB(x, y) >>> 24) != 0) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+            return maxX < 0 ? new int[]{0, 0, 0, 0} : new int[]{minX, minY, maxX + 1, maxY + 1};
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearHolosphereEntryExists(GameTestHelper helper) {
