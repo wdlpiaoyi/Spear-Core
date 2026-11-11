@@ -606,8 +606,8 @@ public final class TetraCompatGameTests {
         for (JsonElement element : handleModuleRoot.getAsJsonObject().getAsJsonArray("improvements")) {
             handleAccepted.add(element.getAsString());
         }
-        helper.assertTrue(handleAccepted.contains("tetra:single/shared_handle/"),
-                "矛杆必须接受 tetra:single/shared_handle/ 下的改进（含 handle_hone/speed）");
+        helper.assertTrue(handleAccepted.contains("tetra:sword/"),
+                "矛杆必须接受 tetra:sword/ 下的改进（复用 Tetra 剑柄的 hilt_hone/speed 打磨）");
         helper.assertTrue(handleAccepted.contains("tetra:spear/handle/"),
                 "矛杆必须接受 tetra:spear/handle/（含 spear_hone/stable）");
         // 尖锐：矛头任一条五级打磨后解锁，单级 +5% 蓄力系数

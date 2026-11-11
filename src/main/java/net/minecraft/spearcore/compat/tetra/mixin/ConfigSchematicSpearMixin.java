@@ -140,7 +140,7 @@ public abstract class ConfigSchematicSpearMixin {
             "single/head|head_hone/durability", "head",
             "single/head|head_hone/speed", "head",
             "sword/blade|blade_hone/damage", "head",
-            "single/handle|handle_hone/speed", "handle");
+            "sword/hilt|hilt_hone/speed", "handle");
 
     private boolean spearcore$allowsNativeSpearHone(ConfigSchematic schematic, String slot, ItemStack stack) {
         try {
