@@ -10,8 +10,6 @@ import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import se.mickelus.tetra.items.modular.IModularItem;
-import se.mickelus.tetra.module.data.ImprovementData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -39,22 +37,6 @@ public class ItemRendererTetraModelMixin {
         if (spear == null || spear.style() != SpearStyle.MODULAR_3D) {
             return;
         }
-        // RevelationFix 的 longinus / aeglos 只是给原贴图叠一个枪尖图标；
-        // 这里直接用它们旋转好的矛尖贴图模型，保持本模组长矛的握持/攻击角度。
-        if (spearcore$hasImprovement(stack, "blade/longinus")) {
-            BakedModel longinus = TetraSpearModel.getLonginus();
-            if (longinus != null) {
-                cir.setReturnValue(longinus);
-                return;
-            }
-        }
-        if (spearcore$hasImprovement(stack, "blade/aeglos")) {
-            BakedModel aeglos = TetraSpearModel.getAeglos();
-            if (aeglos != null) {
-                cir.setReturnValue(aeglos);
-                return;
-            }
-        }
         String headVariant = TetraSpearColors.headVariantKey(stack);
         BakedModel replacement;
         if (headVariant != null && headVariant.startsWith("spear_shuo_head/")) {
@@ -67,20 +49,5 @@ public class ItemRendererTetraModelMixin {
         if (replacement != null) {
             cir.setReturnValue(replacement);
         }
-    }
-
-    private static boolean spearcore$hasImprovement(ItemStack stack, String key) {
-        try {
-            if (stack.getItem() instanceof IModularItem modular) {
-                for (ImprovementData improvement : modular.getImprovements(stack)) {
-                    if (improvement != null && key.equals(improvement.key)) {
-                        return true;
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-            // 读不到改进时按普通矛头处理。
-        }
-        return false;
     }
 }

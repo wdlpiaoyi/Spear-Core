@@ -1,8 +1,0 @@
-{
-    "parent": "item/generated",
-    "gui_light": "front",
-    "textures": {
-        "layer0": "spearcore:item/tetra_spear_handle",
-        "layer1": "spearcore:item/tetra_spear_head_longinus"
-    }
-}
