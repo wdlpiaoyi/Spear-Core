@@ -1155,6 +1155,11 @@ public final class TetraCompatGameTests {
                 "图标叠加层正面必须原样取样");
         helper.assertTrue(Math.abs(TipOverlayGeometry.iconU(0.25F, false) - 0.75F) < 1.0E-6F,
                 "图标叠加层背面必须水平镜像");
+        // sprite.getU/getV 的参数是 0..16 texel 空间（内部再除以 16）；传 0..1 只会采到
+        // 贴图左上角不到 1/16 的透明边，整层枪尖看起来就是「没有」。
+        helper.assertTrue(Math.abs(TipOverlayGeometry.texel(0.25F) - 4.0F) < 1.0E-6F
+                        && Math.abs(TipOverlayGeometry.texel(1.0F) - 16.0F) < 1.0E-6F,
+                "枪尖 uv 必须换算到 0..16 texel 空间，否则 getU/getV 会采到透明边");
         // 枪尖图标是斜箭头、四角透明：必须把原矛头那一层（layer1 / tint 1）藏掉，否则会露灰边。
         helper.assertTrue(TipOverlayGeometry.replacesLayer(1),
                 "枪尖叠加层必须藏掉 tint 1（模型 layer1 = 矛头贴图）");

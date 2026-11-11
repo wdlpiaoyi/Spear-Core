@@ -350,6 +350,39 @@ public final class SpearGameTests {
         helper.succeed();
     }
 
+    /**
+     * 横扫：半径 0.3×射程，判定只按**命中实体**周围的判定箱。
+     *
+     * <p>旧实现夹了 2~4 的下限、还按玩家距离过滤，长手命中（4.5 格）时剑气只覆盖自己脚边。</p>
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void sweepIsCenteredOnHitTarget(GameTestHelper helper) {
+        helper.assertTrue(Math.abs(SpearCombat.sweepRadius(4.5F) - 1.35F) < 1.0E-6F,
+                "4.5 射程的横扫半径应为 1.35，实际 " + SpearCombat.sweepRadius(4.5F));
+        helper.assertTrue(Math.abs(SpearCombat.sweepRadius(6.5F) - 1.95F) < 1.0E-6F,
+                "创造 6.5 射程的横扫半径应为 1.95，实际 " + SpearCombat.sweepRadius(6.5F));
+
+        Mob target = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 3, 1, 3);
+        Mob nearTarget = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 3, 1, 2);
+        Mob nearPlayer = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 4, 1, 4);
+        // 把「离玩家很近」的那只挪到玩家身边（命中实体在 4 格外，正好是长矛的典型命中距离）。
+        nearPlayer.moveTo(target.getX() + 4.0D, target.getY(), target.getZ());
+        Player player = helper.makeMockPlayer();
+        player.moveTo(nearPlayer.getX(), nearPlayer.getY(), nearPlayer.getZ());
+
+        float radius = SpearCombat.sweepRadius(4.5F);
+        helper.assertTrue(SpearCombat.isSweptBy(player, target, nearTarget, radius),
+                "命中实体旁边的目标必须被横扫到（哪怕离玩家 4 格以上）");
+        helper.assertTrue(!SpearCombat.isSweptBy(player, target, nearPlayer, radius),
+                "贴着玩家、但离命中实体很远的目标不能被横扫到（判定只按命中实体）");
+        helper.assertTrue(!SpearCombat.isSweptBy(player, target, target, radius),
+                "主目标不参与横扫，避免重复结算");
+        helper.assertTrue(!SpearCombat.isSweptBy(player, target, player, radius),
+                "攻击者自己不能被自己的横扫打到");
+        helper.succeed();
+    }
+
     /** 蓄力判定箱：JAVA 0.125 / MODDED 0.25。 */
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")

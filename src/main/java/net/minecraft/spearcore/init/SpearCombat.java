@@ -436,6 +436,34 @@ public final class SpearCombat {
     }
 
     /**
+     * 横扫半径：命中实体周围 {@code 0.3 × 有效攻击距离} 格。
+     *
+     * <p>原版剑固定 1.0；这里按长矛射程等比放大（4.5 射程 → 1.35，创造 6.5 → 1.95）。
+     * 不要再夹上下限——夹住之后 0.3 的系数会被吃掉，长剑气的范围又变回固定值。</p>
+     */
+    public static float sweepRadius(float effectiveMaxRange) {
+        return effectiveMaxRange * 0.3F;
+    }
+
+    /**
+     * 横扫候选过滤：只按**命中实体**周围的判定箱筛选，不再按玩家距离筛。
+     *
+     * <p>长矛射程 4.5 时，玩家到命中实体就有 4 格多；再用「玩家距离 ≤ 半径+2」过滤，
+     * 命中实体旁边的怪会被误杀。这里只判断目标周围的判定箱（与
+     * {@code getEntitiesOfClass} 用的盒子一致），并排除自己 / 主目标 / 友军 / 标记盔甲架。</p>
+     */
+    public static boolean isSweptBy(Player player, Entity target, LivingEntity living, float radius) {
+        if (living == player || living == target || player.isAlliedTo(living)) {
+            return false;
+        }
+        if (living instanceof net.minecraft.world.entity.decoration.ArmorStand armorStand
+                && armorStand.isMarker()) {
+            return false;
+        }
+        return living.getBoundingBox().intersects(target.getBoundingBox().inflate(radius, 0.35D, radius));
+    }
+
+    /**
      * 原版剑式横扫：只在满蓄力、站在地面、没有疾跑时触发，伤害按原版
      * {@code 1 + 横扫之刃加成} 计算，并补原版横扫粒子和音效。
      *
@@ -457,19 +485,16 @@ public final class SpearCombat {
             return;
         }
         LAST_SWEEP_TICK.put(player, now);
-        // 剑气以命中实体为中心，半径随长矛攻击距离放大；原版剑是 1.0，长矛 4.5 射程约 2.7。
-        float radius = Mth.clamp((float) spear.effectiveMaxRange(player) * 0.6F, 2.0F, 4.0F);
+        // 剑气以**命中实体**为中心，半径 = 0.3 × 长矛有效攻击距离（4.5 射程 → 1.35 格）。
+        // 之前用 0.6 且夹在 2~4，还按玩家距离过滤，结果长手命中时剑气只覆盖自己脚边。
+        float radius = sweepRadius((float) spear.effectiveMaxRange(player));
         float ratio = 1.0F + EnchantmentHelper.getSweepingDamageRatio(player);
         double yaw = Math.toRadians(player.getYRot());
         double dx = -Math.sin(yaw);
         double dz = Math.cos(yaw);
-        double maxDistanceSqr = (radius + 2.0D) * (radius + 2.0D);
         for (LivingEntity living : player.level().getEntitiesOfClass(LivingEntity.class,
                 target.getBoundingBox().inflate(radius, 0.35D, radius))) {
-            if (living == player || living == target || player.isAlliedTo(living)
-                    || living instanceof net.minecraft.world.entity.decoration.ArmorStand armorStand
-                    && armorStand.isMarker()
-                    || player.distanceToSqr(living) >= maxDistanceSqr) {
+            if (!isSweptBy(player, target, living, radius)) {
                 continue;
             }
             living.knockback(0.4F, dx, dz);

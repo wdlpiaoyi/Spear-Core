@@ -223,8 +223,8 @@ public final class TetraSpearModel {
             vertices[offset + 1] = Float.floatToRawIntBits(y);
             vertices[offset + 2] = Float.floatToRawIntBits(vz);
             vertices[offset + 3] = -1;
-            vertices[offset + 4] = Float.floatToRawIntBits(sprite.getU(u));
-            vertices[offset + 5] = Float.floatToRawIntBits(sprite.getV(v));
+            vertices[offset + 4] = Float.floatToRawIntBits(sprite.getU(TipOverlayGeometry.texel(u)));
+            vertices[offset + 5] = Float.floatToRawIntBits(sprite.getV(TipOverlayGeometry.texel(v)));
         }
         return new BakedQuad(vertices, -1, direction, sprite, true, false);
     }

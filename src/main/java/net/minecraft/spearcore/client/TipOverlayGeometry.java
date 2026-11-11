@@ -52,6 +52,17 @@ public final class TipOverlayGeometry {
     }
 
     /**
+     * 把 0..1 的贴图比例换算成 {@code TextureAtlasSprite#getU/getV} 要的 0..16 texel 坐标。
+     *
+     * <p>坑：{@code TextureAtlasSprite#getU(double)} 内部会再除以 16，所以传 0..1 只会采样到
+     * 贴图左上角不到 1/16 的一条边——枪尖内容在透明外边之外，整层叠加会「看不见」（实机踩过：
+     * 物品栏和手上只剩一根棍子）。所有写给 sprite 的 uv 都必须先过这里。</p>
+     */
+    public static float texel(float normalized) {
+        return normalized * 16.0F;
+    }
+
+    /**
      * 手持层 u：显示坐标 y 越大 → u 越大（原图右侧）。逆时针转 90° 后原图右上角（u=1,v=0）
      * 落在显示区左上角，所以矛尖（原图右上）指向左上，和本模组手持贴图的矛头方向一致。
      *
