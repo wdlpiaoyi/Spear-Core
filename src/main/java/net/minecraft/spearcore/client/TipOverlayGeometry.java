@@ -34,7 +34,21 @@ public final class TipOverlayGeometry {
     public static final float ICON_MIN_Y = 0.0F;
     public static final float ICON_MAX_Y = 1.0F;
 
+    /**
+     * 挂上枪尖后要藏掉的原矛头图层。
+     *
+     * <p>本模组的矛模型是 {@code layer0 = tetra_spear_handle*}、{@code layer1 = tetra_spear_head*}，
+     * 而 {@code ItemModelGenerator} 把图层序号直接当 tint index，所以「矛头」就是 tint 1。
+     * 枪尖图标是斜箭头、四角透明，不藏原矛头会露出灰边（实机反馈过）。</p>
+     */
+    public static final int REPLACED_TINT_INDEX = 1;
+
     private TipOverlayGeometry() {
+    }
+
+    /** 这个 tint index 的四边形是否被枪尖替换（而不是叠在上面）。 */
+    public static boolean replacesLayer(int tintIndex) {
+        return tintIndex == REPLACED_TINT_INDEX;
     }
 
     /**

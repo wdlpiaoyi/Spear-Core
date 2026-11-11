@@ -76,15 +76,43 @@ public final class TipOverlayModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand) {
-        List<BakedQuad> base = originalModel.getQuads(state, side, rand);
+        List<BakedQuad> base = hideReplacedLayer(originalModel.getQuads(state, side, rand));
         return append(base, side);
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand,
                                     ModelData data, @Nullable RenderType renderType) {
-        List<BakedQuad> base = originalModel.getQuads(state, side, rand, data, renderType);
+        List<BakedQuad> base = hideReplacedLayer(originalModel.getQuads(state, side, rand, data, renderType));
         return append(base, side);
+    }
+
+    /**
+     * 盖住枪尖之前先藏掉原矛头那一层。
+     *
+     * <p>第三方枪尖只是「往剑刃贴图上叠一张图标」，图标本身是斜着的箭头形状、四个角是透明的，
+     * 直接叠上去会露出原矛头的灰边（实机反馈「漏了几个像素」）。所以只要挂了叠加层，就把
+     * tint 1（模型 layer1 = 矛头贴图）的四边形全部去掉，杆（tint 0）保留；
+     * 每个方向都要过滤，否则矛头的侧边四边形会从别的渲染趟漏出来。</p>
+     */
+    private static List<BakedQuad> hideReplacedLayer(List<BakedQuad> base) {
+        boolean replace = false;
+        for (BakedQuad quad : base) {
+            if (TipOverlayGeometry.replacesLayer(quad.getTintIndex())) {
+                replace = true;
+                break;
+            }
+        }
+        if (!replace) {
+            return base;
+        }
+        List<BakedQuad> filtered = new ArrayList<>(base.size());
+        for (BakedQuad quad : base) {
+            if (!TipOverlayGeometry.replacesLayer(quad.getTintIndex())) {
+                filtered.add(quad);
+            }
+        }
+        return filtered;
     }
 
     /**

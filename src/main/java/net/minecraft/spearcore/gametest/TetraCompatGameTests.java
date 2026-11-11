@@ -1155,6 +1155,11 @@ public final class TetraCompatGameTests {
                 "图标叠加层正面必须原样取样");
         helper.assertTrue(Math.abs(TipOverlayGeometry.iconU(0.25F, false) - 0.75F) < 1.0E-6F,
                 "图标叠加层背面必须水平镜像");
+        // 枪尖图标是斜箭头、四角透明：必须把原矛头那一层（layer1 / tint 1）藏掉，否则会露灰边。
+        helper.assertTrue(TipOverlayGeometry.replacesLayer(1),
+                "枪尖叠加层必须藏掉 tint 1（模型 layer1 = 矛头贴图）");
+        helper.assertTrue(!TipOverlayGeometry.replacesLayer(0),
+                "杆（模型 layer0 / tint 0）必须保留");
         helper.succeed();
     }
 
