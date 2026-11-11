@@ -27,7 +27,9 @@ public class LivingEntitySlashSwingMixin {
             require = 0)
     private int spearcore$fasterSlashSwing(LivingEntity entity) {
         int duration = ((LivingEntitySwingAccess) entity).spearcore$swingDuration();
-        if (entity instanceof Player player) {
+        // updateSwingTime 每 tick 都跑（没挥动时也会走），而 swingingArm 可以是 null；
+        // 直接 getItemInHand(null) 会抛 Invalid hand null 把玩家 tick 崩掉（实机踩过）。
+        if (entity instanceof Player player && player.swingingArm != null) {
             SpearLike spear = SpearLikeSupport.of(player.getItemInHand(player.swingingArm));
             if (spear != null && spear.slashing()) {
                 return Math.max(2, duration / 2);
