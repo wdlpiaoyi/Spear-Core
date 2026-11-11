@@ -3,6 +3,7 @@ package net.minecraft.spearcore.event;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ShieldItem;
@@ -15,10 +16,10 @@ import net.minecraftforge.fml.common.Mod;
  *
  * <p>两种模式：</p>
  * <ul>
- *   <li>{@code BEDROCK}：潜行即自动举盾（原版基岩版的盾牌机制，不需要右键）。松手没有意义，
- *       所以只由本类负责收盾；蹲下时如果正在蓄力，会先收矛再举盾（基岩版蹲下会被盾牌占用）。</li>
- *   <li>{@code MODDED}：举盾由右键触发（{@link SpearCombat#tryStartCharging} 把右键让给副手盾），
- *       这里只负责「起身收盾」——玩家站起来而没松右键时，原版不会自己收盾。</li>
+ *   <li>{@code BEDROCK}：潜行即自动举盾（原版基岩版的盾牌机制，不需要右键）。
+ *       蹲下时如果正在蓄力，会先收矛再举盾（基岩版蹲下会被盾牌占用）。</li>
+ *   <li>{@code MODDED}：举盾由右键触发（{@link SpearCombat#tryStartCharging} 把右键让给副手盾）；
+ *       这里负责「蓄力中蹲下收矛」和「起身收盾」——玩家站起来而没松右键时，原版不会自己收盾。</li>
  * </ul>
  *
  * <p>只在服务端执行：{@code LivingEntity#startUsingItem/stopUsingItem} 会写 using-item 的实体数据，
@@ -43,16 +44,22 @@ public final class SpearShieldStanceHandler {
         boolean usingOffhandShield = player.isUsingItem()
                 && player.getUsedItemHand() == InteractionHand.OFF_HAND
                 && player.getUseItem().getItem() instanceof ShieldItem;
+        boolean usingMainHandSpear = player.isUsingItem()
+                && player.getUsedItemHand() == InteractionHand.MAIN_HAND
+                && SpearLikeSupport.of(player.getUseItem()) != null;
+
+        // 蹲下 + 副手盾：即使正在蓄力也先把矛收回来
+        // （BEDROCK 会在下面立刻自动举盾；MODDED 等玩家按右键，没按就只是把矛放下）。
+        if (SpearRules.shieldCoWield() != SpearRules.ShieldCoWield.JAVA
+                && sneaking && mainHandSpear && offhandShield && usingMainHandSpear) {
+            player.stopUsingItem();
+        }
 
         if (mainHandSpear && SpearCombat.autoRaisesOffhandShield(sneaking, offhandShield)) {
-            // BEDROCK：潜行即举盾；若正在蓄力则先收矛，别和盾牌抢 using 状态。
+            // BEDROCK：潜行即举盾。
             if (!usingOffhandShield) {
                 if (player.isUsingItem()) {
-                    if (player.getUsedItemHand() != InteractionHand.MAIN_HAND
-                            || SpearLikeSupport.of(player.getUseItem()) == null) {
-                        return; // 正在吃/用别的东西，不抢
-                    }
-                    player.stopUsingItem();
+                    return; // 正在吃/用别的东西，不抢 using 状态
                 }
                 player.startUsingItem(InteractionHand.OFF_HAND);
             }

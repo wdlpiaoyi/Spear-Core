@@ -40,6 +40,10 @@ public abstract class ConfigSchematicSpearMixin {
             return;
         }
         try {
+            if (spearcore$allowsNativeSpearHone((ConfigSchematic) (Object) this, slot, stack)) {
+                cir.setReturnValue(true);
+                return;
+            }
             if (spearcore$isForbiddenGuardSchematic(stack)) {
                 cir.setReturnValue(false);
                 return;
@@ -63,6 +67,50 @@ public abstract class ConfigSchematicSpearMixin {
             }
         } catch (Throwable ignored) {
             // 兼容层失败时退回 Tetra 原判定。
+        }
+    }
+
+    /**
+     * Tetra 自带的打磨配方里，允许直接打磨矛的条目。
+     *
+     * <p>目前只放行 {@code single/handle/hone_speed_*}（改进 {@code handle_hone/speed}）到矛杆：
+     * 本模组以前自造过一份同名同改进的配方，工作台里会出现两条一样的「打磨：速度」，
+     * 现在删掉自造那份、直接复用 Tetra 的。矛头打磨（伤害/耐久/速度）、矛杆耐久和稳定
+     * 仍用本模组自己的配方（Tetra 没有对应的可复用项，或改进 key 不同）。</p>
+     */
+    private static final java.util.Set<String> NATIVE_SPEAR_HONES = java.util.Set.of("handle_hone/speed");
+
+    private boolean spearcore$allowsNativeSpearHone(ConfigSchematic schematic, String slot, ItemStack stack) {
+        try {
+            if (stack == null || stack.isEmpty()
+                    || !(stack.getItem() instanceof DynamicModularItem)
+                    || !TetraSpearProfile.isModularSpearArchetype(DynamicModularItem.getArchetypeKey(stack))) {
+                return false;
+            }
+            SchematicDefinition definition = spearcore$definition(schematic);
+            if (definition == null || !definition.hone
+                    || definition.slots == null || definition.outcomes == null
+                    || definition.outcomes.length == 0) {
+                return false;
+            }
+            String targetRole = TetraModuleGateMapping.roleOfSlot(slot);
+            if (!"handle".equals(targetRole) || !slot.startsWith("spear/")) {
+                return false;
+            }
+            for (OutcomeDefinition outcome : definition.outcomes) {
+                if (outcome == null || outcome.moduleKey != null || outcome.improvements == null
+                        || outcome.improvements.isEmpty()) {
+                    return false;
+                }
+                for (String improvement : outcome.improvements.keySet()) {
+                    if (!NATIVE_SPEAR_HONES.contains(improvement)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 

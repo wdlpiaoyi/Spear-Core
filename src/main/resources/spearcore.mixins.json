@@ -20,7 +20,8 @@
     "ItemInHandLayerMixin",
     "HumanoidModelMixin",
     "AbstractZombieModelMixin",
-    "LivingEntitySpearClientMixin"
+    "LivingEntitySpearClientMixin",
+    "MultiPlayerGameModeSpearMixin"
   ],
   "injectors": {
     "defaultRequire": 1

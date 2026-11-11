@@ -501,10 +501,12 @@ public final class TetraCompatGameTests {
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearHoneSchematicsAreDataDefined(GameTestHelper helper) {
-        // 打磨配方：Tetra 的 hone 面板只列 hone=true 且 slots 命中当前物品的 schematic，
-        // 所以矛头（spear/head）与矛杆（spear/handle）必须各自自带一套，不能指望 Tetra 的那份还会出现。
+        // 打磨配方：Tetra 的 hone 面板按物品列 hone=true 的 schematic，
+        // 矛头（spear/head）与矛杆（spear/handle）必须各自有可用的打磨线。
         // 改进 key 与翻译都复用 Tetra 自带的（矛头：spearhead_hone/damage、head_hone/durability、
-        // head_hone/speed；矛杆：handle_hone/speed），对应目录必须写在模块的 improvements 里。
+        // head_hone/speed；矛杆：handle_hone/speed、handle_hone/durability）。
+        // **矛杆速度不要再自造**：Tetra 自带 single/handle/hone_speed_*（同一改进 key），
+        // 自造一份会让工作台出现两条「打磨：速度」；现在由 ConfigSchematicSpearMixin 放行 Tetra 那条。
         // requirement 里**不能**出现 tetra:module：那个需求比对的是模块 key（不是槽位），
         // 换成 spear/shuo_head / spear/three_point_blade 之后整条打磨线会静默消失（3.4.0 修过的坑）。
         String[][] hones = {
@@ -512,10 +514,11 @@ public final class TetraCompatGameTests {
                 {"spear/head", "spearhead_hone/damage", "head/hone_damage_", "sword/shared_blade/hone_damage_", "0"},
                 {"spear/head", "head_hone/durability", "head/hone_durability_", "double/shared_head/hone_durability_", "0"},
                 {"spear/head", "head_hone/speed", "head/hone_speed_", "double/shared_head/hone_speed_", "0"},
-                {"spear/handle", "handle_hone/speed", "handle/hone_speed_", "single/handle/hone_speed_", "0"},
                 {"spear/handle", "handle_hone/durability", "handle/hone_durability_", "double/shared_head/hone_durability_", "0"},
                 {"spear/handle", "spear_hone/stable", "handle/hone_stable_", "", "1"},
         };
+        helper.assertTrue(!spearcore$assetExists("data/tetra/schematics/spear/handle/hone_speed_1.json"),
+                "矛杆速度打磨必须复用 Tetra 的 single/handle/hone_speed_*，不要再自造一份（会重复）");
         for (String[] hone : hones) {
             String slot = hone[0];
             String improvementKey = hone[1];
@@ -1559,8 +1562,8 @@ public final class TetraCompatGameTests {
         helper.assertTrue(primary != null && primary.has("generic.attack_damage"),
                 "枪纂必须通过 extract.primaryAttributes 提供随材料变化的攻击力");
         double perPrimary = primary.get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.1D) < 1.0E-4D,
-                "木制（primary=3）枪纂攻击力应为 +0.1，实际: " + (perPrimary * 3.0D));
+        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.2D) < 1.0E-3D,
+                "木制（primary=3）枪纂攻击力应为 +0.2，实际: " + (perPrimary * 3.0D));
         helper.succeed();
     }
 

@@ -32,7 +32,7 @@
                     }
                 ],
                 "primaryAttributes": {
-                    "generic.attack_damage": 0.0333333
+                    "generic.attack_damage": 0.0666667
                 }
             }
         }

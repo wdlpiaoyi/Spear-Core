@@ -230,6 +230,25 @@ public final class SpearCombat {
     }
 
     /**
+     * 矛盾共持 {@code BEDROCK} 档：潜行自动举盾时，客户端不要原版「没按右键就松手」那套把盾放下。
+     *
+     * <p>自动举盾只在服务端 {@code startUsingItem}，客户端没按右键；{@code Minecraft#handleKeybinds}
+     * 每 tick 都会对「正在使用物品但右键没按住」的状态调用 {@code releaseUsingItem}，
+     * 于是盾牌举起又放下、一闪一闪。客户端 mixin 用这里拦掉 release。</p>
+     */
+    public static boolean shouldKeepAutoRaisedShield(Player player) {
+        if (player == null || SpearRules.shieldCoWield() != SpearRules.ShieldCoWield.BEDROCK) {
+            return false;
+        }
+        if (!player.isShiftKeyDown() || SpearLikeSupport.of(player.getMainHandItem()) == null
+                || !(player.getOffhandItem().getItem() instanceof ShieldItem)) {
+            return false;
+        }
+        return player.isUsingItem() && player.getUsedItemHand() == InteractionHand.OFF_HAND
+                && player.getUseItem().getItem() instanceof ShieldItem;
+    }
+
+    /**
      * 矛盾共持：起身收盾（{@code BEDROCK} / {@code MODDED} 都适用）。
      *
      * <p>玩家用副手盾格挡时直接站起来（不再潜行），原版不会自动收盾；这里判定为应当中断，
