@@ -501,24 +501,23 @@ public final class TetraCompatGameTests {
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void modularSpearHoneSchematicsAreDataDefined(GameTestHelper helper) {
-        // 打磨配方：Tetra 的 hone 面板按物品列 hone=true 的 schematic，
-        // 矛头（spear/head）与矛杆（spear/handle）必须各自有可用的打磨线。
-        // 改进 key 与翻译都复用 Tetra 自带的（矛头：spearhead_hone/damage、head_hone/durability、
-        // head_hone/speed；矛杆：handle_hone/speed、handle_hone/durability）。
-        // **矛杆速度不要再自造**：Tetra 自带 single/handle/hone_speed_*（同一改进 key），
-        // 自造一份会让工作台出现两条「打磨：速度」；现在由 ConfigSchematicSpearMixin 放行 Tetra 那条。
-        // requirement 里**不能**出现 tetra:module：那个需求比对的是模块 key（不是槽位），
-        // 换成 spear/shuo_head / spear/three_point_blade 之后整条打磨线会静默消失（3.4.0 修过的坑）。
+        // 打磨配方：**除尖锐与稳定外，一律复用 Tetra 自带的 hone 配方**
+        // （剑刃伤害 sword/shared_blade、头部耐久/速度 double/shared_head、杆速度 single/handle），
+        // 由 ConfigSchematicSpearMixin 的 NATIVE_SPEAR_HONES 按改进 key → 槽位角色放行；
+        // 本模组只保留 Tetra 没有对应项的两条：尖锐（矛头）与稳定（复合矛杆 3/3）。
         String[][] hones = {
                 // 槽位, 改进 key, 文件名前缀, localizationKey 前缀, 是否允许模块 gate（稳定线挂在 3/3 加固等级上）
-                {"spear/head", "spearhead_hone/damage", "head/hone_damage_", "sword/shared_blade/hone_damage_", "0"},
-                {"spear/head", "head_hone/durability", "head/hone_durability_", "double/shared_head/hone_durability_", "0"},
-                {"spear/head", "head_hone/speed", "head/hone_speed_", "double/shared_head/hone_speed_", "0"},
-                {"spear/handle", "handle_hone/durability", "handle/hone_durability_", "double/shared_head/hone_durability_", "0"},
                 {"spear/handle", "spear_hone/stable", "handle/hone_stable_", "", "1"},
         };
-        helper.assertTrue(!spearcore$assetExists("data/tetra/schematics/spear/handle/hone_speed_1.json"),
-                "矛杆速度打磨必须复用 Tetra 的 single/handle/hone_speed_*，不要再自造一份（会重复）");
+        for (String stale : new String[]{
+                "data/tetra/schematics/spear/head/hone_damage_1.json",
+                "data/tetra/schematics/spear/head/hone_durability_1.json",
+                "data/tetra/schematics/spear/head/hone_speed_1.json",
+                "data/tetra/schematics/spear/handle/hone_durability_1.json",
+                "data/tetra/schematics/spear/handle/hone_speed_1.json"}) {
+            helper.assertTrue(!spearcore$assetExists(stale),
+                    "打磨必须复用 Tetra 自带的对应配方，不要再自造（会重复）: " + stale);
+        }
         for (String[] hone : hones) {
             String slot = hone[0];
             String improvementKey = hone[1];
@@ -595,7 +594,9 @@ public final class TetraCompatGameTests {
         helper.assertTrue(headAccepted.contains("tetra:single/spearhead/"),
                 "矛头必须接受 tetra:single/spearhead/ 下的改进（含 spearhead_hone/damage）");
         helper.assertTrue(headAccepted.contains("tetra:single/shared_head/"),
-                "矛头必须接受 tetra:single/shared_head/ 下的改进（含 head_hone/durability、head_hone/speed）");
+                "矛头必须接受 tetra:single/shared_head/ 下的改进（含 Tetra 的 head_hone/durability、head_hone/speed）");
+        helper.assertTrue(headAccepted.contains("tetra:sword/"),
+                "矛头必须接受 tetra:sword/ 下的改进（复用 Tetra 的 blade_hone/damage 打磨）");
         JsonElement handleModuleRoot = spearcore$readJson(helper, "tetra", "modules/spear/handle.json");
         if (handleModuleRoot == null) {
             return;
@@ -616,7 +617,8 @@ public final class TetraCompatGameTests {
         JsonObject sharp = sharpRoot.getAsJsonObject();
         helper.assertTrue(sharp.has("hone") && sharp.get("hone").getAsBoolean(), "尖锐必须是 hone=true");
         String sharpRequirement = sharp.get("requirement").toString();
-        for (String key : new String[]{"spearhead_hone/damage", "head_hone/durability", "head_hone/speed"}) {
+        for (String key : new String[]{"spearhead_hone/damage", "blade_hone/damage",
+                "head_hone/durability", "head_hone/speed"}) {
             helper.assertTrue(sharpRequirement.contains(key),
                     "尖锐必须由「" + key + " 五级」解锁，实际 requirement=" + sharpRequirement);
         }
@@ -1562,8 +1564,15 @@ public final class TetraCompatGameTests {
         helper.assertTrue(primary != null && primary.has("generic.attack_damage"),
                 "枪纂必须通过 extract.primaryAttributes 提供随材料变化的攻击力");
         double perPrimary = primary.get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.2D) < 1.0E-3D,
-                "木制（primary=3）枪纂攻击力应为 +0.2，实际: " + (perPrimary * 3.0D));
+        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.3D) < 1.0E-3D,
+                "木制（primary=3）枪纂攻击力应为 +0.3，实际: " + (perPrimary * 3.0D));
+        boolean gemAllowed = false;
+        for (JsonElement element : variant.getAsJsonArray("materials")) {
+            if ("tetra:gem/".equals(element.getAsString())) {
+                gemAllowed = true;
+            }
+        }
+        helper.assertTrue(gemAllowed, "枪纂必须允许宝石（tetra:gem/）做材料");
         helper.succeed();
     }
 

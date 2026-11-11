@@ -47,10 +47,15 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> {
         // 攻击动画 — 手臂
         float attackAnim = entity.attackAnim;
         if (attackAnim > 0.0F && isSpearInHand(entity, entity.swingingArm)) {
-            HumanoidArm attackArm = entity.swingingArm == InteractionHand.MAIN_HAND
-                    ? mainArm : mainArm.getOpposite();
-            ModelPart arm = getArm((HumanoidModel<T>) (Object) this, attackArm);
-            SpearAnimations.thirdPersonAttackHand((HumanoidModel<?>) (Object) this, arm, entity);
+            SpearLike swingingSpear = SpearLikeSupport.of(entity.getItemInHand(entity.swingingArm));
+            if (swingingSpear == null || !swingingSpear.slashing()) {
+                HumanoidArm attackArm = entity.swingingArm == InteractionHand.MAIN_HAND
+                        ? mainArm : mainArm.getOpposite();
+                ModelPart arm = getArm((HumanoidModel<T>) (Object) this, attackArm);
+                SpearAnimations.thirdPersonAttackHand((HumanoidModel<?>) (Object) this, arm, entity);
+            }
+            // 槊 / 三尖两刃刀左键是原版剑式挥砍：手臂保留原版 attackAnim 挥手，
+            // 不再套长矛前刺（前刺的回程是一条慢速直线，和原版「挥出快、收回低」不一致）。
         }
 
         // 蓄力动画 — 手臂

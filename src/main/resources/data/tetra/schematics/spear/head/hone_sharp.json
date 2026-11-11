@@ -32,6 +32,13 @@
                     },
                     {
                         "type": "tetra:improvement",
+                        "improvement": "blade_hone/damage",
+                        "level": {
+                            "min": 5
+                        }
+                    },
+                    {
+                        "type": "tetra:improvement",
                         "improvement": "head_hone/durability",
                         "level": {
                             "min": 5

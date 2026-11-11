@@ -48,11 +48,14 @@ public final class SpearShieldStanceHandler {
                 && player.getUsedItemHand() == InteractionHand.MAIN_HAND
                 && SpearLikeSupport.of(player.getUseItem()) != null;
 
-        // 蹲下 + 副手盾：即使正在蓄力也先把矛收回来
-        // （BEDROCK 会在下面立刻自动举盾；MODDED 等玩家按右键，没按就只是把矛放下）。
+        // 蹲下 + 副手盾：即使正在蓄力也先把矛收回来。
+        // 这里必须 return：同 tick 里「收矛 + 举盾」会把 using-item 实体数据压成一次更新，
+        // 客户端 useItem 仍停在矛上，第一/第三人称会继续显示举矛（实机反馈）。
+        // 下一 tick 再举盾，客户端才能先收到「收矛」再收到「举盾」。
         if (SpearRules.shieldCoWield() != SpearRules.ShieldCoWield.JAVA
                 && sneaking && mainHandSpear && offhandShield && usingMainHandSpear) {
             player.stopUsingItem();
+            return;
         }
 
         if (mainHandSpear && SpearCombat.autoRaisesOffhandShield(sneaking, offhandShield)) {

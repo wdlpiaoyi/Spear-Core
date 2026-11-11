@@ -71,14 +71,17 @@ public abstract class ConfigSchematicSpearMixin {
     }
 
     /**
-     * Tetra 自带的打磨配方里，允许直接打磨矛的条目。
+     * Tetra 自带的打磨配方里，允许直接打磨矛的条目（改进 key → 矛槽位角色）。
      *
-     * <p>目前只放行 {@code single/handle/hone_speed_*}（改进 {@code handle_hone/speed}）到矛杆：
-     * 本模组以前自造过一份同名同改进的配方，工作台里会出现两条一样的「打磨：速度」，
-     * 现在删掉自造那份、直接复用 Tetra 的。矛头打磨（伤害/耐久/速度）、矛杆耐久和稳定
-     * 仍用本模组自己的配方（Tetra 没有对应的可复用项，或改进 key 不同）。</p>
+     * <p>这些改进在 Tetra 里都有现成的 hone 配方（{@code sword/shared_blade}、{@code double/shared_head}、
+     * {@code single/handle}），本模组以前自造过同名同改进的配方，工作台里会出现重复的「打磨：X」；
+     * 现在删掉自造那份、直接复用 Tetra 的，只保留 Tetra 没有对应项的尖锐与稳定。</p>
      */
-    private static final java.util.Set<String> NATIVE_SPEAR_HONES = java.util.Set.of("handle_hone/speed");
+    private static final java.util.Map<String, String> NATIVE_SPEAR_HONES = java.util.Map.of(
+            "head_hone/durability", "head",
+            "head_hone/speed", "head",
+            "blade_hone/damage", "head",
+            "handle_hone/speed", "handle");
 
     private boolean spearcore$allowsNativeSpearHone(ConfigSchematic schematic, String slot, ItemStack stack) {
         try {
@@ -94,7 +97,7 @@ public abstract class ConfigSchematicSpearMixin {
                 return false;
             }
             String targetRole = TetraModuleGateMapping.roleOfSlot(slot);
-            if (!"handle".equals(targetRole) || !slot.startsWith("spear/")) {
+            if (targetRole == null || !slot.startsWith("spear/")) {
                 return false;
             }
             for (OutcomeDefinition outcome : definition.outcomes) {
@@ -103,7 +106,7 @@ public abstract class ConfigSchematicSpearMixin {
                     return false;
                 }
                 for (String improvement : outcome.improvements.keySet()) {
-                    if (!NATIVE_SPEAR_HONES.contains(improvement)) {
+                    if (!targetRole.equals(NATIVE_SPEAR_HONES.get(improvement))) {
                         return false;
                     }
                 }

@@ -9,7 +9,8 @@
                 "tetra:wood/",
                 "tetra:bone/",
                 "tetra:stone/",
-                "tetra:metal/"
+                "tetra:metal/",
+                "tetra:gem/"
             ],
             "key": "spear_butt/",
             "durability": 15,
@@ -32,7 +33,7 @@
                     }
                 ],
                 "primaryAttributes": {
-                    "generic.attack_damage": 0.0666667
+                    "generic.attack_damage": 0.1
                 }
             }
         }

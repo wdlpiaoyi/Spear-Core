@@ -12,7 +12,7 @@
     },
     "outcomes": [
         {
-            "materials": [ "tetra:wood/", "tetra:bone/", "tetra:stone/", "tetra:metal/" ],
+            "materials": [ "tetra:wood/", "tetra:bone/", "tetra:stone/", "tetra:metal/", "tetra:gem/" ],
             "moduleKey": "spear/butt",
             "moduleVariant": "spear_butt/"
         }
