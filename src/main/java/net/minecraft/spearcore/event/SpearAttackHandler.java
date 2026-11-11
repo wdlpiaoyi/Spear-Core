@@ -32,6 +32,11 @@ public class SpearAttackHandler {
         // 不加自定义横扫——横扫若按攻击力全额结算，会绕开原版的蓄力/冷却缩放，
         // 0 蓄力也能打出很高伤害（3.4.0 实机踩过）。
         if (spear.slashing()) {
+            // 槊/刃左键必须是满蓄力，非满蓄力直接取消。
+            if (player.getAttackStrengthScale(0.5F) < 0.99F) {
+                event.setCanceled(true);
+                return;
+            }
             // 槊/刃也保留和普通矛一样的近距限制：贴脸时不触发原版攻击。
             if (player.distanceToSqr(event.getTarget()) < Math.pow(spear.effectiveMinRange(player), 2.0D)) {
                 event.setCanceled(true);

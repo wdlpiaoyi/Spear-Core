@@ -66,6 +66,9 @@ public final class SpearCombat {
     /** 每次蓄力只补一次虚拟攻击；起手时置位，第一次命中后消费掉。 */
     private static final WeakHashMap<LivingEntity, Boolean> VIRTUAL_PENDING = new WeakHashMap<>();
 
+    /** 同一 tick 只允许一次横扫，避免一次攻击命中多个目标时叠出多道剑气。 */
+    private static final WeakHashMap<Player, Long> LAST_SWEEP_TICK = new WeakHashMap<>();
+
     private static boolean virtualAttackFailureLogged;
 
     private SpearCombat() {
@@ -183,10 +186,12 @@ public final class SpearCombat {
                     SpearItem.SlotUtil.slotForHand(user, user.getUsedItemHand()),
                     target, damage, canDamage, canKnockback, canDismount, user,
                     SpearDamageEvent.AttackType.CHARGE, spear);
+            // 无论这次 hurt 是否真正落地都记下目标：目标处于受伤无敌帧时 applied=false，
+            // 如果只在 applied 时记录，下一 tick 无敌帧一过就会再打一次，表现为顶住方块也能持续输出。
+            if (user instanceof SpearCooldownAccessor accessor) {
+                accessor.RememberStabbedEntity(living);
+            }
             if (applied) {
-                if (user instanceof SpearCooldownAccessor accessor) {
-                    accessor.RememberStabbedEntity(living);
-                }
                 if (spear.style() == SpearStyle.MODULAR_3D) {
                     SpearLikeSupport.tetraOnHit(stack, user, living);
                 }
@@ -408,6 +413,12 @@ public final class SpearCombat {
                 || !player.onGround() || player.isSprinting()) {
             return;
         }
+        long now = player.level().getGameTime();
+        Long last = LAST_SWEEP_TICK.get(player);
+        if (last != null && last == now) {
+            return;
+        }
+        LAST_SWEEP_TICK.put(player, now);
         // 剑气以命中实体为中心，半径随长矛攻击距离略微放大；原版剑是 1.0，长矛 4.5 射程约 2.0。
         float radius = Mth.clamp((float) spear.effectiveMaxRange(player) * 0.45F, 1.5F, 3.0F);
         float ratio = 1.0F + EnchantmentHelper.getSweepingDamageRatio(player);
@@ -427,15 +438,10 @@ public final class SpearCombat {
             living.hurt(player.damageSources().playerAttack(player), ratio);
         }
         if (player.level() instanceof ServerLevel server) {
-            // 粒子放在命中实体周围，而不是角色面前；多方向各补一枚，肉眼看起来就是一圈剑气。
-            for (int i = 0; i < 6; i++) {
-                double angle = Math.PI * 2.0D * i / 6.0D;
-                server.sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
-                        target.getX() + Math.cos(angle) * radius * 0.65D,
-                        target.getY(0.5D),
-                        target.getZ() + Math.sin(angle) * radius * 0.65D,
-                        1, 0.0D, 0.0D, 0.0D, 0.0D);
-            }
+            // 只放一枚剑气，位置在命中实体处；范围由伤害判定半径体现，避免一次横扫出现多道剑气。
+            server.sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
+                    target.getX(), target.getY(0.5D), target.getZ(),
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
         player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
                 net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F, 1.0F);

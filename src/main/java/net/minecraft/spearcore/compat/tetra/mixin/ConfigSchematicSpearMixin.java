@@ -24,6 +24,10 @@ public abstract class ConfigSchematicSpearMixin {
 
     @Inject(method = "isRelevant", at = @At("HEAD"), cancellable = true, remap = false)
     private void spearcore$spearSchematicIsRelevant(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        if (spearcore$isForbiddenGuardSchematic(stack)) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (spearcore$isThirdPartySpearImprovement(stack)) {
             cir.setReturnValue(true);
         }
@@ -32,10 +36,14 @@ public abstract class ConfigSchematicSpearMixin {
     @Inject(method = "isApplicableForSlot", at = @At("HEAD"), cancellable = true, remap = false)
     private void spearcore$spearSchematicAppliesToSlot(String slot, ItemStack stack,
                                                        CallbackInfoReturnable<Boolean> cir) {
-        if (slot == null || !slot.startsWith("spear/")) {
+        if (slot == null || (!slot.startsWith("spear/") && !"sword/guard".equals(slot))) {
             return;
         }
         try {
+            if (spearcore$isForbiddenGuardSchematic(stack)) {
+                cir.setReturnValue(false);
+                return;
+            }
             if (!spearcore$isThirdPartySpearImprovement(stack)) {
                 return;
             }
@@ -56,6 +64,45 @@ public abstract class ConfigSchematicSpearMixin {
         } catch (Throwable ignored) {
             // 兼容层失败时退回 Tetra 原判定。
         }
+    }
+
+    /**
+     * 矛的 sword/guard 槽只允许 Tetra 的 binding / socket；Tetra 剑的 basic_guard、
+     * wide_guard、decorative_guard 等护手模块不应该出现在矛上。
+     */
+    private boolean spearcore$isForbiddenGuardSchematic(ItemStack stack) {
+        try {
+            if (stack == null || stack.isEmpty()
+                    || !(stack.getItem() instanceof DynamicModularItem)
+                    || !TetraSpearProfile.isModularSpearArchetype(DynamicModularItem.getArchetypeKey(stack))) {
+                return false;
+            }
+            SchematicDefinition definition = spearcore$definition((ConfigSchematic) (Object) this);
+            if (definition == null || definition.slots == null || definition.outcomes == null) {
+                return false;
+            }
+            boolean guardSlot = false;
+            for (String slot : definition.slots) {
+                if ("sword/guard".equals(slot)) {
+                    guardSlot = true;
+                    break;
+                }
+            }
+            if (!guardSlot) {
+                return false;
+            }
+            for (OutcomeDefinition outcome : definition.outcomes) {
+                if (outcome == null || outcome.moduleKey == null) {
+                    continue;
+                }
+                if (!"sword/binding".equals(outcome.moduleKey) && !"sword/socket".equals(outcome.moduleKey)) {
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {
+            // 字段不可用时退回原判定。
+        }
+        return false;
     }
 
     private boolean spearcore$isThirdPartySpearImprovement(ItemStack stack) {

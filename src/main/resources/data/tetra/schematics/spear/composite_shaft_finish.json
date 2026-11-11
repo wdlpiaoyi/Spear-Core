@@ -37,5 +37,6 @@
                 "spear_composite/stage": 3
             }
         }
-    ]
+    ],
+    "preview": "always"
 }
