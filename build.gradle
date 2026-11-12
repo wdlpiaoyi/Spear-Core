@@ -145,9 +145,16 @@ tasks.register('stageGameTestStructures', Copy) {
     into 'run/gameteststructures'
 }
 
+// 资源包兼容测试的真实包夹具：放进 run/resourcepacks 供 realPackIsRemapped 使用。
+tasks.register('stageGameTestResourcepacks', Copy) {
+    from 'gameteststructures/resourcepacks'
+    into 'run/resourcepacks'
+    include '*.zip'
+}
+
 // 注意：不能用 tasks.named('runGameTestServer')——ForgeGradle 在 minecraft{} 之后才创建这些 run 任务
 tasks.matching { it.name == 'runGameTestServer' }.configureEach {
-    dependsOn 'stageGameTestStructures'
+    dependsOn 'stageGameTestStructures', 'stageGameTestResourcepacks'
 }
 
 tasks.withType(JavaCompile).configureEach {

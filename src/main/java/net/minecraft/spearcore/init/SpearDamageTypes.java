@@ -43,8 +43,21 @@ public final class SpearDamageTypes {
                     .getHolderOrThrow(DamageTypes.PLAYER_ATTACK);
             return new PlayerSpearDamageSource(playerAttack, attacker);
         }
-        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
-                .getHolderOrThrow(SPEAR), attacker);
+        return new DamageSource(holder(level, SPEAR), attacker);
+    }
+
+    /** 三尖两刃刀的 20% 虚空伤害：直接使用原版 {@code minecraft:out_of_world}。 */
+    public static DamageSource outOfWorld(Level level, Entity attacker) {
+        return new DamageSource(holder(level, DamageTypes.FELL_OUT_OF_WORLD), attacker);
+    }
+
+    /** 三尖两刃刀的 20% 魔法伤害：直接使用原版 {@code minecraft:magic}。 */
+    public static DamageSource magic(Level level, Entity attacker) {
+        return new DamageSource(holder(level, DamageTypes.MAGIC), attacker);
+    }
+
+    private static Holder<DamageType> holder(Level level, ResourceKey<DamageType> key) {
+        return level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(key);
     }
 
     /**
@@ -63,7 +76,11 @@ public final class SpearDamageTypes {
                 return Component.translatable(DEATH_PREFIX, victim.getDisplayName());
             }
             if (attacker instanceof LivingEntity living) {
-                ItemStack weapon = living.getMainHandItem();
+                // 副手蓄力击杀时真正造成伤害的是使用中的矛，不是主手物品。
+                ItemStack weapon = living.getUseItem();
+                if (SpearLikeSupport.of(weapon) == null) {
+                    weapon = living.getMainHandItem();
+                }
                 if (!weapon.isEmpty()) {
                     return Component.translatable(DEATH_PREFIX + ".item", victim.getDisplayName(),
                             attacker.getDisplayName(), weapon.getDisplayName());

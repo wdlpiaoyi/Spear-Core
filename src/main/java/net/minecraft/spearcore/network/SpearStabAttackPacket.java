@@ -14,6 +14,8 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -25,6 +27,9 @@ import java.util.function.Supplier;
 public class SpearStabAttackPacket {
 
     private static final String PROTOCOL_VERSION = "1";
+
+    /** 同一 tick 只接受一个戳刺包；只在服务端线程访问。 */
+    private static final Map<ServerPlayer, Long> LAST_STAB_TICK = new WeakHashMap<>();
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(SpearcoreMod.MODID, "main"),
@@ -54,13 +59,19 @@ public class SpearStabAttackPacket {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (player == null) return;
+            if (player == null || player.hasDisconnected() || player.isChangingDimension()) return;
 
             if (!player.level().getChunkSource().hasChunk(
                     SectionPos.blockToSectionCoord(player.getX()),
                     SectionPos.blockToSectionCoord(player.getZ()))) {
                 return;
             }
+            long gameTime = player.level().getGameTime();
+            Long last = LAST_STAB_TICK.get(player);
+            if (last != null && last == gameTime) {
+                return;
+            }
+            LAST_STAB_TICK.put(player, gameTime);
             ItemStack stack = player.getMainHandItem();
             SpearLike spear = SpearLikeSupport.of(stack);
             if (spear == null || spear.slashing()) {

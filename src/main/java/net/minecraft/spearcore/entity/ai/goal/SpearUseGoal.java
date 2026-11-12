@@ -1,5 +1,6 @@
 package net.minecraft.spearcore.entity.ai.goal;
 
+import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.util.SpearCollision;
 import net.minecraft.world.InteractionHand;
@@ -200,8 +201,9 @@ public class SpearUseGoal<T extends PathfinderMob> extends Goal {
         List<EntityHitResult> hits = SpearCollision.getHitEntitiesAlong(
                 mob,
                 spear,
-                spear.getHitboxMargin(),
-                entity -> mob == entity ? false : entity == target
+                // 预判必须和戳刺结算同一口径：戳刺用 hitboxMargin2；多部件目标按母实体比较。
+                spear.getHitboxMargin2(),
+                entity -> mob == entity ? false : SpearCombat.rootTarget(entity) == target
                         && entity.isAlive()
                         && entity != mob.getVehicle()
                         && !mob.isPassengerOfSameVehicle(entity)

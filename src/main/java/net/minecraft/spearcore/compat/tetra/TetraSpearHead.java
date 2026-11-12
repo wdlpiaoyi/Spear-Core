@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * 模块化长矛的矛头形态。
  *
- * <p>只按矛头槽变体 key 的前缀区分，不读 Tetra 的类型：</p>
+ * <p>优先按矛头槽的模块 key 区分（更可靠），读不到再退回变体 key 前缀；本枚举本身不 import Tetra 类型。</p>
  * <ul>
  *   <li>{@link #PLAIN}：普通矛头（{@code spear_head/}），左键戳刺、右键蓄力；</li>
  *   <li>{@link #SHUO}：槊头（{@code spear_shuo_head/}），左键变成挥砍 + 自带横扫，攻速更慢、伤害更高；</li>

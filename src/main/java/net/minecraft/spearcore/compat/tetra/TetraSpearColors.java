@@ -1,6 +1,5 @@
 package net.minecraft.spearcore.compat.tetra;
 
-import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +27,7 @@ public final class TetraSpearColors {
     public static final String HEAD_SLOT = "spear/head";
     public static final String HANDLE_SLOT = "spear/handle";
 
-    private static final Map<String, Integer> MATERIAL_CACHE = new HashMap<>();
+    private static final Map<String, Integer> MATERIAL_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
     private static boolean loggedFailure;
     private static boolean validatedReflection;
 

@@ -29,7 +29,7 @@ public final class TetraSpearProfile {
      */
     public static final String SPEAR_ARCHETYPE_KEY = "modular_spear";
 
-    private static boolean warningLogged;
+    private static volatile boolean warningLogged;
 
     private TetraSpearProfile() {
     }
@@ -63,5 +63,25 @@ public final class TetraSpearProfile {
      */
     public static boolean isModularSpearArchetype(@Nullable String archetypeKey) {
         return SPEAR_ARCHETYPE_KEY.equals(archetypeKey);
+    }
+
+    /**
+     * 矛头形态：行为、命名、渲染共用。
+     *
+     * <p>先看模块 key、再退回变体前缀；只靠变体前缀在第三方改写 key 时会失效。</p>
+     */
+    public static TetraSpearHead headOf(net.minecraft.world.item.ItemStack stack) {
+        if (stack == null || stack.isEmpty() || !isTetraLoaded()) {
+            return TetraSpearHead.PLAIN;
+        }
+        try {
+            return TetraSpearBridge.head(stack);
+        } catch (Throwable throwable) {
+            if (!warningLogged) {
+                warningLogged = true;
+                SpearcoreMod.LOGGER.warn("[spearcore] 读取 Tetra 矛头形态失败，按普通矛头处理", throwable);
+            }
+            return TetraSpearHead.PLAIN;
+        }
     }
 }

@@ -24,7 +24,7 @@
             ],
             "key": "spear_head/",
             "attributes": {
-                "generic.attack_speed": -0.9
+                "generic.attack_speed": -1.2
             },
             "aspects": {
                 "pointy_weapon": 1,

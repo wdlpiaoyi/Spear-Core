@@ -45,13 +45,16 @@ public class SpearClientExtensions implements IClientItemExtensions {
         int dir = arm == HumanoidArm.RIGHT ? 1 : -1;
 
         // 处理使用物品的情况（如持矛准备攻击）
-        if (player.isUsingItem() && player.getUseItem() == itemInHand) {
+        // 槽位里的 ItemStack 对象可能被 ContainerSetSlot/SetContent 替换；引用比较会静默退回空闲姿势。
+        ItemStack useStack = player.getUseItem();
+        if (player.isUsingItem() && !useStack.isEmpty()
+                && (useStack == itemInHand || ItemStack.isSameItemSameTags(useStack, itemInHand))) {
             // 计算使用物品的持续时间
-            float useTicks = itemInHand.getUseDuration() - (player.getUseItemRemainingTicks() - partialTick + 1.0F);
+            float useTicks = useStack.getUseDuration() - (player.getUseItemRemainingTicks() - partialTick + 1.0F);
             if (useTicks < 0) useTicks = 0;
             // 3D 模型用独立的平滑蓄力曲线 + 蓄力锚点，不再套贴图长矛的分段曲线（会在时间边界跳变）。
             applyItemArmTransform(poseStack, arm, 0.0F);
-            SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, itemInHand);
+            SpearAnimations.firstPersonUse(SpearAnimations.spearHitTicks + partialTick, poseStack, useTicks, arm, useStack);
             return true;
         } else if (swingProcess > 0.0F) {
             if (spear.slashing()) {

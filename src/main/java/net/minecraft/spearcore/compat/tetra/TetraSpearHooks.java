@@ -2,9 +2,7 @@ package net.minecraft.spearcore.compat.tetra;
 
 import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import se.mickelus.tetra.effect.SweepingEffect;
 import se.mickelus.tetra.effect.data.DataEffectsHandler;
 
 /**
@@ -18,19 +16,6 @@ public final class TetraSpearHooks {
     private static boolean loggedFailure;
 
     private TetraSpearHooks() {
-    }
-
-    /**
-     * 挥砍命中后的横扫（自带横扫之刃 III）。
-     *
-     * @param level Tetra 的横扫等级；3 对应原版横扫之刃 III 的伤害/范围
-     */
-    public static void slashSweep(Player player, ItemStack stack, LivingEntity target, int level) {
-        try {
-            SweepingEffect.sweepAttack(stack, player, target, level);
-        } catch (Throwable throwable) {
-            warn(throwable);
-        }
     }
 
     /** 右键起手时触发 Tetra 的 {@code tetra:on_use} 类 item_effects。 */

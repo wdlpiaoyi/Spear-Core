@@ -1,6 +1,8 @@
 package net.minecraft.spearcore.util;
 
 import net.minecraft.spearcore.config.SpearConfig;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.Map;
@@ -36,8 +38,19 @@ public final class SpearRules {
     /** 蓄力判定箱：JAVA = 0.125；MODDED = 本模组原本的 0.25。 */
     public enum ChargeHitboxMargin { JAVA, MODDED }
 
-    /** 蓄力重复命中：JAVA = 每个目标每次蓄力只结算一次；BEDROCK/MODDED = 同目标 10 tick 内只结算一次。 */
-    public enum ChargeRepeatHit { JAVA, BEDROCK }
+    /**
+     * 蓄力重复命中：
+     * JAVA = 每个目标每次蓄力只结算一次；
+     * BEDROCK = 同目标固定 {@code contactCooldownTicks}（当前 10 tick）一次；
+     * MODDED = 按攻击时长缩放，攻速越快重复间隔越短。
+     */
+    public enum ChargeRepeatHit { JAVA, BEDROCK, MODDED }
+
+    /**
+     * 第三方 SpearItem（Avaritia Spear 等）的蓄力重复命中，独立于 {@link ChargeRepeatHit}。
+     * JAVA = 每次蓄力一次；BEDROCK = 固定接触冷却；MODDED = 按实际攻击速度缩放。
+     */
+    public enum ChargeRepeatHitThirdParty { JAVA, BEDROCK, MODDED }
 
     /** 戳刺重复命中：JAVA/BEDROCK 无；MODDED = 同目标 10 tick 内跳过。 */
     public enum JabRepeatHit { JAVA, MODDED }
@@ -172,9 +185,77 @@ public final class SpearRules {
         return read(SpearConfig.CHARGE_REPEAT_HIT, ChargeRepeatHit.JAVA);
     }
 
-    /** 蓄力时"同目标只结算一次"的窗口：JAVA 用整次蓄力，BEDROCK 用 10 tick 接触冷却。 */
+    public static ChargeRepeatHitThirdParty chargeRepeatHitThirdParty() {
+        return read(SpearConfig.CHARGE_REPEAT_HIT_THIRD_PARTY, ChargeRepeatHitThirdParty.JAVA);
+    }
+
+    /**
+     * 蓄力时"同目标只结算一次"的窗口。
+     *
+     * @param speedScaling 是否走本模组内建矛的 {@link ChargeRepeatHit}；false 走第三方独立的
+     *                     {@link ChargeRepeatHitThirdParty}，不会连带改掉 Avaritia 等矛。
+     */
+    public static int chargeRepeatCooldownTicks(LivingEntity user, int contactCooldownTicks,
+                                                float attackDuration, boolean speedScaling) {
+        if (speedScaling) {
+            return switch (chargeRepeatHit()) {
+                case JAVA -> Integer.MAX_VALUE;
+                case BEDROCK -> contactCooldownTicks;
+                case MODDED -> speedScaledChargeRepeatTicks(user, attackDuration);
+            };
+        }
+        return switch (chargeRepeatHitThirdParty()) {
+            case JAVA -> Integer.MAX_VALUE;
+            case BEDROCK -> contactCooldownTicks;
+            case MODDED -> speedScaledChargeRepeatTicks(user, attackDuration);
+        };
+    }
+
+    /** 无持有者上下文时的回退：按武器自身攻击时长估算。 */
+    public static int chargeRepeatCooldownTicks(int contactCooldownTicks, float attackDuration,
+                                                boolean speedScaling) {
+        if (speedScaling) {
+            return switch (chargeRepeatHit()) {
+                case JAVA -> Integer.MAX_VALUE;
+                case BEDROCK -> contactCooldownTicks;
+                case MODDED -> speedScaledChargeRepeatTicks(attackDuration);
+            };
+        }
+        return switch (chargeRepeatHitThirdParty()) {
+            case JAVA -> Integer.MAX_VALUE;
+            case BEDROCK -> contactCooldownTicks;
+            case MODDED -> speedScaledChargeRepeatTicks(attackDuration);
+        };
+    }
+
+    /** 本模组内建矛路径：MODDED 按实际攻速缩放。 */
+    public static int chargeRepeatCooldownTicks(int contactCooldownTicks, float attackDuration) {
+        return chargeRepeatCooldownTicks(contactCooldownTicks, attackDuration, true);
+    }
+
+    /** 第三方 SpearItem 的默认路径：走独立的 chargeRepeatHitThirdParty。 */
     public static int chargeRepeatCooldownTicks(int contactCooldownTicks) {
-        return chargeRepeatHit() == ChargeRepeatHit.JAVA ? Integer.MAX_VALUE : contactCooldownTicks;
+        return chargeRepeatCooldownTicks(contactCooldownTicks, 1.0F, false);
+    }
+
+    /** 按攻击时长换算同目标重复命中间隔：0.6 秒→6 tick、0.95 秒→10 tick、1.3 秒→13 tick。 */
+    public static int speedScaledChargeRepeatTicks(float attackDuration) {
+        return Math.max(1, Math.round(Math.max(0.0F, attackDuration) * 10.0F));
+    }
+
+    /**
+     * 按持有者**实际攻击速度**换算同目标重复命中间隔；包含 haste、装备与其他 ATTACK_SPEED 修饰符。
+     * 实际攻击速度不可用时回退到武器自身 attackDuration。
+     */
+    public static int speedScaledChargeRepeatTicks(LivingEntity user, float fallbackAttackDuration) {
+        if (user != null && user.getAttribute(Attributes.ATTACK_SPEED) != null) {
+            double attackSpeed = user.getAttributeValue(Attributes.ATTACK_SPEED);
+            if (attackSpeed > 0.0D) {
+                // 与旧公式等价：攻击间隔的一半（20 / attacksPerSecond / 2）。
+                return Math.max(1, Math.round(10.0F / (float) attackSpeed));
+            }
+        }
+        return speedScaledChargeRepeatTicks(fallbackAttackDuration);
     }
 
     // ========== 耐久 / 距离 ==========

@@ -26,14 +26,27 @@ public final class TetraSpearRepairDefinitions {
     private TetraSpearRepairDefinitions() {
     }
 
+    /** 数据重载后材料表可能换对象；由 reload 监听器调用。 */
+    public static void clearCache() {
+        CACHE.clear();
+    }
+
     /** 当前变体的维修定义；无法解析材料时返回 {@code null}（等于没有维修项）。 */
     public static RepairDefinition get(String moduleKey, String variantKey) {
         if (moduleKey == null || variantKey == null) {
             return null;
         }
-        Optional<RepairDefinition> cached = CACHE.computeIfAbsent(moduleKey + "|" + variantKey,
-                key -> Optional.ofNullable(build(moduleKey, variantKey)));
-        return cached.orElse(null);
+        String cacheKey = moduleKey + "|" + variantKey;
+        Optional<RepairDefinition> cached = CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached.orElse(null);
+        }
+        // 只缓存成功结果：材料表/数据尚未就绪时 build 返回 null，不能把失败永久钉住。
+        RepairDefinition built = build(moduleKey, variantKey);
+        if (built != null) {
+            CACHE.put(cacheKey, Optional.of(built));
+        }
+        return built;
     }
 
     private static RepairDefinition build(String moduleKey, String variantKey) {

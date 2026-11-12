@@ -75,6 +75,77 @@ public class SpearStats {
                     hitboxMargin2, mobFactor,
                     dealsKnockback, dismounts);
         }
+
+        /** 链式构造器：给 KubeJS / 外部注册用，避免 28 个位置参数错位。 */
+        public static final class Builder {
+            private int durability;
+            private float attackDuration;
+            private float damageMultiplier;
+            private float attackDamageBonus;
+            private int enchantmentValue;
+            private Rarity rarity = Rarity.COMMON;
+            private Ingredient repairIngredient = Ingredient.EMPTY;
+            private boolean fireResistant;
+            private String materialName = "custom";
+            private Supplier<SoundEvent> useSound = SpearSounds.ITEM_SPEAR_USE;
+            private Supplier<SoundEvent> hitSound = SpearSounds.ITEM_SPEAR_HIT;
+            private Supplier<SoundEvent> attackSound = SpearSounds.ITEM_SPEAR_ATTACK;
+            private float swingTimes;
+            private float hitboxMargin = 0.25F;
+            private int contactCooldownTicks = 10;
+            private int delayTicks;
+            private Optional<SpearCondition> dismountConditions = Optional.empty();
+            private Optional<SpearCondition> knockbackConditions = Optional.empty();
+            private Optional<SpearCondition> damageConditions = Optional.empty();
+            private float forwardMovement;
+            private float minRange;
+            private float maxRange;
+            private float minCreativeRange;
+            private float maxCreativeRange;
+            private float hitboxMargin2 = 0.25F;
+            private float mobFactor = 0.5F;
+            private boolean dealsKnockback;
+            private boolean dismounts;
+
+            public Builder durability(int v) { this.durability = v; return this; }
+            public Builder attackDuration(float v) { this.attackDuration = v; return this; }
+            public Builder damageMultiplier(float v) { this.damageMultiplier = v; return this; }
+            public Builder attackDamageBonus(float v) { this.attackDamageBonus = v; return this; }
+            public Builder enchantmentValue(int v) { this.enchantmentValue = v; return this; }
+            public Builder rarity(Rarity v) { this.rarity = v; return this; }
+            public Builder repairIngredient(Ingredient v) { this.repairIngredient = v; return this; }
+            public Builder fireResistant(boolean v) { this.fireResistant = v; return this; }
+            public Builder materialName(String v) { this.materialName = v; return this; }
+            public Builder useSound(Supplier<SoundEvent> v) { this.useSound = v; return this; }
+            public Builder hitSound(Supplier<SoundEvent> v) { this.hitSound = v; return this; }
+            public Builder attackSound(Supplier<SoundEvent> v) { this.attackSound = v; return this; }
+            public Builder swingTimes(float v) { this.swingTimes = v; return this; }
+            public Builder hitboxMargin(float v) { this.hitboxMargin = v; return this; }
+            public Builder contactCooldownTicks(int v) { this.contactCooldownTicks = v; return this; }
+            public Builder delayTicks(int v) { this.delayTicks = v; return this; }
+            public Builder dismountConditions(Optional<SpearCondition> v) { this.dismountConditions = v; return this; }
+            public Builder knockbackConditions(Optional<SpearCondition> v) { this.knockbackConditions = v; return this; }
+            public Builder damageConditions(Optional<SpearCondition> v) { this.damageConditions = v; return this; }
+            public Builder forwardMovement(float v) { this.forwardMovement = v; return this; }
+            public Builder minRange(float v) { this.minRange = v; return this; }
+            public Builder maxRange(float v) { this.maxRange = v; return this; }
+            public Builder minCreativeRange(float v) { this.minCreativeRange = v; return this; }
+            public Builder maxCreativeRange(float v) { this.maxCreativeRange = v; return this; }
+            public Builder hitboxMargin2(float v) { this.hitboxMargin2 = v; return this; }
+            public Builder mobFactor(float v) { this.mobFactor = v; return this; }
+            public Builder dealsKnockback(boolean v) { this.dealsKnockback = v; return this; }
+            public Builder dismounts(boolean v) { this.dismounts = v; return this; }
+
+            public Stats build() {
+                return new Stats(durability, attackDuration, damageMultiplier, attackDamageBonus,
+                        enchantmentValue, rarity, repairIngredient, fireResistant, materialName,
+                        useSound, hitSound, attackSound, swingTimes, hitboxMargin, contactCooldownTicks,
+                        delayTicks, dismountConditions, knockbackConditions, damageConditions,
+                        forwardMovement, minRange, maxRange, minCreativeRange, maxCreativeRange,
+                        hitboxMargin2, mobFactor, dealsKnockback, dismounts);
+            }
+        }
+
     }
 
     // ========== Jerotes 原版风格的简化工厂 ==========

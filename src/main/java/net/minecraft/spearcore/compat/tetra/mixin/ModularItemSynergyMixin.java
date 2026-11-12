@@ -1,9 +1,11 @@
 package net.minecraft.spearcore.compat.tetra.mixin;
 
+import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -42,17 +44,49 @@ public abstract class ModularItemSynergyMixin {
         }
     }
 
-    /** 反射调用 {@code SynergyStore#getOrdered}（mutil 的 DataStore 不是本模组的编译期依赖）。 */
+    /** 反射结果缓存；失败只 warn 一次，避免每次效果聚合都 Class.forName + getMethod。 */
+    @Unique
+    private static Class<?> dataManagerClass;
+    @Unique
+    private static java.lang.reflect.Field instanceField;
+    @Unique
+    private static java.lang.reflect.Field synergyDataField;
+    @Unique
+    private static java.lang.reflect.Method getOrderedMethod;
+    @Unique
+    private static boolean synergyReflectionMissing;
+    @Unique
+    private static boolean synergyReflectionWarning;
+
     private static SynergyData[] getOrderedSynergies() throws ReflectiveOperationException {
-        Class<?> dataManagerClass = Class.forName("se.mickelus.tetra.data.DataManager");
-        Object dataManager = dataManagerClass.getField("instance").get(null);
-        if (dataManager == null) {
+        if (synergyReflectionMissing) {
             return null;
         }
-        Object store = dataManagerClass.getField("synergyData").get(dataManager);
-        if (store == null) {
-            return null;
+        try {
+            if (dataManagerClass == null) {
+                dataManagerClass = Class.forName("se.mickelus.tetra.data.DataManager");
+                instanceField = dataManagerClass.getField("instance");
+                synergyDataField = dataManagerClass.getField("synergyData");
+            }
+            Object dataManager = instanceField.get(null);
+            if (dataManager == null) {
+                return null;
+            }
+            Object store = synergyDataField.get(dataManager);
+            if (store == null) {
+                return null;
+            }
+            if (getOrderedMethod == null) {
+                getOrderedMethod = store.getClass().getMethod("getOrdered", String.class);
+            }
+            return (SynergyData[]) getOrderedMethod.invoke(store, "spear/");
+        } catch (ReflectiveOperationException exception) {
+            synergyReflectionMissing = true;
+            if (!synergyReflectionWarning) {
+                synergyReflectionWarning = true;
+                SpearcoreMod.LOGGER.warn("[spearcore] 读取 Tetra synergyData 失败，模块化长矛将没有协同", exception);
+            }
+            throw exception;
         }
-        return (SynergyData[]) store.getClass().getMethod("getOrdered", String.class).invoke(store, "spear/");
     }
 }

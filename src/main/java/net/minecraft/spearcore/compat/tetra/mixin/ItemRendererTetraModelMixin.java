@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.spearcore.client.TetraSpearModel;
 import net.minecraft.spearcore.client.TipOverlayModel;
-import net.minecraft.spearcore.compat.tetra.TetraSpearColors;
+import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
@@ -47,15 +47,11 @@ public class ItemRendererTetraModelMixin {
         if (spear == null || spear.style() != SpearStyle.MODULAR_3D) {
             return;
         }
-        String headVariant = TetraSpearColors.headVariantKey(stack);
-        BakedModel replacement;
-        if (headVariant != null && headVariant.startsWith("spear_shuo_head/")) {
-            replacement = TetraSpearModel.getShuo();
-        } else if (headVariant != null && headVariant.startsWith("spear_three_point/")) {
-            replacement = TetraSpearModel.getThree();
-        } else {
-            replacement = TetraSpearModel.getDefault();
-        }
+        BakedModel replacement = switch (TetraSpearProfile.headOf(stack)) {
+            case SHUO -> TetraSpearModel.getShuo();
+            case THREE -> TetraSpearModel.getThree();
+            default -> TetraSpearModel.getDefault();
+        };
         if (replacement == null) {
             return;
         }

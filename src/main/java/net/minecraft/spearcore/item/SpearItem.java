@@ -21,8 +21,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -87,11 +85,6 @@ public abstract class SpearItem extends Item implements SpearLike {
 
     protected int getSpearEnchantmentValue() { return 0; }
     protected boolean canRepair(ItemStack stack, ItemStack repairCandidate) { return false; }
-    protected static double getSpearMultiplier(LivingEntity entity,
-                                               net.minecraft.world.entity.ai.attributes.Attribute attribute) {
-        var instance = entity.getAttribute(attribute);
-        return instance != null ? instance.getValue() : 1.0;
-    }
     // ========== getKnownMovement / getMotion（J库 static） ==========
 
     /** 最近一 tick 的位移（服务端用玩家上报的 known movement，其他实体走 delta movement）。 */
@@ -155,10 +148,6 @@ public abstract class SpearItem extends Item implements SpearLike {
     @Override
     public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
         return !player.isCreative();
-    }
-
-    public int computeDamageUseDuration() {
-        return getDelayTicks() + getDamageConditions().map(SpearCondition::maxDurationTicks).orElse(0);
     }
 
     /** 按这个长矛的攻击速度折算出来的使用冷却 tick 数（基岩版戳刺冷却 / 戳刺后摇都用它）。 */

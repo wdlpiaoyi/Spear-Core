@@ -45,10 +45,15 @@ public abstract class ServerGamePacketListenerSpearMixin {
 
     @Inject(method = "handleMovePlayer", at = @At("TAIL"))
     private void spearcore$handleMovePlayerTail(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
+        // 用移动包里的客户端目标坐标，而不是服务器修正后的坐标：
+        // 高速装备/服务器回拉时不会把真实位移吞掉，也没有任何格数上限。
+        if (!packet.hasPosition()) {
+            return;
+        }
         this.spearcore$rememberKnownMovement(new Vec3(
-                this.player.getX() - this.spearcore$movePlayerX,
-                this.player.getY() - this.spearcore$movePlayerY,
-                this.player.getZ() - this.spearcore$movePlayerZ
+                packet.getX(this.spearcore$movePlayerX) - this.spearcore$movePlayerX,
+                packet.getY(this.spearcore$movePlayerY) - this.spearcore$movePlayerY,
+                packet.getZ(this.spearcore$movePlayerZ) - this.spearcore$movePlayerZ
         ));
     }
 
@@ -66,18 +71,17 @@ public abstract class ServerGamePacketListenerSpearMixin {
     private void spearcore$handleMoveVehicleTail(ServerboundMoveVehiclePacket packet, CallbackInfo ci) {
         Entity vehicle = this.player.getVehicle();
         if (vehicle != null && vehicle != this.player && vehicle.getControllingPassenger() == this.player && vehicle == this.lastVehicle) {
+            // 车辆移动包始终带位置；同样使用客户端目标坐标，不设上限。
             this.spearcore$rememberKnownMovement(new Vec3(
-                    vehicle.getX() - this.spearcore$moveVehicleX,
-                    vehicle.getY() - this.spearcore$moveVehicleY,
-                    vehicle.getZ() - this.spearcore$moveVehicleZ
+                    packet.getX() - this.spearcore$moveVehicleX,
+                    packet.getY() - this.spearcore$moveVehicleY,
+                    packet.getZ() - this.spearcore$moveVehicleZ
             ));
         }
     }
 
     @Unique
     private void spearcore$rememberKnownMovement(Vec3 movement) {
-        if (movement.lengthSqr() > 1.0E-5D) {
-            ((KnownMovementAccessor) this.player).SetKnownMovement(movement);
-        }
+        ((KnownMovementAccessor) this.player).SetKnownMovement(movement);
     }
 }

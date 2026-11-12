@@ -2,12 +2,14 @@ package net.minecraft.spearcore.compat.tetra.mixin;
 
 import java.util.Collection;
 import java.util.List;
+import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.spearcore.compat.tetra.TetraSpearRepairDefinitions;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import se.mickelus.tetra.items.modular.impl.dynamic.DynamicModularItem;
 import se.mickelus.tetra.module.ItemModule;
 import se.mickelus.tetra.module.data.VariantData;
 import se.mickelus.tetra.module.schematic.RepairDefinition;
@@ -26,6 +28,10 @@ public abstract class ItemModuleRepairMixin {
             ItemModule self = (ItemModule) (Object) this;
             String moduleKey = self.getKey();
             if (moduleKey == null || !moduleKey.startsWith("spear/")) {
+                return;
+            }
+            if (!(stack.getItem() instanceof DynamicModularItem)
+                    || !TetraSpearProfile.isModularSpearArchetype(DynamicModularItem.getArchetypeKey(stack))) {
                 return;
             }
             VariantData variant = self.getVariantData(stack);

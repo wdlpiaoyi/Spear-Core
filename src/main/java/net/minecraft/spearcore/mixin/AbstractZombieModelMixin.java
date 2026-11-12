@@ -2,7 +2,7 @@ package net.minecraft.spearcore.mixin;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.spearcore.item.SpearItem;
+import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.world.entity.monster.Monster;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,7 +27,7 @@ public abstract class AbstractZombieModelMixin<T extends Monster> extends Humano
     private void spearcore$setupSpearZombieAnim(T entity, float limbSwing, float limbSwingAmount,
                                                 float ageInTicks, float netHeadYaw, float headPitch,
                                                 CallbackInfo ci) {
-        if (entity.getMainHandItem().getItem() instanceof SpearItem) {
+        if (SpearLikeSupport.of(entity.getMainHandItem()) != null) {
             super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
             ci.cancel();
         }

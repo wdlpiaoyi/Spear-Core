@@ -2,7 +2,7 @@
     "item": "tetra:dynamic_handheld",
     "archetype": "modular_spear",
     "icon": {
-        "textureLocation": "spearcore:textures/item/tetra_spear.png",
+        "textureLocation": "spearcore:textures/gui/holo_spear.png",
         "textureX": 0,
         "textureY": 0
     },

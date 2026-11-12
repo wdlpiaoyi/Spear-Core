@@ -30,6 +30,8 @@ public class SpearSprintHandler {
     /** 自己维护的双击 W 计时器，不依赖原版 sprintTriggerTime。 */
     private static int sprintTapTimer;
     private static boolean wasPressingForward;
+    /** 上一次 tick 的玩家实例；换维度/重生时 LocalPlayer 会被替换，需要清掉双击状态。 */
+    private static LocalPlayer lastPlayer;
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -39,8 +41,13 @@ public class SpearSprintHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) {
+            lastPlayer = null;
             reset();
             return;
+        }
+        if (player != lastPlayer) {
+            lastPlayer = player;
+            reset();
         }
 
         boolean usingSpear = isUsingSpear(player);
@@ -79,13 +86,23 @@ public class SpearSprintHandler {
                 && net.minecraft.spearcore.init.SpearLikeSupport.of(use) != null;
     }
 
-    /** 原版允许起跑的条件（饥饿、潜行、骑乘、失明、飞行）。 */
+    /** 原版允许起跑的条件（除了“正在使用物品”这一条；与 LocalPlayer#canStartSprinting 对齐）。 */
     private static boolean canStartSprinting(LocalPlayer player) {
+        boolean impulse = player.isUnderWater()
+                ? player.input.hasForwardImpulse()
+                : player.input.forwardImpulse >= 0.8F;
+        boolean food = player.isPassenger()
+                || player.getFoodData().getFoodLevel() > 6.0F
+                || player.getAbilities().mayfly;
+        boolean vehicle = !player.isPassenger()
+                || (player.getVehicle().canSprint() && player.getVehicle().isControlledByLocalInstance());
         return !player.isSprinting()
                 && !player.isCrouching()
-                && !player.isPassenger()
+                && impulse
+                && food
                 && !player.hasEffect(MobEffects.BLINDNESS)
-                && (player.getFoodData().getFoodLevel() > 6.0F || player.getAbilities().mayfly);
+                && vehicle
+                && !player.isFallFlying();
     }
 
     private static void reset() {

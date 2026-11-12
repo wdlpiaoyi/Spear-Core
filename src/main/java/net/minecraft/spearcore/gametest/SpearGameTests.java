@@ -1,5 +1,6 @@
 package net.minecraft.spearcore.gametest;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -8,8 +9,12 @@ import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.config.SpearConfig;
 import net.minecraft.spearcore.event.SpearDamageEvent;
 import net.minecraft.spearcore.event.SpearHitEvent;
+import net.minecraft.spearcore.event.ThreePointBladeHandler;
+import net.minecraft.spearcore.compat.tetra.TetraSpearStats;
+import net.minecraft.spearcore.event.SpearMobEquipHandler;
 import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.init.SpearCoreItems;
+import net.minecraft.spearcore.init.SpearDamageTypes;
 import net.minecraft.spearcore.init.SpearStats;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.util.SpearCooldownAccessor;
@@ -18,17 +23,27 @@ import net.minecraft.spearcore.util.SpearCondition;
 import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -62,6 +77,46 @@ public final class SpearGameTests {
     @SubscribeEvent
     public static void onRegisterGameTests(RegisterGameTestsEvent event) {
         event.register(SpearGameTests.class);
+    }
+
+    /** Stats.Builder 的关键字段不能因为链式调用/参数顺序错位。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void statsBuilderKeepsValues(GameTestHelper helper) {
+        SpearStats.Stats stats = new SpearStats.Stats.Builder()
+                .durability(123)
+                .attackDuration(0.9F)
+                .damageMultiplier(1.1F)
+                .attackDamageBonus(3.0F)
+                .enchantmentValue(15)
+                .rarity(Rarity.RARE)
+                .repairIngredient(Ingredient.of(Items.IRON_INGOT))
+                .fireResistant(true)
+                .materialName("test_spear")
+                .swingTimes(0.9F)
+                .hitboxMargin(0.2F)
+                .contactCooldownTicks(9)
+                .delayTicks(11)
+                .forwardMovement(0.38F)
+                .minRange(2.0F)
+                .maxRange(4.5F)
+                .minCreativeRange(2.0F)
+                .maxCreativeRange(6.5F)
+                .hitboxMargin2(0.25F)
+                .mobFactor(0.5F)
+                .dealsKnockback(true)
+                .dismounts(true)
+                .build();
+        helper.assertTrue(stats.durability() == 123 && stats.attackDuration() == 0.9F
+                        && stats.damageMultiplier() == 1.1F && stats.attackDamageBonus() == 3.0F
+                        && stats.enchantmentValue() == 15 && stats.rarity() == Rarity.RARE
+                        && stats.fireResistant() && "test_spear".equals(stats.materialName())
+                        && stats.swingTimes() == 0.9F && stats.hitboxMargin() == 0.2F
+                        && stats.contactCooldownTicks() == 9 && stats.delayTicks() == 11
+                        && stats.hitboxMargin2() == 0.25F && stats.mobFactor() == 0.5F
+                        && stats.dealsKnockback() && stats.dismounts(),
+                "Stats.Builder 字段顺序错位");
+        helper.succeed();
     }
 
     /** 七把矛的实例必须都是 SpearItem —— 所有行为判定的前提。 */
@@ -212,20 +267,21 @@ public final class SpearGameTests {
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
     public static void hitMomentumFollowsConfig(GameTestHelper helper) {
-        // 测试不依赖本地配置文件：先强制到默认值，跑完再恢复原值
+        // 测试不依赖本地配置文件：整段都在 try/finally 里，断言失败也不会把配置泄漏给后续测试
         SpearRules.HitSlowDown original = SpearConfig.HIT_SLOW_DOWN.get();
-        SpearConfig.HIT_SLOW_DOWN.set(SpearRules.HitSlowDown.JAVA);
-        helper.assertTrue(SpearRules.slowsDownAttackerOnHit(),
-                "hitSlowDown 默认应为 JAVA（测试内已强制复位）");
-
-        // 第一段：JAVA —— 命中后自己也被削到 0.3 × 0.6 = 0.18
-        double vanillaSpeed = spearcore$stabAndReadSpeed(helper, 1, 1);
-        helper.assertTrue(Math.abs(vanillaSpeed - 0.18D) < 1.0E-6D,
-                "JAVA 模式命中后自己应减速到 0.18，实际 x 速度 " + vanillaSpeed);
-
-        // 第二段：MODDED —— 命中后速度不变，不用重新起跑
+        double vanillaSpeed;
         double moddedSpeed;
         try {
+            SpearConfig.HIT_SLOW_DOWN.set(SpearRules.HitSlowDown.JAVA);
+            helper.assertTrue(SpearRules.slowsDownAttackerOnHit(),
+                    "hitSlowDown 默认应为 JAVA（测试内已强制复位）");
+
+            // 第一段：JAVA —— 命中后自己也被削到 0.3 × 0.6 = 0.18
+            vanillaSpeed = spearcore$stabAndReadSpeed(helper, 1, 1);
+            helper.assertTrue(Math.abs(vanillaSpeed - 0.18D) < 1.0E-6D,
+                    "JAVA 模式命中后自己应减速到 0.18，实际 x 速度 " + vanillaSpeed);
+
+            // 第二段：MODDED —— 命中后速度不变，不用重新起跑
             SpearConfig.HIT_SLOW_DOWN.set(SpearRules.HitSlowDown.MODDED);
             moddedSpeed = spearcore$stabAndReadSpeed(helper, 3, 1);
         } finally {
@@ -401,6 +457,48 @@ public final class SpearGameTests {
         helper.succeed();
     }
 
+    /** 蓄力判定箱开关对内建矛与 Tetra 拟合矛都要生效。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraChargeHitboxFollowsConfig(GameTestHelper helper) {
+        SpearRules.ChargeHitboxMargin original = SpearConfig.CHARGE_HITBOX_MARGIN.get();
+        try {
+            SpearConfig.CHARGE_HITBOX_MARGIN.set(SpearRules.ChargeHitboxMargin.JAVA);
+            helper.assertTrue(Math.abs(TetraSpearStats.fit(4.0D, -2.0D).getHitboxMargin() - 0.125F) < 1.0E-6F,
+                    "Tetra 蓄力判定箱在 JAVA 档应为 0.125");
+            SpearConfig.CHARGE_HITBOX_MARGIN.set(SpearRules.ChargeHitboxMargin.MODDED);
+            helper.assertTrue(Math.abs(TetraSpearStats.fit(4.0D, -2.0D).getHitboxMargin() - 0.25F) < 1.0E-6F,
+                    "Tetra 蓄力判定箱在 MODDED 档应为 0.25");
+        } finally {
+            SpearConfig.CHARGE_HITBOX_MARGIN.set(original);
+        }
+        helper.succeed();
+    }
+
+    /** 子类 finalizeSpawn 的 populateDefaultEquipmentSlots 不能把矛覆盖掉。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void mobEquipmentSurvivesSubclassOverrides(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ZombifiedPiglin piglin = EntityType.ZOMBIFIED_PIGLIN.create(level);
+        if (piglin == null) {
+            helper.fail("无法创建僵尸猪灵");
+            return;
+        }
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+        piglin.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
+        piglin.finalizeSpawn(level, level.getCurrentDifficultyAt(piglin.blockPosition()),
+                MobSpawnType.COMMAND, null, null);
+        helper.assertTrue(piglin.getMainHandItem().is(Items.GOLDEN_SWORD),
+                "前置：僵尸猪灵的 finalizeSpawn 应已把主手设成金剑，实际 " + piglin.getMainHandItem());
+        SpearMobEquipHandler.queueForTest(piglin,
+                new ItemStack(SpearCoreItems.GOLDEN_SPEAR.get()), 0.085F);
+        level.addFreshEntity(piglin);
+        helper.assertTrue(piglin.getMainHandItem().getItem() instanceof SpearItem,
+                "加入世界后应被 EntityJoinLevelEvent 换成金矛，实际 " + piglin.getMainHandItem());
+        helper.succeed();
+    }
+
     /** 创造模式攻击距离：JAVA 6.5 / BEDROCK 7.5。 */
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
@@ -471,6 +569,9 @@ public final class SpearGameTests {
         SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
         Mob user = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
         user.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(iron));
+        // 装备属性是在实体 tick 时通过 LivingEntity#collectEquipmentChanges 同步进属性的；
+        // 不 tick 就断言会把「怪物属性不含武器加成」这个错误前提固化下来。
+        user.tick();
         float weaponBonus = spearcore$attackDamageBonus(iron);
         helper.assertTrue(weaponBonus > 0.0F, "铁矛的攻击力加成不应为 0（木矛才是 0）");
         user.getAttribute(Attributes.ATTACK_DAMAGE).addTransientModifier(
@@ -490,6 +591,129 @@ public final class SpearGameTests {
         } finally {
             SpearConfig.CHARGE_STRENGTH.set(original);
         }
+        helper.succeed();
+    }
+
+    /** 蓄力重复命中：JAVA 一次 / BEDROCK 固定 10t / MODDED 按攻击时长缩放。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void chargeRepeatModdedFollowsConfig(GameTestHelper helper) {
+        SpearRules.ChargeRepeatHit original = SpearConfig.CHARGE_REPEAT_HIT.get();
+        SpearRules.ChargeRepeatHitThirdParty originalThirdParty =
+                SpearConfig.CHARGE_REPEAT_HIT_THIRD_PARTY.get();
+        try {
+            SpearConfig.CHARGE_REPEAT_HIT.set(SpearRules.ChargeRepeatHit.JAVA);
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F) == Integer.MAX_VALUE,
+                    "JAVA 蓄力对同一目标只能结算一次");
+
+            SpearConfig.CHARGE_REPEAT_HIT.set(SpearRules.ChargeRepeatHit.BEDROCK);
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F) == 10,
+                    "BEDROCK 应固定使用 contactCooldownTicks=10");
+
+            SpearConfig.CHARGE_REPEAT_HIT.set(SpearRules.ChargeRepeatHit.MODDED);
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F) == 6,
+                    "MODDED 0.6 秒应折成 6 tick，实际 " + SpearRules.chargeRepeatCooldownTicks(10, 0.6F));
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F, true) == 6,
+                    "本模组内建矛路径应允许按攻速缩放");
+
+            // 第三方矛有独立配置，不受 chargeRepeatHit=MODDED 连带影响。
+            SpearConfig.CHARGE_REPEAT_HIT_THIRD_PARTY.set(SpearRules.ChargeRepeatHitThirdParty.JAVA);
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F, false) == Integer.MAX_VALUE,
+                    "第三方默认 JAVA 应保持每次蓄力一次");
+            SpearConfig.CHARGE_REPEAT_HIT_THIRD_PARTY.set(SpearRules.ChargeRepeatHitThirdParty.BEDROCK);
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F, false) == 10,
+                    "第三方 BEDROCK 应使用它自己的 contactCooldownTicks");
+            SpearConfig.CHARGE_REPEAT_HIT_THIRD_PARTY.set(SpearRules.ChargeRepeatHitThirdParty.MODDED);
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.6F, false) == 6,
+                    "第三方 MODDED 才按攻速缩放");
+
+            SpearItem iron = (SpearItem) SpearCoreItems.IRON_SPEAR.get();
+            helper.assertTrue(iron.chargeRepeatCooldownTicks()
+                            == SpearRules.speedScaledChargeRepeatTicks(iron.getAttackDuration()),
+                    "内建矛必须在 MODDED 档按自身攻击时长缩放");
+
+            // 实际攻速修饰符（haste / 装备）必须参与，而不是只按武器 attackDuration。
+            Player player = helper.makeMockPlayer();
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(iron));
+            player.tick();
+            int beforeHaste = iron.chargeRepeatCooldownTicks(player);
+            player.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 200, 1));
+            int withHaste = iron.chargeRepeatCooldownTicks(player);
+            helper.assertTrue(withHaste < beforeHaste,
+                    "Haste 必须缩短蓄力重复间隔: " + beforeHaste + " -> " + withHaste);
+            player.removeEffect(MobEffects.DIG_SPEED);
+
+            AttributeInstance attackSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
+            helper.assertTrue(attackSpeed != null, "测试玩家必须带 ATTACK_SPEED 属性");
+            if (attackSpeed != null) {
+                AttributeModifier haste = new AttributeModifier(UUID.randomUUID(), "game test haste",
+                        2.0D, AttributeModifier.Operation.ADDITION);
+                attackSpeed.addTransientModifier(haste);
+                try {
+                    int afterHaste = iron.chargeRepeatCooldownTicks(player);
+                    helper.assertTrue(afterHaste < beforeHaste,
+                            "haste/攻速修饰符必须缩短蓄力重复间隔: " + beforeHaste + " -> " + afterHaste);
+                } finally {
+                    attackSpeed.removeModifier(haste);
+                }
+            }
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 0.95F) == 10,
+                    "MODDED 0.95 秒应折成 10 tick");
+            helper.assertTrue(SpearRules.chargeRepeatCooldownTicks(10, 1.3F) == 13,
+                    "MODDED 1.3 秒应折成 13 tick");
+            helper.assertTrue(SpearRules.speedScaledChargeRepeatTicks(0.1F) == 1,
+                    "极短攻击时长也应至少保留 1 tick");
+        } finally {
+            SpearConfig.CHARGE_REPEAT_HIT.set(original);
+            SpearConfig.CHARGE_REPEAT_HIT_THIRD_PARTY.set(originalThirdParty);
+        }
+        helper.succeed();
+    }
+
+    /** 三尖两刃刀：20% out_of_world + 20% 魔法 + 10% 直接扣血，最大生命 3%，最低 1 点。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void threePointDamageSharesAndMaxHealth(GameTestHelper helper) {
+        helper.assertTrue(Math.abs(ThreePointBladeHandler.NORMAL_SHARE - 0.50F) < 1.0E-6F
+                        && Math.abs(ThreePointBladeHandler.VOID_SHARE - 0.20F) < 1.0E-6F
+                        && Math.abs(ThreePointBladeHandler.MAGIC_SHARE - 0.20F) < 1.0E-6F
+                        && Math.abs(ThreePointBladeHandler.DIRECT_SHARE - 0.10F) < 1.0E-6F
+                        && Math.abs(ThreePointBladeHandler.MAX_HEALTH_SHARE - 0.03F) < 1.0E-6F,
+                "三尖两刃刀拆分比例必须为 50/20/20/10，最大生命 3%");
+
+        Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        double initial = zombie.getMaxHealth();
+        ThreePointBladeHandler.reduceMaxHealth(zombie, 10.0F);
+        helper.assertTrue(Math.abs(zombie.getMaxHealth() - (initial - 0.3D)) < 1.0E-5D,
+                "10 点伤害应扣 0.3 最大生命，实际 " + zombie.getMaxHealth());
+        ThreePointBladeHandler.reduceMaxHealth(zombie, 10.0F);
+        helper.assertTrue(Math.abs(zombie.getMaxHealth() - (initial - 0.6D)) < 1.0E-5D,
+                "最大生命削减必须可叠加，实际 " + zombie.getMaxHealth());
+        ThreePointBladeHandler.reduceMaxHealth(zombie, 10_000.0F);
+        helper.assertTrue(Math.abs(zombie.getMaxHealth() - 1.0D) < 1.0E-5D,
+                "最大生命最低只能到 1.0，实际 " + zombie.getMaxHealth());
+
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, 3, 1, 3);
+        double cowMax = cow.getMaxHealth();
+        ThreePointBladeHandler.reduceMaxHealth(cow, 10.0F);
+        helper.assertTrue(Math.abs(cow.getMaxHealth() - cowMax) < 1.0E-5D,
+                "非敌对生物不应被削减最大生命");
+        helper.succeed();
+    }
+
+    /** 虚空/魔法的伤害来源必须是原版 out_of_world / magic，并保留攻击者归属。 */
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void threePointSourcesUseVanillaTypes(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer();
+        DamageSource voidSource = SpearDamageTypes.outOfWorld(player.level(), player);
+        DamageSource magicSource = SpearDamageTypes.magic(player.level(), player);
+        helper.assertTrue(voidSource.typeHolder().is(DamageTypes.FELL_OUT_OF_WORLD),
+                "三尖两刃刀的虚空伤害必须是 minecraft:out_of_world，实际 " + voidSource.getMsgId());
+        helper.assertTrue(magicSource.typeHolder().is(DamageTypes.MAGIC),
+                "三尖两刃刀的魔法伤害必须是 minecraft:magic，实际 " + magicSource.getMsgId());
+        helper.assertTrue(voidSource.getEntity() == player && magicSource.getEntity() == player,
+                "两种伤害来源都必须保留攻击者归属");
         helper.succeed();
     }
 
@@ -831,6 +1055,8 @@ public final class SpearGameTests {
     public static void spearsCarryItemTags(GameTestHelper helper) {
         TagKey<Item> spearsTag = TagKey.create(Registries.ITEM, new ResourceLocation(SpearcoreMod.MODID, "spears"));
         TagKey<Item> spearTag = TagKey.create(Registries.ITEM, new ResourceLocation(SpearcoreMod.MODID, "spear"));
+        TagKey<Item> copperTag = TagKey.create(Registries.ITEM,
+                new ResourceLocation(SpearcoreMod.MODID, "copper_spear"));
         TagKey<Item> swordsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "swords"));
         TagKey<Item> toolsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "tools"));
         TagKey<Item> minecraftSpearsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "spears"));
@@ -868,6 +1094,20 @@ public final class SpearGameTests {
         }
         helper.assertTrue(new ItemStack(SpearCoreItems.GOLDEN_SPEAR.get()).is(piglinLovedTag),
                 "金矛没有进入 #minecraft:piglin_loved");
+        // 负断言：六把原版材质矛不含铜；铜 tag 只含铜；猪灵喜爱只含金矛。
+        for (Item item : vanillaMaterialSpears) {
+            helper.assertTrue(!new ItemStack(item).is(copperTag), "#spearcore:copper_spear 只应含铜矛：" + item);
+        }
+        helper.assertTrue(new ItemStack(SpearCoreItems.COPPER_SPEAR.get()).is(copperTag),
+                "铜矛没有进入 #spearcore:copper_spear");
+        helper.assertTrue(!new ItemStack(SpearCoreItems.COPPER_SPEAR.get()).is(spearsTag),
+                "#spearcore:spears 按上游约定不含铜矛");
+        for (Item item : allSpears) {
+            if (item != SpearCoreItems.GOLDEN_SPEAR.get()) {
+                helper.assertTrue(!new ItemStack(item).is(piglinLovedTag),
+                        "#minecraft:piglin_loved 只应含金矛：" + item);
+            }
+        }
         helper.succeed();
     }
 

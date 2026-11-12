@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -52,8 +53,8 @@ import java.util.WeakHashMap;
 public final class SpearCombat {
 
     /** 蓄力阶段缓存，用于阶段变更检测。 */
-    private static final WeakHashMap<LivingEntity, SpearChargePhaseEvent.Phase> PHASE_CACHE =
-            new WeakHashMap<>();
+    private static final Map<LivingEntity, SpearChargePhaseEvent.Phase> PHASE_CACHE =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * 「虚拟原版攻击」的重入闸门。
@@ -65,10 +66,12 @@ public final class SpearCombat {
     private static final ThreadLocal<Boolean> VIRTUAL_ATTACK = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     /** 每次蓄力只补一次虚拟攻击；起手时置位，第一次命中后消费掉。 */
-    private static final WeakHashMap<LivingEntity, Boolean> VIRTUAL_PENDING = new WeakHashMap<>();
+    private static final Map<LivingEntity, Boolean> VIRTUAL_PENDING =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     /** 同一 tick 只允许一次横扫，避免一次攻击命中多个目标时叠出多道剑气。 */
-    private static final WeakHashMap<Player, Long> LAST_SWEEP_TICK = new WeakHashMap<>();
+    private static final Map<Player, Long> LAST_SWEEP_TICK =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private static boolean virtualAttackFailureLogged;
 
@@ -155,10 +158,9 @@ public final class SpearCombat {
             LivingEntity living = resolveLivingTarget(target);
             if (living == null) continue;
 
-            // 蓄力重复命中：JAVA 每个目标每次蓄力只结算一次；BEDROCK 用 10 tick 接触冷却。
+            // 蓄力重复命中：JAVA 每个目标每次蓄力只结算一次；BEDROCK 固定接触冷却；MODDED/Tetra 按攻速缩放。
             if (user instanceof SpearCooldownAccessor accessor
-                    && accessor.WasRecentlyStabbed(living,
-                    SpearRules.chargeRepeatCooldownTicks(spear.getContactCooldownTicks()))) {
+                    && accessor.WasRecentlyStabbed(living, spear.chargeRepeatCooldownTicks(user))) {
                 continue;
             }
 
@@ -286,7 +288,10 @@ public final class SpearCombat {
         }
         player.startUsingItem(hand);
         playUseSound(player, spear);
-        VIRTUAL_PENDING.put(player, Boolean.TRUE);
+        if (!level.isClientSide) {
+            // 客户端不跑命中结算；只允许服务端线程写这个缓存。
+            VIRTUAL_PENDING.put(player, Boolean.TRUE);
+        }
         if (spear.style() == SpearStyle.MODULAR_3D) {
             SpearLikeSupport.tetraOnUse(stack, player);
         }
@@ -309,11 +314,10 @@ public final class SpearCombat {
     public static void attack(LivingEntity attacker, ItemStack stack, EquipmentSlot slot, SpearLike spear) {
         float baseDamage = attacker.getAttribute(Attributes.ATTACK_DAMAGE) != null
                 ? (float) attacker.getAttributeValue(Attributes.ATTACK_DAMAGE) : 0f;
-        boolean hitSomething = false;
 
         for (EntityHitResult hit : SpearItem.getHitEntitiesAlong(attacker, spear, spear.getHitboxMargin2(),
                 entity -> SpearItem.canHitEntity(attacker, entity))) {
-            hitSomething |= stabAttack(slot, hit.getEntity(), baseDamage, true,
+            stabAttack(slot, hit.getEntity(), baseDamage, true,
                     spear.dealsKnockback(), spear.dismounts(), attacker,
                     SpearDamageEvent.AttackType.STAB, spear);
         }
@@ -323,12 +327,9 @@ public final class SpearCombat {
         }
         SpearItem.jerotesLungeForwardMaybe(attacker);
 
-        if (hitSomething) {
-            attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
-                    spear.getHitSound(), SoundSource.PLAYERS, 1.0f, 1.0f);
-        }
+        // 命中音效由 stabAttack 在目标处播放，这里只补攻击音，避免一次命中两声。
         attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
-                spear.getAttackSound(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                spear.getAttackSound(), attacker.getSoundSource(), 1.0f, 1.0f);
         attacker.swing(net.minecraft.world.InteractionHand.MAIN_HAND, false);
     }
 
@@ -434,24 +435,10 @@ public final class SpearCombat {
         if (hitSomething) {
             attacker.level().broadcastEntityEvent(attacker, (byte) 2);
             attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
-                    spear.getHitSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                    spear.getHitSound(), attacker.getSoundSource(), 1.0F, 1.0F);
         }
         SpearItem.jerotesLungeForwardMaybe(attacker);
         return hitSomething;
-    }
-
-    /**
-     * 挥砍命中后的横扫（槊头 / 三尖两刃刀），走 Tetra 的横扫实现（自带横扫之刃 III）。
-     */
-    public static void slashSweep(Player player, ItemStack stack, Entity target, SpearLike spear) {
-        if (player.level().isClientSide || target == null) {
-            return;
-        }
-        LivingEntity living = resolveLivingTarget(target);
-        if (living == null) {
-            return;
-        }
-        SpearLikeSupport.tetraSlashSweep(player, stack, living, 3);
     }
 
     /**
@@ -462,6 +449,19 @@ public final class SpearCombat {
      */
     public static float sweepRadius(float effectiveMaxRange) {
         return effectiveMaxRange * 0.3F;
+    }
+
+    /**
+     * 原版剑式横扫的触发条件：攻击强度、疾跑与地面限制。
+     *
+     * <p>槊头 / 三尖两刃刀通过 {@link SpearLike#sweepsWhileAirborne()} 允许空中横扫；
+     * 普通矛头仍要求站在地面。两者都保留攻击强度与非疾跑限制。</p>
+     */
+    public static boolean canVanillaSlashSweep(Player player, SpearLike spear) {
+        if (player == null || spear == null) return false;
+        return player.getAttackStrengthScale(0.5F) > 0.9F
+                && (player.onGround() || spear.sweepsWhileAirborne())
+                && !player.isSprinting();
     }
 
     /**
@@ -483,8 +483,8 @@ public final class SpearCombat {
     }
 
     /**
-     * 原版剑式横扫：只在满蓄力、站在地面、没有疾跑时触发，伤害按原版
-     * {@code 1 + 横扫之刃加成} 计算，并补原版横扫粒子和音效。
+     * 原版剑式横扫：满蓄力、没有疾跑时触发；普通矛头要求站在地面，槊头 / 三尖两刃刀
+     * 允许空中触发。伤害按原版 {@code 1 + 横扫之刃加成} 计算，并补原版横扫粒子和音效。
      *
      * <p>不能用 Tetra 的 {@code sweeping} 效果代替：那套按攻击力全额结算，会绕开原版
      * 蓄力/冷却缩放，0 蓄力也能打出高伤。这里只复刻原版 {@code Player#attack} 的横扫分支，
@@ -494,8 +494,7 @@ public final class SpearCombat {
         if (player == null || target == null || spear == null || player.level().isClientSide) {
             return;
         }
-        if (player.getAttackStrengthScale(0.5F) <= 0.9F
-                || !player.onGround() || player.isSprinting()) {
+        if (!canVanillaSlashSweep(player, spear)) {
             return;
         }
         long now = player.level().getGameTime();
@@ -545,9 +544,11 @@ public final class SpearCombat {
         if (player == null || target == null || player.level().isClientSide) {
             return;
         }
+        // 第三方挂在 Player#attack 的 mixin 常按 LivingEntity 处理；多部件实体要传母实体。
+        Entity attackTarget = rootTarget(target);
         VIRTUAL_ATTACK.set(Boolean.TRUE);
         try {
-            player.attack(target);
+            player.attack(attackTarget);
         } catch (Throwable throwable) {
             if (!virtualAttackFailureLogged) {
                 virtualAttackFailureLogged = true;
@@ -670,7 +671,7 @@ public final class SpearCombat {
         if (!hitSomething) return false;
         MinecraftForge.EVENT_BUS.post(new SpearHitEvent(attacker, target, finalDamage, attackType));
         level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                spear.getHitSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                spear.getHitSound(), attacker.getSoundSource(), 1.0F, 1.0F);
         attacker.setLastHurtMob(living != null ? living : target);
         stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(slot));
         return true;
@@ -719,11 +720,6 @@ public final class SpearCombat {
 
     // ========== 数值 ==========
 
-    public static int computeDamageUseDuration(SpearLike spear) {
-        return spear.getDelayTicks() + spear.getDamageConditions()
-                .map(SpearCondition::maxDurationTicks).orElse(0);
-    }
-
     /**
      * 蓄力伤害的基线。
      *
@@ -737,10 +733,14 @@ public final class SpearCombat {
         if (user.getAttribute(Attributes.ATTACK_DAMAGE) == null) return 0.0F;
         double weaponBonus = weaponAttackDamage(user);
         if (SpearRules.chargeGainsAttributeModifiers()) {
-            // 玩家的装备修饰符会进属性，怪物不会（原版只在 Mob#doHurtTarget 里临时加武器加成），
-            // 所以非玩家要自己把武器加成补上，否则 BEDROCK 档下怪物蓄力反而丢了武器伤害。
-            return (float) (user.getAttributeValue(Attributes.ATTACK_DAMAGE)
-                    + (user instanceof Player ? 0.0D : weaponBonus));
+            // 1.20.1 的装备修饰符会在实体 tick 时进属性（LivingEntity#collectEquipmentChanges），
+            // 玩家和怪物都一样。只有副手蓄力时这把矛不在 MAINHAND 槽，属性里没有它的 ADDITION：
+            // 此时把副手矛的加成补上，同时扣掉主手武器已经算进去的那份。
+            double value = user.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            if (user.getUsedItemHand() == InteractionHand.OFF_HAND) {
+                value += weaponBonus - weaponAttackDamage(user.getMainHandItem());
+            }
+            return (float) value;
         }
         return (float) (user.getAttributeBaseValue(Attributes.ATTACK_DAMAGE) + weaponBonus);
     }
@@ -754,6 +754,11 @@ public final class SpearCombat {
     private static double weaponAttackDamage(LivingEntity user) {
         ItemStack stack = user.getUseItem();
         if (stack.isEmpty()) stack = user.getMainHandItem();
+        return weaponAttackDamage(stack);
+    }
+
+    /** 指定物品堆在 MAINHAND 上贡献的 {@code ADDITION} 攻击力。 */
+    private static double weaponAttackDamage(ItemStack stack) {
         if (stack.isEmpty()) return 0.0D;
         double sum = 0.0D;
         for (AttributeModifier modifier : stack.getAttributeModifiers(EquipmentSlot.MAINHAND)

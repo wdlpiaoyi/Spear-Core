@@ -46,10 +46,10 @@ public class SpearItemBuilder extends ItemBuilder {
     private static final ResourceLocation GENERATED_MODEL =
             new ResourceLocation("minecraft", "item/generated");
 
-    /** 新矛默认并入内建矛的标签，使附魔/标签判定与内建矛一致。 */
+    /** 新矛默认并入「全部矛」的标签；#spearcore:spears 仍只保留六把原版材质矛。 */
     private static final ResourceLocation[] DEFAULT_TAGS = {
             new ResourceLocation("minecraft", "spears"),
-            new ResourceLocation(SpearcoreMod.MODID, "spears"),
+            new ResourceLocation(SpearcoreMod.MODID, "spear"),
     };
 
     // ===== 矛参数，默认 = 铁矛 =====
@@ -240,7 +240,7 @@ public class SpearItemBuilder extends ItemBuilder {
         return this;
     }
 
-    /** 判定箱外扩半径：常规 / 第二阶段。默认 0.25 / 0.125。 */
+    /** 判定箱外扩半径：蓄力 / 戳刺。默认 0.25 / 0.25。 */
     public SpearItemBuilder hitbox(float margin, float margin2) {
         this.hitboxMargin = margin;
         this.hitboxMargin2 = margin2;
@@ -277,7 +277,7 @@ public class SpearItemBuilder extends ItemBuilder {
         return this;
     }
 
-    /** 是否会把骑手从坐骑上击落（还需满足击落窗口条件）。默认 false。 */
+    /** 是否会把骑手从坐骑上击落（还需满足击落窗口条件）。默认 true（内建铁矛预设）。 */
     public SpearItemBuilder dismount(boolean v) {
         this.dismounts = v;
         return this;
@@ -291,35 +291,36 @@ public class SpearItemBuilder extends ItemBuilder {
         // 而 1.21 的 durability() 会同时把堆叠数设为 1 —— 正是矛需要的。
         this.maxDamage = Math.max(1, this.durability);
 
-        var stats = SpearStats.Stats.of(
-                this.durability,
-                this.attackDuration,
-                this.damageMultiplier,
-                this.attackDamageBonus,
-                this.enchantmentValue,
-                this.rarity,
-                this.repairIngredient,
-                this.fireResistant,
-                this.materialName,
-                this.useSound,
-                this.hitSound,
-                this.attackSound,
-                this.swingTimes,
-                this.hitboxMargin,
-                this.contactCooldownTicks,
-                this.delayTicks,
-                SpearStats.dismountConditionFor(this.materialName, this.dismountWindowTicks),
-                this.knockbackConditions,
-                this.damageConditions,
-                this.forwardMovement,
-                this.minRange,
-                this.maxRange,
-                this.minCreativeRange,
-                this.maxCreativeRange,
-                this.hitboxMargin2,
-                this.mobFactor,
-                this.dealsKnockback,
-                this.dismounts);
+        var stats = new SpearStats.Stats.Builder()
+                .durability(this.durability)
+                .attackDuration(this.attackDuration)
+                .damageMultiplier(this.damageMultiplier)
+                .attackDamageBonus(this.attackDamageBonus)
+                .enchantmentValue(this.enchantmentValue)
+                .rarity(this.rarity)
+                .repairIngredient(this.repairIngredient)
+                .fireResistant(this.fireResistant)
+                .materialName(this.materialName)
+                .useSound(this.useSound)
+                .hitSound(this.hitSound)
+                .attackSound(this.attackSound)
+                .swingTimes(this.swingTimes)
+                .hitboxMargin(this.hitboxMargin)
+                .contactCooldownTicks(this.contactCooldownTicks)
+                .delayTicks(this.delayTicks)
+                .dismountConditions(SpearStats.dismountConditionFor(this.materialName, this.dismountWindowTicks))
+                .knockbackConditions(this.knockbackConditions)
+                .damageConditions(this.damageConditions)
+                .forwardMovement(this.forwardMovement)
+                .minRange(this.minRange)
+                .maxRange(this.maxRange)
+                .minCreativeRange(this.minCreativeRange)
+                .maxCreativeRange(this.maxCreativeRange)
+                .hitboxMargin2(this.hitboxMargin2)
+                .mobFactor(this.mobFactor)
+                .dealsKnockback(this.dealsKnockback)
+                .dismounts(this.dismounts)
+                .build();
 
         return new ConfiguredSpearItem(stats, createItemProperties());
     }

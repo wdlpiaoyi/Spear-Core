@@ -20,8 +20,9 @@ import se.mickelus.tetra.module.schematic.UpgradeSchematic;
  *
  * <p>Tetra 的工作台用 {@code getSchematics(CraftingContext)}，它会过滤掉
  * {@code matchesRequirements} 为 false 的配方，所以玩家看不到「还差稳定 V」的提示。
- * 这里只在 stage 2 的复合矛杆上把完成配方补回列表；{@code canApplyUpgrade} 仍会检查
- * 稳定 V 并禁用合成按钮，因此不会真的提前安装。</p>
+ * 这里只在 stage 2 的复合矛杆上把完成配方补回列表；{@code ConfigSchematic#canApplyUpgrade}
+ * 仍会调用 {@code matchesRequirements} 并禁用合成按钮，因此不会真的提前安装（以后数据里
+ * 加别的完成条件也由该方法兜住）。</p>
  */
 @Mixin(targets = "se.mickelus.tetra.module.SchematicRegistry", remap = false)
 public abstract class SchematicRegistrySpearMixin {

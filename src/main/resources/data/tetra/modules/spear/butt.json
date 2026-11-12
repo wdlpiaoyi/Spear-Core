@@ -14,8 +14,11 @@
             ],
             "key": "spear_butt/",
             "durability": 15,
-            "integrity": -1,
+            "integrity": -2,
             "extract": {
+                "primaryAttributes": {
+                    "**generic.attack_damage": 0.01
+                },
                 "secondaryEffects": {
                     "counterweight": 2
                 },
@@ -31,10 +34,7 @@
                     {
                         "location": "tetra:item/module/sword/pommel/counterweight/"
                     }
-                ],
-                "primaryAttributes": {
-                    "generic.attack_damage": 0.1
-                }
+                ]
             }
         }
     ]

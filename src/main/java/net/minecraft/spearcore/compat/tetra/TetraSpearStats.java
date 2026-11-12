@@ -7,7 +7,9 @@ import net.minecraft.spearcore.init.SpearSounds;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearStyle;
 import net.minecraft.spearcore.util.SpearCondition;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.Optional;
 
@@ -20,16 +22,16 @@ import java.util.Optional;
  *
  * <ul>
  *   <li>攻击速度 → 蓄力全长 {@code attackDuration}（越快越短，夹在 0.60~1.30 秒）。</li>
- *   <li>攻击力 → 蓄力速度倍率 {@code damageMultiplier}（越高越疼；超过 4 点后按
- *       {@code soft = 4 + (d - 4) / (1 + (d - 4) / 8)} 放缓，避免高数值材料滚雪球）。</li>
+ *   <li>攻击力 → 蓄力速度倍率 {@code damageMultiplier}（越高越疼；不设上限，
+ *       随 Tetra 攻击力线性增长，尖锐再乘 1.5，避免冒险整合包后期装备脱节）。</li>
  *   <li>蓄力阶段（前摇 / 击落 / 击退 / 伤害）以本模组铁矛的秒数为基准，按 duration 等比缩放。</li>
- *   <li>击落骑手的速度阈值同样随 soft 值从 14 往 9 收，最低不低于下界合金的 9。</li>
+ *   <li>击落骑手的速度阈值随攻击力从 14 往 9 收，最低不低于下界合金的 9。</li>
  *   <li>Tetra 自己贡献的额外攻击距离（长手柄 / 插槽等）只按配置 {@code tetraExtraReachScale}
  *       （默认 1.0，可调小）计入本模组长矛射程，其他来源的 reach 不受影响。</li>
  * </ul>
  *
- * <p>这样同一个公式对「原版材料 + 模组材料 + 附属新加材料」都成立，也不会因为某个材料数值特别高而失控。
- * 公式只依赖 Tetra 已经算好的属性，不读本模组的材质表，因此无需为 Tetra 材料单独维护配置。</p>
+ * <p>这样同一个公式对「原版材料 + 模组材料 + 附属新加材料」都成立。公式只依赖 Tetra 已经算好的属性，
+ * 不读本模组的材质表，因此无需为 Tetra 材料单独维护配置；高数值段不设硬上限。</p>
  *
  * <p>本类刻意不 import 任何 Tetra 类型：只有 {@link TetraSpearProfile} 确认 Tetra 已加载后才会构造它。</p>
  */
@@ -39,12 +41,11 @@ public final class TetraSpearStats implements SpearLike {
     private static final float MIN_DURATION = 0.60F;
     private static final float MAX_DURATION = 1.30F;
 
-    /** 蓄力速度倍率的上下限。 */
+    /** 蓄力速度倍率的最低值；不设上限，高数值装备随 Tetra 攻击力线性增长。 */
     private static final float MIN_MULTIPLIER = 0.60F;
-    private static final float MAX_MULTIPLIER = 1.45F;
 
-    /** 攻击力超过该值后开始放缓（拟合公式的拐点）。 */
-    private static final float SOFT_CAP = 4.0F;
+    /** 「尖锐」打磨的蓄力系数加成。 */
+    public static final float SHARP_HONE_BONUS = 0.5F;
 
     /** 以本模组铁矛为基准的阶段秒数：前摇 / 击落窗口 / 击退窗口 / 伤害窗口。 */
     private static final float BASE_DELAY_SEC = 0.60F;
@@ -82,13 +83,20 @@ public final class TetraSpearStats implements SpearLike {
     /** 三尖两刃刀允许贴脸；槊头保留长矛的 2 格最小距离。 */
     private final boolean allowsCloseRange;
 
+    /** 是否为三尖两刃刀（伤害拆分与最大生命削减）。 */
+    private final boolean threePointBlade;
+
+    /** 空中是否允许横扫（槊头 / 三尖两刃刀）。 */
+    private final boolean airborneSweep;
+
     private TetraSpearStats(float attackDuration, float damageMultiplier,
                             int delayTicks,
                             Optional<SpearCondition> dismountConditions,
                             Optional<SpearCondition> knockbackConditions,
                             Optional<SpearCondition> damageConditions,
                             double tetraReachBonus, boolean slashing,
-                            boolean requiresFullCharge, boolean allowsCloseRange) {
+                            boolean requiresFullCharge, boolean allowsCloseRange,
+                            boolean threePointBlade, boolean airborneSweep) {
         this.attackDuration = attackDuration;
         this.damageMultiplier = damageMultiplier;
         this.delayTicks = delayTicks;
@@ -99,6 +107,8 @@ public final class TetraSpearStats implements SpearLike {
         this.slashing = slashing;
         this.requiresFullCharge = requiresFullCharge;
         this.allowsCloseRange = allowsCloseRange;
+        this.threePointBlade = threePointBlade;
+        this.airborneSweep = airborneSweep;
         this.dismountEndTick = delayTicks + dismountConditions.map(SpearCondition::maxDurationTicks).orElse(0);
         this.knockbackEndTick = delayTicks + knockbackConditions.map(SpearCondition::maxDurationTicks).orElse(0);
         this.damageEndTick = delayTicks + damageConditions.map(SpearCondition::maxDurationTicks).orElse(0);
@@ -132,7 +142,7 @@ public final class TetraSpearStats implements SpearLike {
      * @param attackSpeed     Tetra 的 {@code Attributes.ATTACK_SPEED} 总值
      * @param tetraReachBonus Tetra 自己贡献的 {@code forge:entity_reach} 加成（长手柄 / 插槽等）
      * @param slashing        左键是否挥砍（槊头 / 三尖两刃刀）
-     * @param sharpBonus      蓄力伤害系数加成（「尖锐」打磨：0.05）
+     * @param sharpBonus      蓄力伤害系数加成（「尖锐」打磨：0.5）
      */
     public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus,
                                       boolean slashing, float sharpBonus) {
@@ -142,18 +152,26 @@ public final class TetraSpearStats implements SpearLike {
     public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus,
                                       boolean slashing, float sharpBonus,
                                       boolean requiresFullCharge, boolean allowsCloseRange) {
-        float duration = clamp(1.10F + 0.10F * ((float) attackSpeed + 2.0F), MIN_DURATION, MAX_DURATION);
+        return fit(attackDamage, attackSpeed, tetraReachBonus, slashing, sharpBonus,
+                requiresFullCharge, allowsCloseRange, false, false);
+    }
 
-        float damage = (float) attackDamage;
-        float soft = damage <= SOFT_CAP
-                ? damage
-                : SOFT_CAP + (damage - SOFT_CAP) / (1.0F + (damage - SOFT_CAP) / 8.0F);
-        float multiplier = clamp(0.55F + 0.09F * soft, MIN_MULTIPLIER, MAX_MULTIPLIER)
-                * (1.0F + Math.max(0.0F, sharpBonus));
+    public static TetraSpearStats fit(double attackDamage, double attackSpeed, double tetraReachBonus,
+                                      boolean slashing, float sharpBonus,
+                                      boolean requiresFullCharge, boolean allowsCloseRange,
+                                      boolean threePointBlade, boolean airborneSweep) {
+        // attackSpeed 是 Tetra 的修饰符合计（负值，越接近 0 越快），所以用负系数：
+        // 越快 → duration 越短；原先的 + 号会把轻矛的蓄力窗口拉得比重矛还长。
+        float duration = clamp(1.10F - 0.10F * ((float) attackSpeed + 2.0F), MIN_DURATION, MAX_DURATION);
+
+        float damage = Math.max(0.0F, (float) attackDamage);
+        // 不设上限：Tetra 后期材料/整合包装备越强，蓄力倍率就越高；尖锐再乘 1.5。
+        float multiplier = Math.max(MIN_MULTIPLIER,
+                (0.55F + 0.09F * damage) * (1.0F + Math.max(0.0F, sharpBonus)));
 
         float scale = duration / BASE_DURATION;
         int delay = Math.round(BASE_DELAY_SEC * scale * 20.0F);
-        float dismountSpeed = clamp(DISMOUNT_SPEED_MAX - 0.5F * soft, DISMOUNT_SPEED_MIN, DISMOUNT_SPEED_MAX);
+        float dismountSpeed = clamp(DISMOUNT_SPEED_MAX - 0.5F * damage, DISMOUNT_SPEED_MIN, DISMOUNT_SPEED_MAX);
 
         return new TetraSpearStats(
                 duration,
@@ -162,7 +180,8 @@ public final class TetraSpearStats implements SpearLike {
                 SpearCondition.ofAttackerSpeed(Math.round(BASE_DISMOUNT_SEC * scale * 20.0F), dismountSpeed),
                 SpearCondition.ofAttackerSpeed(Math.round(BASE_KNOCKBACK_SEC * scale * 20.0F), 5.1F),
                 SpearCondition.ofRelativeSpeed(Math.round(BASE_DAMAGE_SEC * scale * 20.0F), 4.6F),
-                Math.max(0.0D, tetraReachBonus), slashing, requiresFullCharge, allowsCloseRange
+                Math.max(0.0D, tetraReachBonus), slashing, requiresFullCharge, allowsCloseRange,
+                threePointBlade, airborneSweep
         );
     }
 
@@ -259,7 +278,8 @@ public final class TetraSpearStats implements SpearLike {
 
     @Override
     public float getHitboxMargin() {
-        return 0.25F;
+        // 与内建矛共用 behavior.chargeHitboxMargin：JAVA 0.125 / MODDED 0.25。
+        return SpearRules.hitboxMargin(0.25F);
     }
 
     @Override
@@ -275,6 +295,30 @@ public final class TetraSpearStats implements SpearLike {
     @Override
     public float getSwingTimes() {
         return attackDuration;
+    }
+
+    /**
+     * Tetra 模块化长矛固定按攻击时长缩放蓄力重复命中，不受 {@code chargeRepeatHit} 的
+     * JAVA/BEDROCK 档限制；攻速越快，同一目标的重复间隔越短。
+     */
+    @Override
+    public int chargeRepeatCooldownTicks(LivingEntity user) {
+        return SpearRules.speedScaledChargeRepeatTicks(user, attackDuration);
+    }
+
+    @Override
+    public int chargeRepeatCooldownTicks() {
+        return SpearRules.speedScaledChargeRepeatTicks(attackDuration);
+    }
+
+    @Override
+    public boolean sweepsWhileAirborne() {
+        return airborneSweep;
+    }
+
+    @Override
+    public boolean threePointBlade() {
+        return threePointBlade;
     }
 
     @Override

@@ -16,9 +16,7 @@
   "client": [
     "SpearCooldownAttackMixin",
     "ItemInitializeClientMixin",
-    "LocalPlayerFovMixin",
     "LocalPlayerInputMixin",
-    "ItemInHandRendererMixin",
     "ItemInHandLayerMixin",
     "HumanoidModelMixin",
     "AbstractZombieModelMixin",

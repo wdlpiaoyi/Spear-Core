@@ -5,6 +5,7 @@ import net.minecraft.spearcore.init.SpearCombat;
 import net.minecraft.spearcore.util.SpearCondition;
 import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.Optional;
 
@@ -80,6 +81,29 @@ public interface SpearLike {
         return Math.round(getAttackDuration() * 20.0F);
     }
 
+    /**
+     * 蓄力命中同一目标后的重复结算间隔。
+     *
+     * <p>默认走 {@link SpearRules} 的 {@code chargeRepeatHit}，但不会按攻速缩放；本模组内建矛
+     * 由 {@code BaseSpearItem} 打开 {@link #speedScalesChargeRepeat()}，Tetra 模块化长矛则直接
+     * override 成本身攻击时长。第三方 {@code SpearItem}（例如 Avaritia Spear）保持默认 false，
+     * 不受本模组新选项影响。</p>
+     */
+    default int chargeRepeatCooldownTicks(LivingEntity user) {
+        return SpearRules.chargeRepeatCooldownTicks(user, getContactCooldownTicks(),
+                getAttackDuration(), speedScalesChargeRepeat());
+    }
+
+    /** 无持有者上下文时的回退（测试/工具查询用）。 */
+    default int chargeRepeatCooldownTicks() {
+        return chargeRepeatCooldownTicks(null);
+    }
+
+    /** 是否走本模组的 chargeRepeatHit；第三方矛默认 false，走独立配置。 */
+    default boolean speedScalesChargeRepeat() {
+        return false;
+    }
+
     /** 表现风格：本模组贴图矛 / Tetra 3D 模块化工具。 */
     default SpearStyle style() {
         return SpearStyle.VANILLA_SPEAR;
@@ -98,6 +122,16 @@ public interface SpearLike {
      * 是否要求左键必须满蓄力（槊头）。三尖两刃刀不要求，保持高上限。
      */
     default boolean requiresFullCharge() {
+        return false;
+    }
+
+    /** 空中是否允许触发横扫；目前只有槊头、三尖两刃刀为 true。 */
+    default boolean sweepsWhileAirborne() {
+        return false;
+    }
+
+    /** 是否为三尖两刃刀（伤害拆分与最大生命削减只对它生效）。 */
+    default boolean threePointBlade() {
         return false;
     }
 

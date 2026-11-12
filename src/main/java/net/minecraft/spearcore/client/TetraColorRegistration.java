@@ -1,5 +1,6 @@
 package net.minecraft.spearcore.client;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.spearcore.compat.tetra.TetraSpearColors;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
@@ -22,8 +23,14 @@ public final class TetraColorRegistration {
     }
 
     public static void register(RegisterColorHandlersEvent.Item event) {
+        // 只给模块化长矛用的物品注册 tint；给所有 IModularItem 注册 -1 会抹掉 Tetra
+        // 或其它联动模组自己注册的物品色（Forge 的物品色是 last-wins）。
+        ResourceLocation dynamicHandheld = new ResourceLocation("tetra", "dynamic_handheld");
         for (Item item : ForgeRegistries.ITEMS.getValues()) {
             if (!(item instanceof IModularItem)) {
+                continue;
+            }
+            if (!dynamicHandheld.equals(ForgeRegistries.ITEMS.getKey(item))) {
                 continue;
             }
             event.register(TetraColorRegistration::resolveColor, item);

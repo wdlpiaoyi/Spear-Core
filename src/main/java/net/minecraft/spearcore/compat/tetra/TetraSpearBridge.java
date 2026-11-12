@@ -1,5 +1,6 @@
 package net.minecraft.spearcore.compat.tetra;
 
+import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -35,6 +36,10 @@ final class TetraSpearBridge {
         }
 
         IModularItem modular = (IModularItem) stack.getItem();
+        if (modular.isBroken(stack)) {
+            // 断掉的模块化矛仍保留物品；不要让它继续走蓄力/戳刺，属性也不可信。
+            return null;
+        }
         double attackDamage = modular.getAttributeValue(stack, Attributes.ATTACK_DAMAGE);
         double attackSpeed = modular.getAttributeValue(stack, Attributes.ATTACK_SPEED);
 
@@ -49,8 +54,11 @@ final class TetraSpearBridge {
         TetraSpearHead head = head(stack);
         return TetraSpearStats.fit(attackDamage, attackSpeed, tetraReachBonus,
                 head.slashing(), sharpBonus(modular, stack),
-                head == TetraSpearHead.SHUO, head == TetraSpearHead.THREE);
+                head == TetraSpearHead.SHUO, head == TetraSpearHead.THREE,
+                head == TetraSpearHead.THREE, head.slashing());
     }
+
+    private static boolean headWarning;
 
     /** 矛头形态（渲染、命名、行为共用）；优先模块 key，读不到再按变体前缀。 */
     static TetraSpearHead head(ItemStack stack) {
@@ -59,14 +67,18 @@ final class TetraSpearBridge {
             IModularItem modular = (IModularItem) stack.getItem();
             ItemModule module = modular.getModuleFromSlot(stack, "spear/head");
             moduleKey = module == null ? null : module.getKey();
-        } catch (Throwable ignored) {
-            // 读不到模块 key 时退回变体前缀。
+        } catch (Throwable throwable) {
+            if (!headWarning) {
+                headWarning = true;
+                SpearcoreMod.LOGGER.warn(
+                        "[spearcore] 读取 Tetra 矛头模块失败，将退回变体前缀/普通矛头", throwable);
+            }
         }
         return TetraSpearHead.ofVariantAndModule(TetraSpearColors.headVariantKey(stack), moduleKey);
     }
 
     /**
-     * 「尖锐」打磨的蓄力系数加成：Tetra 的改进列表里有 {@code spearhead_hone/sharp} 就是 +5%。
+     * 「尖锐」打磨的蓄力系数加成：Tetra 的改进列表里有 {@code spearhead_hone/sharp} 就是 +50%。
      *
      * <p>改进是 Tetra 数据（{@code data/tetra/improvements/spear/head/sharp.json}），这里只读不改。</p>
      */
@@ -74,7 +86,7 @@ final class TetraSpearBridge {
         try {
             for (var improvement : modular.getImprovements(stack)) {
                 if (improvement != null && "spearhead_hone/sharp".equals(improvement.key)) {
-                    return 0.05F;
+                    return TetraSpearStats.SHARP_HONE_BONUS;
                 }
             }
         } catch (Throwable ignored) {

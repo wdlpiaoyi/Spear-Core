@@ -1,9 +1,11 @@
 package net.minecraft.spearcore.compat.tetra.mixin;
 
+import net.minecraft.spearcore.SpearcoreMod;
 import net.minecraft.spearcore.compat.tetra.TetraModuleGateMapping;
 import net.minecraft.spearcore.compat.tetra.TetraSpearProfile;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -133,9 +135,10 @@ public abstract class ConfigSchematicSpearMixin {
      *   <li>{@code single/handle}：单手柄速度（{@code handle_hone/speed}）。</li>
      * </ul>
      *
-     * <p>Tetra **没有手柄耐久**打磨（只有单头/盾握把的耐久），所以矛杆耐久仍由本模组自造，
-     * 与尖锐、稳定一起是本模组自己的三条线。</p>
+     * <p>Tetra **没有手柄耐久**打磨（只有单头/盾握把的耐久），所以矛杆耐久线已直接移除，
+     * 不再自造；本模组自己的打磨只剩「尖锐」与「稳定」。</p>
      */
+    @Unique
     private static final java.util.Map<String, String> NATIVE_SPEAR_HONES = java.util.Map.of(
             "single/head|head_hone/durability", "head",
             "single/head|head_hone/speed", "head",
@@ -261,9 +264,34 @@ public abstract class ConfigSchematicSpearMixin {
         return false;
     }
 
+    /** 反射字段只查一次；Tetra 改结构时只 warn 一次，而不是每个配方静默失败。 */
+    @Unique
+    private static java.lang.reflect.Field definitionField;
+    @Unique
+    private static boolean definitionFieldMissing;
+    @Unique
+    private static boolean definitionFieldWarning;
+
     private static SchematicDefinition spearcore$definition(ConfigSchematic schematic) throws Exception {
-        java.lang.reflect.Field field = ConfigSchematic.class.getDeclaredField("definition");
-        field.setAccessible(true);
-        return (SchematicDefinition) field.get(schematic);
+        if (definitionFieldMissing) {
+            throw new NoSuchFieldException("ConfigSchematic.definition");
+        }
+        if (definitionField == null) {
+            try {
+                java.lang.reflect.Field field = ConfigSchematic.class.getDeclaredField("definition");
+                field.setAccessible(true);
+                definitionField = field;
+            } catch (Exception exception) {
+                definitionFieldMissing = true;
+                if (!definitionFieldWarning) {
+                    definitionFieldWarning = true;
+                    SpearcoreMod.LOGGER.warn(
+                            "[spearcore] 读取 Tetra ConfigSchematic.definition 失败，矛的第三方配方门禁将退回原判定",
+                            exception);
+                }
+                throw exception;
+            }
+        }
+        return (SchematicDefinition) definitionField.get(schematic);
     }
 }

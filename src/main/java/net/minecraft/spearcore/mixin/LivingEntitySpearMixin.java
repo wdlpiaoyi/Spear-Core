@@ -2,7 +2,6 @@ package net.minecraft.spearcore.mixin;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import net.minecraft.spearcore.client.animation.SpearAnimations;
 import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.util.SpearCooldownAccessor;

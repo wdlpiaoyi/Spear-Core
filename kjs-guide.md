@@ -121,7 +121,9 @@ kubejs/
 | `.forwardMovement(数字)` | 冲锋时向前推进的力度 | 0.38 |
 | `.mobFactor(数字)` | 怪物（非玩家）的攻击距离倍率 | 0.5 |
 | `.knockback(true/false)` | 会不会把目标击退 | true |
-| `.dismount(true/false)` | 会不会把骑手从坐骑上捅下来 | false |
+| `.dismount(true/false)` | 会不会把骑手从坐骑上捅下来 | true |
+
+> `.contactCooldown(刻)` 只管戳刺；蓄力重复命中另由 `behavior.chargeRepeatHit` 控制。`MODDED` 档按持有者**实际攻击速度**（包含 haste 与装备修饰符）缩放，Tetra 模块化长矛固定按自身攻速缩放。第三方矛使用独立的 `behavior.chargeRepeatHitThirdParty`，不会被 `chargeRepeatHit` 连带修改。
 
 ### 4.3 音效与杂项
 
@@ -168,7 +170,7 @@ kubejs/assets/mypack/textures/item/bronze_spear_in_hand.png
 
 ## 6. 和原版 / 内建矛的关系
 
-- 新矛会**自动**被加进 `#spearcore:spears` 与 `#minecraft:spears` 两个标签。
+- 新矛会**自动**被加进 `#spearcore:spear`（单数，全部矛）与 `#minecraft:spears` 两个标签；`#spearcore:spears`（复数）仍只含六把原版材质矛。
   所以锋利、亡灵杀手、节肢杀手、耐久、火焰附加、抢夺这些附魔，它和内建矛享受同一套规则，不用你额外配。
 - 内建那七把矛（木 / 石 / 铜 / 铁 / 金 / 钻石 / 下界合金）由 Spear Core 自己的配置项控制是否出现，和你加的矛互不影响。
 
@@ -189,10 +191,10 @@ StartupEvents.modifyCreativeTab('minecraft:combat', event => {
 ## 8. 几个必须知道的坑
 
 **1）不能用"普通物品 + 加标签"糊弄过去。**
-矛的行为是按"这个物品是不是矛类"判定的。用 `event.create('mypack:spear')` 造一个普通物品、再塞进 `#spearcore:spears`，它照样没有突刺、没有冲锋、没有动画。**必须**写成 `event.create(..., 'spearcore:spear')`。
+矛的行为是按"这个物品是不是矛类"判定的。用 `event.create('mypack:spear')` 造一个普通物品、再塞进 `#spearcore:spear`，它照样没有突刺、没有冲锋、没有动画。**必须**写成 `event.create(..., 'spearcore:spear')`。
 
 **2）KubeJS 的通用物品回调对矛不生效。**
-`.use(...)`、`.finishUsingItem(...)` 这类 KubeJS 自带回调，在矛身上不会触发——矛的"使用"行为由 Spear Core 自己实现。同理 `.attributes(...)` 也不生效，攻击力请用 `.attackDamageBonus()` 与 `.damageMultiplier()`。
+`.use(...)`、`.finishUsingItem(...)` 这类 KubeJS 自带回调，在矛身上不会触发——矛的"使用"行为由 Spear Core 自己实现。`.attributes(...)` 方法本身不存在（KubeJS 只有 `modifyAttribute`），攻击力请用 `.attackDamageBonus()` 与 `.damageMultiplier()`。
 
 **3）耐久和堆叠不是随便设的。**
 矛永远**不可堆叠**（堆叠数 1）。调 `.durability()` 就够了，别试图让它堆叠。
@@ -204,7 +206,7 @@ StartupEvents.modifyCreativeTab('minecraft:combat', event => {
 物品是注册表内容，联机时客户端必须也有同一份脚本与贴图，否则别人看到的是紫黑方块或者空手。
 
 **6）别自己写 `models/item/*.json`。**
-矛的模型由 Spear Core 生成（`neoforge:separate_transforms`）。自己覆盖它，多半会得到"GUI 里正常、拿手里被劈成两半"的效果。
+矛的模型由 Spear Core 生成（`forge:separate_transforms`）。自己覆盖它，多半会得到"GUI 里正常、拿手里被劈成两半"的效果。
 
 ---
 
@@ -251,7 +253,7 @@ event.create('命名空间:名字', 'spearcore:spear')
     .forwardMovement(0.38)           // 冲锋前推力度
     .mobFactor(0.5)                  // 怪物攻击距离倍率
     .knockback(true)                 // 是否击退
-    .dismount(false)                 // 是否击落骑手（内建七把矛已改为 true，击落阈值固定 Java 版数据）
+    .dismount(true)                  // 是否击落骑手（内建七把矛默认 true，击落阈值固定 Java 版数据）
     .materialName('custom')          // 标记名
     .texture('命名空间:item/名字')      // 图标贴图(手持自动找 _in_hand)
     .inHandTexture('命名空间:item/手持图') // 可选：单独指定手持贴图
@@ -372,7 +374,9 @@ Anything you leave out uses the **iron spear** values. Tweak only what you care 
 | `.forwardMovement(number)` | Lunge forward push | 0.38 |
 | `.mobFactor(number)` | Attack range multiplier for monsters (non-players) | 0.5 |
 | `.knockback(true/false)` | Whether it knocks the target back | true |
-| `.dismount(true/false)` | Whether it pulls a rider off their mount | false |
+| `.dismount(true/false)` | Whether it pulls a rider off their mount | true |
+
+> `.contactCooldown(ticks)` only affects jabs; charge repeat hits are controlled by `behavior.chargeRepeatHit`. `MODDED` scales with the holder's **actual attack speed** (including Haste and equipment modifiers); Tetra modular spears always scale with their own attack speed. Third-party spears use the separate `behavior.chargeRepeatHitThirdParty` option and are not affected by `chargeRepeatHit`.
 
 ### 4.3 Sound and misc
 
@@ -419,7 +423,7 @@ kubejs/assets/mypack/textures/item/bronze_spear_in_hand.png
 
 ## 6. How it relates to vanilla and the built-in spears
 
-- New spears are **automatically** added to both `#spearcore:spears` and `#minecraft:spears`.
+- New spears are **automatically** added to `#spearcore:spear` (singular, all spears) and `#minecraft:spears`; the plural `#spearcore:spears` still contains only the six vanilla-material spears.
   Sharpness, Smite, Bane of Arthropods, Unbreaking, Fire Aspect and Looting therefore treat it exactly like a built-in spear, with no extra configuration.
 - The seven built-in spears (wood / stone / copper / iron / golden / diamond / netherite) are toggled by Spear Core's own config and are independent of anything you add.
 
@@ -440,10 +444,10 @@ StartupEvents.modifyCreativeTab('minecraft:combat', event => {
 ## 8. Pitfalls you need to know
 
 **1) "Ordinary item + tag" does not work.**
-Spear behaviour is decided by whether the item's class is a spear. Creating a plain item with `event.create('mypack:spear')` and adding it to `#spearcore:spears` still gives you no stab, no lunge and no animation. It **must** be `event.create(..., 'spearcore:spear')`.
+Spear behaviour is decided by whether the item's class is a spear. Creating a plain item with `event.create('mypack:spear')` and adding it to `#spearcore:spear` still gives you no stab, no lunge and no animation. It **must** be `event.create(..., 'spearcore:spear')`.
 
 **2) KubeJS's generic item callbacks do not fire for spears.**
-Callbacks such as `.use(...)` and `.finishUsingItem(...)` never run on a spear, because the "use" behaviour is implemented inside Spear Core. For the same reason `.attributes(...)` has no effect; use `.attackDamageBonus()` and `.damageMultiplier()` for damage.
+Callbacks such as `.use(...)` and `.finishUsingItem(...)` never run on a spear, because the "use" behaviour is implemented inside Spear Core. The `.attributes(...)` method does not exist (KubeJS only has `modifyAttribute`); has no effect; use `.attackDamageBonus()` and `.damageMultiplier()` for damage.
 
 **3) Durability and stacking are not free-form.**
 A spear is always **unstackable** (stack size 1). Setting `.durability()` is all you need; do not try to make it stack.
@@ -455,7 +459,7 @@ Registration in `startup_scripts` only runs once at startup. `/reload` and KubeJ
 Items are registry content, so in multiplayer the client must have the same scripts and textures, or players will see a purple-black square or an empty hand.
 
 **6) Do not write `models/item/*.json` yourself.**
-The spear model is generated by Spear Core (`neoforge:separate_transforms`). Overwriting it usually produces "fine in the GUI, split in half in hand".
+The spear model is generated by Spear Core (`forge:separate_transforms`). Overwriting it usually produces "fine in the GUI, split in half in hand".
 
 ---
 
@@ -477,7 +481,7 @@ and the tag pass will include your spear:
 
 If a script is wrong, the error only shows up in KubeJS's log/console and the game still starts; fix it by the line number in the report.
 
-**If you do not see `Found plugin source spearcore` or the "联动已启用" line**, then KubeJS is missing, the version is wrong (you need `2101.x`), or you disabled the plugin in `kubejs/plugins.txt`.
+**If you do not see `Found plugin source spearcore` or the "联动已启用" line**, then KubeJS is missing, the version is wrong (you need `2001.x`), or you disabled the plugin in `kubejs/plugins.txt`.
 
 ---
 
@@ -502,7 +506,7 @@ event.create('namespace:name', 'spearcore:spear')
     .forwardMovement(0.38)           // lunge forward push
     .mobFactor(0.5)                  // mob attack range multiplier
     .knockback(true)                 // knock targets back
-    .dismount(false)                 // pull riders off mounts (built-in spears now default to true; thresholds are fixed to Java values)
+    .dismount(true)                   // pull riders off mounts (built-in spears default to true; thresholds are fixed to Java values)
     .materialName('custom')          // label
     .texture('namespace:item/name')      // icon texture (in-hand auto uses _in_hand)
     .inHandTexture('namespace:item/in_hand') // optional: set the in-hand texture explicitly

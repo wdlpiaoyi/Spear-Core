@@ -107,7 +107,7 @@ public class SpearAnimations {
                 ? livingEntity.getMainArm() : livingEntity.getMainArm().getOpposite();
         humanoidModel.rightArm.yRot -= humanoidModel.body.yRot;
         humanoidModel.leftArm.yRot -= humanoidModel.body.yRot;
-        humanoidModel.leftArm.xRot -= humanoidModel.body.yRot;
+        humanoidModel.leftArm.xRot -= humanoidModel.body.xRot;
         float f2 = easeInOutSine(progress(f, 0.0f, 0.05f));
         float f3 = easeInQuad(progress(f, 0.05f, 0.2f));
         float f4 = easeInOutExpo(progress(f, 0.4f, 1.0f));

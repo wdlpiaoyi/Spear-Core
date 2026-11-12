@@ -38,15 +38,20 @@ public final class SpearShieldStanceHandler {
             return;
         }
         Player player = event.player;
+        if (!player.isAlive() || player.isSpectator()) {
+            return;
+        }
         boolean sneaking = player.isShiftKeyDown();
-        boolean mainHandSpear = SpearLikeSupport.of(player.getMainHandItem()) != null;
+        var mainSpear = SpearLikeSupport.of(player.getMainHandItem());
+        boolean mainHandSpear = mainSpear != null;
         boolean offhandShield = player.getOffhandItem().getItem() instanceof ShieldItem;
         boolean usingOffhandShield = player.isUsingItem()
                 && player.getUsedItemHand() == InteractionHand.OFF_HAND
                 && player.getUseItem().getItem() instanceof ShieldItem;
+        // 使用主手时 getUseItem 就是主手物品，直接复用上面的结果，少解析一次 Tetra 栈。
         boolean usingMainHandSpear = player.isUsingItem()
                 && player.getUsedItemHand() == InteractionHand.MAIN_HAND
-                && SpearLikeSupport.of(player.getUseItem()) != null;
+                && mainHandSpear;
 
         // 蹲下 + 副手盾：即使正在蓄力也先把矛收回来。
         // 这里必须 return：同 tick 里「收矛 + 举盾」会把 using-item 实体数据压成一次更新，

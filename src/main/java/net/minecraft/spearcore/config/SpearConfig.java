@@ -94,8 +94,18 @@ public class SpearConfig {
     public static final ForgeConfigSpec.EnumValue<SpearRules.ChargeRepeatHit> CHARGE_REPEAT_HIT = BUILDER
             .comment("蓄力命中同一目标后的重复结算间隔。",
                     "JAVA（默认）：每个目标每次蓄力只结算一次。",
-                    "BEDROCK：同一目标 10 tick（0.5s）内只结算一次，之后可再次命中；这也等于本模组原本的行为。")
+                    "BEDROCK：同一目标 10 tick（0.5s）内只结算一次，之后可再次命中；这也等于本模组原本的行为。",
+                    "MODDED：按当前长矛的攻击时长缩放间隔，攻速越快重复命中越频繁；只作用于本模组内建/KubeJS 矛与 Tetra 模块化长矛。",
+                    "第三方 SpearItem（如 Avaritia Spear）不受这个新档影响，仍保持它自己的设置。")
             .defineEnum("chargeRepeatHit", SpearRules.ChargeRepeatHit.JAVA);
+
+    public static final ForgeConfigSpec.EnumValue<SpearRules.ChargeRepeatHitThirdParty> CHARGE_REPEAT_HIT_THIRD_PARTY = BUILDER
+            .comment("第三方 SpearItem（例如 Avaritia Spear）的蓄力重复命中。",
+                    "JAVA（默认）：每个目标每次蓄力只结算一次，保持第三方矛原本的节奏。",
+                    "BEDROCK：同目标固定使用该矛自己的 contactCooldownTicks。",
+                    "MODDED：按该矛持有者的实际攻击速度缩放重复间隔。",
+                    "这个开关独立于 chargeRepeatHit，不会让本模组的设置连带改掉第三方矛。")
+            .defineEnum("chargeRepeatHitThirdParty", SpearRules.ChargeRepeatHitThirdParty.JAVA);
 
     public static final ForgeConfigSpec.EnumValue<SpearRules.JabRepeatHit> JAB_REPEAT_HIT = BUILDER
             .comment("戳刺命中同一目标后的重复结算间隔。",

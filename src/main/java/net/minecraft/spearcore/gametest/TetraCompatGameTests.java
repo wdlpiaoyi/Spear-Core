@@ -2,9 +2,12 @@ package net.minecraft.spearcore.gametest;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.tags.TagKey;
 import net.minecraft.spearcore.SpearcoreMod;
+import net.minecraft.spearcore.config.SpearConfig;
 import net.minecraft.spearcore.client.TipOverlayGeometry;
 import net.minecraft.spearcore.compat.tetra.TetraDamageScaling;
 import net.minecraft.spearcore.compat.tetra.TetraMaterialKey;
@@ -20,6 +23,7 @@ import net.minecraft.spearcore.init.SpearLikeSupport;
 import net.minecraft.spearcore.item.SpearLike;
 import net.minecraft.spearcore.item.SpearItem;
 import net.minecraft.spearcore.item.SpearStyle;
+import net.minecraft.spearcore.util.SpearRules;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
@@ -32,6 +36,7 @@ import net.minecraft.world.entity.monster.Spider;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.spearcore.init.SpearDamageTypes;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -51,10 +56,12 @@ import com.google.gson.JsonElement;
 import net.minecraft.nbt.CompoundTag;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import javax.imageio.ImageIO;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +70,7 @@ import java.util.Set;
  * Tetra 兼容层的纯公式测试。
  *
  * <p>Tetra 本身不是 GameTest 依赖（GameTest 服务端不加载 Tetra），所以这里只验证不依赖 Tetra API 的
- * 部分：材料属性 → 长矛数值的拟合公式、边界与放缓、以及「非长矛物品不会被误判」。</p>
+ * 部分：材料属性 → 长矛数值的拟合公式、边界与无上限增长、以及「非长矛物品不会被误判」。</p>
  */
 @Mod.EventBusSubscriber(modid = SpearcoreMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class TetraCompatGameTests {
@@ -80,33 +87,66 @@ public final class TetraCompatGameTests {
 
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
-    public static void fitDurationClampsAndGrowsWithSpeed(GameTestHelper helper) {
-        float previous = -1.0F;
-        for (double speed = -4.0D; speed <= 4.0D; speed += 0.25D) {
+    public static void fitDurationClampsAndShrinksWithSpeed(GameTestHelper helper) {
+        float previous = Float.MAX_VALUE;
+        for (double speed = -4.0D; speed <= 0.0D; speed += 0.25D) {
             float duration = TetraSpearStats.fit(4.0D, speed).getAttackDuration();
             helper.assertTrue(duration >= 0.60F - 1.0E-4F && duration <= 1.30F + 1.0E-4F,
                     "攻击速度 " + speed + " 拟合出的 duration 越界: " + duration);
-            helper.assertTrue(duration >= previous - 1.0E-4F,
-                    "duration 应随攻击速度单调不减: " + previous + " -> " + duration);
+            helper.assertTrue(duration <= previous + 1.0E-4F,
+                    "duration 应随攻击速度单调不增（越快越短）: " + previous + " -> " + duration);
             previous = duration;
         }
+        helper.assertTrue(TetraSpearStats.fit(4.0D, -1.0D).getAttackDuration()
+                        < TetraSpearStats.fit(4.0D, -3.0D).getAttackDuration(),
+                "更快的矛（-1.0）蓄力应短于更慢的矛（-3.0）");
         helper.succeed();
     }
 
     @PrefixGameTestTemplate(false)
     @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
-    public static void fitMultiplierGrowsButTapersAtHighDamage(GameTestHelper helper) {
-        float low = TetraSpearStats.fit(2.0D, 1.5D).getDamageMultiplier();
-        float mid = TetraSpearStats.fit(4.0D, 1.5D).getDamageMultiplier();
-        float high = TetraSpearStats.fit(8.0D, 1.5D).getDamageMultiplier();
-        float extreme = TetraSpearStats.fit(12.0D, 1.5D).getDamageMultiplier();
+    public static void fitMultiplierGrowsLinearlyAtHighDamage(GameTestHelper helper) {
+        float low = TetraSpearStats.fit(4.0D, 1.5D).getDamageMultiplier();
+        float mid = TetraSpearStats.fit(8.0D, 1.5D).getDamageMultiplier();
+        float high = TetraSpearStats.fit(12.0D, 1.5D).getDamageMultiplier();
+        float extreme = TetraSpearStats.fit(16.0D, 1.5D).getDamageMultiplier();
 
-        helper.assertTrue(low < mid && mid < high, "倍率应随攻击力单调上升: " + low + " / " + mid + " / " + high);
-        helper.assertTrue(extreme > high, "高数值区间仍应缓慢上升: " + high + " -> " + extreme);
-        helper.assertTrue((extreme - high) < (high - mid),
-                "高攻击力区间必须放缓（衰减）: mid->high=" + (high - mid) + ", high->extreme=" + (extreme - high));
-        helper.assertTrue(low >= 0.60F - 1.0E-4F && extreme <= 1.45F + 1.0E-4F,
-                "倍率应被夹在 0.60~1.45: " + low + " / " + extreme);
+        helper.assertTrue(low < mid && mid < high && high < extreme,
+                "倍率应随攻击力单调上升: " + low + " / " + mid + " / " + high + " / " + extreme);
+        helper.assertTrue(Math.abs((mid - low) - (high - mid)) < 1.0E-5F
+                        && Math.abs((high - mid) - (extreme - high)) < 1.0E-5F,
+                "高攻击力区间不再放缓，应保持线性: " + low + " / " + mid + " / " + high + " / " + extreme);
+        helper.assertTrue(low >= 0.60F - 1.0E-4F, "倍率不应低于 0.60: " + low);
+        helper.assertTrue(extreme > 1.45F, "高攻击力倍率不应再被 1.45 截断: " + extreme);
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void sharpHoneIsFiftyPercent(GameTestHelper helper) {
+        float plain = TetraSpearStats.fit(12.0D, -2.0D, 0.0D, false, 0.0F).getDamageMultiplier();
+        float sharp = TetraSpearStats.fit(12.0D, -2.0D, 0.0D, false, TetraSpearStats.SHARP_HONE_BONUS)
+                .getDamageMultiplier();
+        helper.assertTrue(Math.abs(sharp / plain - 1.5F) < 1.0E-5F,
+                "尖锐必须是完整 +50%: " + plain + " -> " + sharp);
+        helper.assertTrue(sharp > 1.45F, "尖锐后的倍率不应被旧 1.45 上限截断: " + sharp);
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void tetraChargeRepeatScalesWithSpeed(GameTestHelper helper) {
+        TetraSpearStats fast = TetraSpearStats.fit(4.0D, -1.0D);
+        TetraSpearStats slow = TetraSpearStats.fit(4.0D, -3.0D);
+        helper.assertTrue(fast.chargeRepeatCooldownTicks() < slow.chargeRepeatCooldownTicks(),
+                "Tetra 越快，蓄力重复间隔应越短: " + fast.chargeRepeatCooldownTicks()
+                        + " / " + slow.chargeRepeatCooldownTicks());
+        helper.assertTrue(fast.chargeRepeatCooldownTicks()
+                        == SpearRules.speedScaledChargeRepeatTicks(fast.getAttackDuration()),
+                "Tetra 蓄力重复间隔必须按自身 attackDuration 现算");
+        helper.assertTrue(slow.chargeRepeatCooldownTicks()
+                        == SpearRules.speedScaledChargeRepeatTicks(slow.getAttackDuration()),
+                "Tetra 蓄力重复间隔必须按自身 attackDuration 现算");
         helper.succeed();
     }
 
@@ -286,6 +326,15 @@ public final class TetraCompatGameTests {
         boolean craftable = helper.getLevel().getRecipeManager().getRecipes().stream()
                 .anyMatch(recipe -> recipe.getResultItem(helper.getLevel().registryAccess()).is(probe));
         helper.assertTrue(!craftable, "探针不应有任何配方，避免被玩家正常获取");
+        ItemStack probeStack = new ItemStack(probe);
+        TagKey<Item> swordsTag = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "swords"));
+        TagKey<Item> spearTag = TagKey.create(Registries.ITEM, new ResourceLocation(SpearcoreMod.MODID, "spear"));
+        TagKey<Item> spearsTag = TagKey.create(Registries.ITEM, new ResourceLocation(SpearcoreMod.MODID, "spears"));
+        TagKey<Item> piglinLovedTag = TagKey.create(Registries.ITEM,
+                new ResourceLocation("minecraft", "piglin_loved"));
+        helper.assertTrue(probeStack.is(swordsTag), "探针必须挂 #minecraft:swords，供按标签判断武器的模组识别");
+        helper.assertFalse(probeStack.is(spearTag) || probeStack.is(spearsTag) || probeStack.is(piglinLovedTag),
+                "探针不能被当成长矛或猪灵喜爱物品");
         helper.succeed();
     }
 
@@ -610,7 +659,7 @@ public final class TetraCompatGameTests {
                 "矛杆必须接受 tetra:sword/ 下的改进（复用 Tetra 剑柄的 hilt_hone/speed 打磨）");
         helper.assertTrue(handleAccepted.contains("tetra:spear/handle/"),
                 "矛杆必须接受 tetra:spear/handle/（含 spear_hone/stable）");
-        // 尖锐：矛头任一条五级打磨后解锁，单级 +5% 蓄力系数
+        // 尖锐：矛头任一条五级打磨后解锁，单级 +50% 蓄力系数
         JsonElement sharpRoot = spearcore$readJson(helper, "tetra", "schematics/spear/head/hone_sharp.json");
         if (sharpRoot == null) {
             return;
@@ -703,9 +752,12 @@ public final class TetraCompatGameTests {
         Map<String, String> partToSlot = spearcore$partToSlot();
         Map<String, String> variantPrefix = spearcore$variantPrefix();
         Map<String, String[]> requiredMaterialPrefixes = Map.ofEntries(
-                Map.entry("head", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/"}),
-                Map.entry("butt", new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/"}),
-                Map.entry("handle", new String[]{"tetra:rod/"}),
+                Map.entry("head",
+                        new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/", "tetra:bone/"}),
+                Map.entry("butt",
+                        new String[]{"tetra:wood/", "tetra:bone/", "tetra:stone/", "tetra:metal/", "tetra:gem/"}),
+                Map.entry("handle",
+                        new String[]{"tetra:wood/", "tetra:metal/", "tetra:bone/", "tetra:rod/"}),
                 Map.entry("shuo_head", new String[]{"tetra:metal/"}),
                 Map.entry("three_point_blade",
                         new String[]{"tetra:wood/", "tetra:stone/", "tetra:metal/", "tetra:gem/", "tetra:bone/"}),
@@ -844,7 +896,6 @@ public final class TetraCompatGameTests {
                 "tetra.module.spear/three_point_blade.name",
                 "tetra.module.spear/three_point_blade.material_name",
                 "tetra/schematic/spear/shuo_head.name", "tetra/schematic/spear/shuo_head.slot1",
-                "tetra/schematic/spear/composite_shaft.name", "tetra/schematic/spear/composite_shaft.slot1",
                 "tetra/schematic/spear/three_point_blade.name",
                 "tetra/schematic/spear/three_point_blade.slot1",
                 "tetra.unlock.tetra.spear/shuo_head.description",
@@ -858,6 +909,7 @@ public final class TetraCompatGameTests {
                 // 本轮新增：名字、螺栓绑定、积竹木柲阶段、尖锐/耐久/稳定、镶嵌描述
                 "item.spearcore.modular_spear.named_shuo",
                 "item.spearcore.modular_spear.named_blade",
+                "tetra.holo.craft.modular_spear",
                 "tetra.improvement.spear_composite/stage.name",
                 "tetra.improvement.spear_composite/stage.description",
                 "tetra/schematic/spear/composite_shaft_1.name",
@@ -874,8 +926,6 @@ public final class TetraCompatGameTests {
                 "tetra/schematic/spear/head/hone_sharp.name",
                 "tetra/schematic/spear/head/hone_sharp.description",
                 "tetra/schematic/spear/head/hone_sharp.slot1",
-                "tetra.improvement.handle_hone/durability.name",
-                "tetra.improvement.handle_hone/durability.description",
                 "tetra.improvement.spear_hone/stable.name",
                 "tetra.improvement.spear_hone/stable.description",
                 "tetra.improvement.spearhead_hone/sharp.name",
@@ -1095,35 +1145,37 @@ public final class TetraCompatGameTests {
         // 三种矛头外观：默认（tetra_spear）、槊头（tetra_spear_shuo）、三尖两刃刀（tetra_spear_three）。
         // 只换头部那一层贴图，杆贴图共用：头部贴图本来就该盖住杆（槊头 / 三尖两刃刀比普通矛头长），
         // 所以以后新增矛头只需要复制一份 tetra_spear_head* 改画，不用为每种矛头重画杆。
-        for (String part : new String[]{"shuo", "three"}) {
+        for (String part : new String[]{"", "shuo", "three"}) {
+            String suffix = part.isEmpty() ? "" : "_" + part;
+            String label = part.isEmpty() ? "默认" : part;
             JsonElement hand = spearcore$readAssetJson(helper,
-                    "models/item/tetra_spear_" + part + "_in_hand.json");
+                    "models/item/tetra_spear" + suffix + "_in_hand.json");
             JsonElement icon = spearcore$readAssetJson(helper,
-                    "models/item/tetra_spear_icon_" + part + ".json");
+                    "models/item/tetra_spear_icon" + suffix + ".json");
             JsonElement split = spearcore$readAssetJson(helper,
-                    "models/item/tetra_spear_" + part + ".json");
+                    "models/item/tetra_spear" + suffix + ".json");
             if (hand == null || icon == null || split == null) {
                 return;
             }
+            String headInHand = "spearcore:item/tetra_spear_head" + suffix + "_in_hand";
+            String headIcon = "spearcore:item/tetra_spear_head" + suffix;
             String handTextures = hand.getAsJsonObject().getAsJsonObject("textures").toString();
             helper.assertTrue(handTextures.contains("spearcore:item/tetra_spear_handle_in_hand"),
-                    part + " 的手持模型必须共用杆贴图 tetra_spear_handle_in_hand");
-            helper.assertTrue(handTextures.contains("spearcore:item/tetra_spear_head_" + part + "_in_hand"),
-                    part + " 的手持模型必须用各自的头部贴图");
+                    label + " 的手持模型必须共用杆贴图 tetra_spear_handle_in_hand");
+            helper.assertTrue(handTextures.contains(headInHand),
+                    label + " 的手持模型必须用对应的头部贴图 " + headInHand);
             String iconTextures = icon.getAsJsonObject().getAsJsonObject("textures").toString();
             helper.assertTrue(iconTextures.contains("spearcore:item/tetra_spear_handle"),
-                    part + " 的物品栏模型必须共用杆贴图 tetra_spear_handle");
-            helper.assertTrue(iconTextures.contains("spearcore:item/tetra_spear_head_" + part + "\""),
-                    part + " 的物品栏模型必须用各自的头部贴图");
-            helper.assertTrue(("spearcore:item/tetra_spear_" + part + "_in_hand").equals(
+                    label + " 的物品栏模型必须共用杆贴图 tetra_spear_handle");
+            helper.assertTrue(iconTextures.contains(headIcon + "\""),
+                    label + " 的物品栏模型必须用对应的头部贴图 " + headIcon);
+            helper.assertTrue(("spearcore:item/tetra_spear" + suffix + "_in_hand").equals(
                             split.getAsJsonObject().getAsJsonObject("base").get("parent").getAsString()),
-                    part + " 的 separate_transforms 模型必须指向自己的手持模型");
-            helper.assertTrue(spearcore$assetExists(
-                            "textures/item/tetra_spear_head_" + part + ".png"),
-                    part + " 缺少物品栏头部贴图 textures/item/tetra_spear_head_" + part + ".png");
-            helper.assertTrue(spearcore$assetExists(
-                            "textures/item/tetra_spear_head_" + part + "_in_hand.png"),
-                    part + " 缺少手持头部贴图 textures/item/tetra_spear_head_" + part + "_in_hand.png");
+                    label + " 的 separate_transforms 模型必须指向自己的手持模型");
+            helper.assertTrue(spearcore$assetExists("textures/item/tetra_spear_head" + suffix + ".png"),
+                    label + " 缺少物品栏头部贴图 textures/item/tetra_spear_head" + suffix + ".png");
+            helper.assertTrue(spearcore$assetExists("textures/item/tetra_spear_head" + suffix + "_in_hand.png"),
+                    label + " 缺少手持头部贴图 textures/item/tetra_spear_head" + suffix + "_in_hand.png");
         }
         helper.succeed();
     }
@@ -1265,6 +1317,31 @@ public final class TetraCompatGameTests {
         helper.assertTrue(TetraSpearProfile.SPEAR_ARCHETYPE_KEY.equals(json.get("archetype").getAsString()),
                 "全息球条目必须限定 archetype=modular_spear");
         helper.assertTrue(json.has("icon") && json.has("position"), "全息球条目必须有 icon 与 position");
+        String texture = json.getAsJsonObject("icon").get("textureLocation").getAsString();
+        var iconUrl = TetraCompatGameTests.class.getResource("/assets/" + texture.replace(":", "/"));
+        helper.assertTrue(iconUrl != null, "全息球 icon 贴图不存在: " + texture);
+        if (iconUrl != null) {
+            try {
+                BufferedImage image = ImageIO.read(iconUrl);
+                helper.assertTrue(image != null && image.getWidth() == 256 && image.getHeight() == 256,
+                        "全息球 icon 必须是 256×256（Tetra 的 GuiTexture 固定按 256 采样）: " + texture);
+                if (image != null) {
+                    boolean visible = false;
+                    for (int y = 0; y < Math.min(38, image.getHeight()) && !visible; y++) {
+                        for (int x = 0; x < Math.min(38, image.getWidth()); x++) {
+                            if ((image.getRGB(x, y) >>> 24) != 0) {
+                                visible = true;
+                                break;
+                            }
+                        }
+                    }
+                    helper.assertTrue(visible, "全息球 icon 左上 38×38 区域不能全透明: " + texture);
+                }
+            } catch (Exception exception) {
+                helper.fail("读取全息球 icon 失败: " + exception);
+                return;
+            }
+        }
         helper.succeed();
     }
 
@@ -1286,9 +1363,12 @@ public final class TetraCompatGameTests {
         double baseSpeed = variant.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         double baseReach = variant.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
         double baseDamage = variant.getAsJsonObject("attributes").get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(baseSpeed < -1.1D, "1/3 攻速必须慢于普通矛杆，实际: " + baseSpeed);
-        helper.assertTrue(baseReach < 0.5D, "1/3 射程必须小于普通矛杆，实际: " + baseReach);
-        helper.assertTrue(baseDamage < 0.0D, "1/3 伤害必须低于普通矛杆，实际: " + baseDamage);
+        helper.assertTrue(Math.abs(baseSpeed + 1.8D) < 1.0E-6D,
+                "1/3 攻速应为 -1.8（削弱非完整形态），实际: " + baseSpeed);
+        helper.assertTrue(Math.abs(baseReach + 0.5D) < 1.0E-6D,
+                "1/3 射程应为 -0.5（削弱非完整形态），实际: " + baseReach);
+        helper.assertTrue(Math.abs(baseDamage + 0.6D) < 1.0E-6D,
+                "1/3 伤害应为 -0.6（削弱非完整形态），实际: " + baseDamage);
         helper.assertTrue(variant.getAsJsonObject("extract").get("integrity").getAsDouble() == 1.5D,
                 "复合矛杆完整度应为 1.5");
 
@@ -1314,9 +1394,12 @@ public final class TetraCompatGameTests {
         }
         helper.assertTrue(totalSpeed > baseSpeed && totalReach > baseReach && totalDamage > baseDamage,
                 "三级改进后攻速/射程/伤害都应继续提升");
-        helper.assertTrue(totalSpeed > -1.1D, "完成版攻速必须快于普通矛杆，实际: " + totalSpeed);
-        helper.assertTrue(totalDamage >= 1.0D && totalReach >= 1.5D,
-                "完成版应相对普通杆净 +1.0 伤害 / +1.0 射程，实际: " + totalDamage + " / " + totalReach);
+        helper.assertTrue(Math.abs(totalSpeed + 0.7D) < 1.0E-6D,
+                "完成版攻速应保持 -0.7，实际: " + totalSpeed);
+        helper.assertTrue(Math.abs(totalDamage - 1.0D) < 1.0E-6D
+                        && Math.abs(totalReach - 1.5D) < 1.0E-6D,
+                "完成版应保持相对普通杆净 +1.0 伤害 / +1.0 射程，实际: "
+                        + totalDamage + " / " + totalReach);
 
         // 2/3、3/3、完成必须是 improvement，不能写 moduleKey/moduleVariant。
         String[][] staged = {
@@ -1392,10 +1475,16 @@ public final class TetraCompatGameTests {
         double headSpeed = head.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         double threeSpeed = three.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
         double shuoSpeed = shuo.getAsJsonObject("attributes").get("generic.attack_speed").getAsDouble();
+        helper.assertTrue(Math.abs(headSpeed + 1.2D) < 1.0E-6D,
+                "普通矛头攻速应为 -1.2（降低基础矛头速度）");
+        helper.assertTrue(Math.abs(shuoSpeed + 1.5D) < 1.0E-6D,
+                "槊头攻速应为 -1.5");
+        helper.assertTrue(Math.abs(threeSpeed + 0.15D) < 1.0E-6D,
+                "三尖两刃刀攻速应保持不变（-0.15）");
+        helper.assertTrue(shuoSpeed < headSpeed,
+                "槊头必须比普通矛头更慢（" + shuoSpeed + " < " + headSpeed + "）");
         helper.assertTrue(threeSpeed > headSpeed,
-                "三尖两刃刀攻速必须高于普通矛头（" + threeSpeed + " > " + headSpeed + "）");
-        helper.assertTrue(shuoSpeed > headSpeed,
-                "槊攻速必须高于普通矛头（" + shuoSpeed + " > " + headSpeed + "）");
+                "三尖两刃刀仍应比普通矛头快（" + threeSpeed + " > " + headSpeed + "）");
         double headDamage = head.getAsJsonObject("extract").getAsJsonObject("primaryAttributes")
                 .get("generic.attack_damage").getAsDouble();
         double threeDamage = three.getAsJsonObject("extract").getAsJsonObject("primaryAttributes")
@@ -1416,6 +1505,10 @@ public final class TetraCompatGameTests {
                 "Tetra 射程缩放默认必须是 1.0（不缩）");
         helper.assertTrue(TetraDamageScaling.DEFAULT_DAMAGE_SCALE == 1.0D,
                 "Tetra 伤害缩放默认必须是 1.0（不缩）");
+        helper.assertTrue(SpearConfig.TETRA_EXTRA_REACH_SCALE.getDefault() == 1.0D,
+                "配置项 tetraExtraReachScale 的默认值必须是 1.0");
+        helper.assertTrue(SpearConfig.TETRA_DAMAGE_SCALE.getDefault() == 1.0D,
+                "配置项 tetraDamageScale 的默认值必须是 1.0");
         helper.succeed();
     }
 
@@ -1440,6 +1533,16 @@ public final class TetraCompatGameTests {
         helper.assertTrue("item.spearcore.modular_spear.named_shuo".equals(TetraSpearHead.SHUO.nameKey())
                         && "item.spearcore.modular_spear.named_blade".equals(TetraSpearHead.THREE.nameKey()),
                 "矛头名字 key 必须区分槊/刃");
+
+        SpearLike plain = TetraSpearStats.fit(4.0D, -2.0D);
+        SpearLike shuo = TetraSpearStats.fit(4.0D, -2.0D, 0.0D, true, 0.0F,
+                true, false, false, true);
+        SpearLike three = TetraSpearStats.fit(4.0D, -2.0D, 0.0D, true, 0.0F,
+                false, true, true, true);
+        helper.assertFalse(plain.sweepsWhileAirborne(), "普通矛头不能空中横扫");
+        helper.assertTrue(shuo.sweepsWhileAirborne() && shuo.slashing(), "槊头必须允许空中横扫");
+        helper.assertTrue(three.sweepsWhileAirborne() && three.threePointBlade(),
+                "三尖两刃刀必须允许空中横扫并标记三尖两刃刀");
         helper.succeed();
     }
 
@@ -1482,6 +1585,53 @@ public final class TetraCompatGameTests {
         helper.assertTrue("tetra:spear/composite_shaft_1".equals(
                         TetraSpearScrolls.COMPOSITE_SHAFT.schematics()[0]),
                 "积竹木柲卷轴必须解锁 1/3 阶段配方");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearHeadDetectionUsesModuleFirst(GameTestHelper helper) {
+        helper.assertTrue(TetraSpearHead.ofVariantAndModule("spear_head/iron", "spear/shuo_head")
+                        == TetraSpearHead.SHUO,
+                "模块 key 为 spear/shuo_head 时应判为槊头");
+        helper.assertTrue(TetraSpearHead.ofVariantAndModule("spear_head/iron", "spear/three_point_blade")
+                        == TetraSpearHead.THREE,
+                "模块 key 为 spear/three_point_blade 时应判为三尖两刃刀");
+        helper.assertTrue(TetraSpearHead.ofVariantAndModule("spear_head/iron", null)
+                        == TetraSpearHead.PLAIN,
+                "无模块 key 时按变体前缀判为普通矛头");
+        helper.assertTrue(TetraSpearHead.ofVariantAndModule("spear_three_point/iron", null)
+                        == TetraSpearHead.THREE,
+                "变体前缀 spear_three_point/ 应判为三尖两刃刀");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(templateNamespace = SpearcoreMod.MODID, template = TEMPLATE, batch = "spearcore")
+    public static void modularSpearHoneImprovementsAreDataDefined(GameTestHelper helper) {
+        JsonArray stable = spearcore$readJson(helper, "tetra", "improvements/spear/handle/stable.json")
+                .getAsJsonArray();
+        helper.assertTrue(stable.size() == 5, "稳定打磨应有 5 级，实际 " + stable.size());
+        for (int i = 0; i < stable.size(); i++) {
+            JsonObject entry = stable.get(i).getAsJsonObject();
+            helper.assertTrue("spear_hone/stable".equals(entry.get("key").getAsString()),
+                    "稳定的改进 key 必须是 spear_hone/stable");
+            helper.assertTrue(entry.get("level").getAsInt() == i + 1,
+                    "稳定的等级必须依次为 1..5");
+            helper.assertTrue(entry.get("integrity").getAsInt() == -1,
+                    "稳定每级应扣 1 完整度");
+            double reach = entry.getAsJsonObject("attributes").get("forge:entity_reach").getAsDouble();
+            helper.assertTrue(Math.abs(reach - 0.02D * (i + 1)) < 1.0E-9D,
+                    "稳定 " + (i + 1) + " 级的射程应为 " + (0.02D * (i + 1)) + "，实际 " + reach);
+        }
+        JsonArray sharp = spearcore$readJson(helper, "tetra", "improvements/spear/head/sharp.json")
+                .getAsJsonArray();
+        helper.assertTrue(sharp.size() == 1, "尖锐应只有 1 级，实际 " + sharp.size());
+        JsonObject sharpEntry = sharp.get(0).getAsJsonObject();
+        helper.assertTrue("spearhead_hone/sharp".equals(sharpEntry.get("key").getAsString()),
+                "尖锐的改进 key 必须是 spearhead_hone/sharp");
+        helper.assertTrue(sharpEntry.get("level").getAsInt() == 1, "尖锐等级应为 1");
+        helper.assertTrue(sharpEntry.get("integrity").getAsInt() == -1, "尖锐应扣 1 完整度");
         helper.succeed();
     }
 
@@ -1560,13 +1710,21 @@ public final class TetraCompatGameTests {
             return;
         }
         JsonObject variant = root.getAsJsonObject().getAsJsonArray("variants").get(0).getAsJsonObject();
-        helper.assertFalse(variant.has("attributes"), "枪纂不能用固定 attributes，伤害必须随材料变化");
+        helper.assertFalse(variant.has("attributes"),
+                "枪纂不能用固定 attributes，否则百分比不会随材料缩放");
+        helper.assertTrue(variant.get("integrity").getAsInt() == -2,
+                "枪纂完整度消耗应翻倍为 -2，实际: " + variant.get("integrity").getAsInt());
         JsonObject primary = variant.getAsJsonObject("extract").getAsJsonObject("primaryAttributes");
-        helper.assertTrue(primary != null && primary.has("generic.attack_damage"),
-                "枪纂必须通过 extract.primaryAttributes 提供随材料变化的攻击力");
-        double perPrimary = primary.get("generic.attack_damage").getAsDouble();
-        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.3D) < 1.0E-3D,
-                "木制（primary=3）枪纂攻击力应为 +0.3，实际: " + (perPrimary * 3.0D));
+        helper.assertTrue(primary != null && primary.has("**generic.attack_damage"),
+                "枪纂必须在 extract.primaryAttributes 用 MULTIPLY_TOTAL（**generic.attack_damage）提供比例攻击力");
+        double perPrimary = primary.get("**generic.attack_damage").getAsDouble();
+        helper.assertTrue(Math.abs(perPrimary - 0.01D) < 1.0E-6D,
+                "枪纂比例攻击力系数应为 0.01（铁 primary=5 时 +5%），实际: " + perPrimary);
+        helper.assertTrue(Math.abs(perPrimary * 3.0D - 0.03D) < 1.0E-6D
+                        && Math.abs(perPrimary * 5.0D - 0.05D) < 1.0E-6D,
+                "枪纂百分比必须按材料 primary 缩放（木 3% / 铁 5%）");
+        helper.assertFalse(primary.has("generic.attack_damage"),
+                "枪纂不能再保留固定攻击力（会绕过百分比缩放）");
         boolean gemAllowed = false;
         for (JsonElement element : variant.getAsJsonArray("materials")) {
             if ("tetra:gem/".equals(element.getAsString())) {

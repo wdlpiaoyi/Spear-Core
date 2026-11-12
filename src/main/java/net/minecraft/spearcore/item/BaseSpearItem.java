@@ -46,6 +46,10 @@ public abstract class BaseSpearItem extends SpearItem {
     private final boolean dealsKnockback;
     private final boolean dismounts;
 
+    /** 主手属性是多手查询热路径；缓存到 jabDamageBonus 变化为止。 */
+    private volatile Multimap<Attribute, AttributeModifier> cachedMainhandModifiers;
+    private volatile float cachedJabDamageBonus = Float.NaN;
+
     protected BaseSpearItem(SpearStats.Stats stats) {
         super(buildProperties(stats));
         this.selfItemSupplier = () -> this;
@@ -140,7 +144,14 @@ public abstract class BaseSpearItem extends SpearItem {
         if (slot != EquipmentSlot.MAINHAND) {
             return super.getDefaultAttributeModifiers(slot);
         }
-        return buildAttributeModifiers(SpearStats.get(getSelfItem()));
+        float bonus = SpearRules.jabDamageBonus();
+        Multimap<Attribute, AttributeModifier> cached = cachedMainhandModifiers;
+        if (cached == null || cachedJabDamageBonus != bonus) {
+            cached = buildAttributeModifiers(SpearStats.get(getSelfItem()));
+            cachedMainhandModifiers = cached;
+            cachedJabDamageBonus = bonus;
+        }
+        return cached;
     }
 
     /**
@@ -245,6 +256,10 @@ public abstract class BaseSpearItem extends SpearItem {
 
     @Override
     public int getContactCooldownTicks() { return contactCooldownTicks; }
+
+    /** 只有本模组内建/KubeJS 矛在 MODDED 档按攻速缩放蓄力重复命中。 */
+    @Override
+    public boolean speedScalesChargeRepeat() { return true; }
 
     @Override
     public float getSwingTimes() { return swingTimes; }

@@ -3,6 +3,7 @@ package net.minecraft.spearcore.mixin;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.spearcore.init.SpearLikeSupport;
+import net.minecraft.world.effect.MobEffects;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -68,9 +69,31 @@ public class LocalPlayerInputMixin {
      */
     @Inject(method = "canStartSprinting", at = @At("HEAD"), cancellable = true, require = 0)
     private void spearcore$allowSprintWhileUsingSpear(CallbackInfoReturnable<Boolean> cir) {
-        if (spearcore$isUsingSpear((LocalPlayer) (Object) this)) {
+        LocalPlayer player = (LocalPlayer) (Object) this;
+        if (spearcore$isUsingSpear(player) && spearcore$canStartSprintingExceptUsingItem(player)) {
             cir.setReturnValue(true);
         }
+    }
+
+    /**
+     * 原版 {@code canStartSprinting} 去掉 {@code !isUsingItem()} 后的其余条件。
+     * 不要直接 return true——那会连饥饿、失明、骑乘、滑翔一起绕过。
+     */
+    private static boolean spearcore$canStartSprintingExceptUsingItem(LocalPlayer player) {
+        boolean impulse = player.isUnderWater()
+                ? player.input.hasForwardImpulse()
+                : (double) player.input.forwardImpulse >= 0.8D;
+        boolean food = player.isPassenger()
+                || (float) player.getFoodData().getFoodLevel() > 6.0F
+                || player.getAbilities().mayfly;
+        boolean vehicle = !player.isPassenger()
+                || (player.getVehicle().canSprint() && player.getVehicle().isControlledByLocalInstance());
+        return !player.isSprinting()
+                && impulse
+                && food
+                && !player.hasEffect(MobEffects.BLINDNESS)
+                && vehicle
+                && !player.isFallFlying();
     }
 
     private static boolean spearcore$isUsingSpear(LocalPlayer player) {

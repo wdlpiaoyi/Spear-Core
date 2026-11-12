@@ -61,13 +61,16 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> {
         // 蓄力动画 — 手臂
         float useTicks = entity.getTicksUsingItem();
         if (useTicks > 0.0F) {
-            if (mainIsSpear) {
+            // 只给「真正在用的那只手」套蓄力姿势。副手举盾/吃东西时主手矛不能端起来，
+            // 否则矛盾共持的第三人称会变成一手举盾一手端矛。
+            InteractionHand usedHand = entity.getUsedItemHand();
+            if (mainIsSpear && usedHand == InteractionHand.MAIN_HAND) {
                 HumanoidArm armSide = mainArm;
                 ModelPart arm = getArm((HumanoidModel<T>) (Object) this, armSide);
                 SpearAnimations.thirdPersonHandUse(arm, head, armSide == HumanoidArm.RIGHT,
                         mainHand, (HumanoidModel<?>) (Object) this, entity);
             }
-            if (offIsSpear) {
+            if (offIsSpear && usedHand == InteractionHand.OFF_HAND) {
                 HumanoidArm armSide = mainArm.getOpposite();
                 ModelPart arm = getArm((HumanoidModel<T>) (Object) this, armSide);
                 SpearAnimations.thirdPersonHandUse(arm, head, armSide == HumanoidArm.RIGHT,

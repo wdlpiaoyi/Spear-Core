@@ -27,6 +27,14 @@ public abstract class ModuleRequirementSpearMixin {
     @Final
     String moduleKey;
 
+    @Shadow
+    @Final
+    String moduleVariant;
+
+    @Shadow
+    @Final
+    String materialPattern;
+
     @Inject(method = "test", at = @At("HEAD"), cancellable = true, remap = false)
     private void spearcore$spearModuleEquivalent(CraftingContext context,
                                                  CallbackInfoReturnable<Boolean> cir) {
@@ -38,6 +46,21 @@ public abstract class ModuleRequirementSpearMixin {
             if (target == null || target.isEmpty()
                     || !TetraSpearProfile.isModularSpearArchetype(DynamicModularItem.getArchetypeKey(target))) {
                 return;
+            }
+            // 变体/材料约束按当前模块的实际变体比对；跨命名空间的变体 key（如 basic_blade/iron）
+            // 本身对不上矛的 spear_head/iron，这时保持原判定，不强行放行。
+            if (moduleVariant != null || materialPattern != null) {
+                if (context.targetModule == null) {
+                    return;
+                }
+                var variant = context.targetModule.getVariantData(context.targetStack);
+                String variantKey = variant == null ? null : variant.key;
+                if (moduleVariant != null && !moduleVariant.equals(variantKey)) {
+                    return;
+                }
+                if (materialPattern != null && (variantKey == null || !variantKey.matches(materialPattern))) {
+                    return;
+                }
             }
             if (TetraModuleGateMapping.matches(context.slot, moduleKey)) {
                 cir.setReturnValue(true);

@@ -28,9 +28,9 @@
         "level": 3,
         "group": "composite",
         "attributes": {
-            "generic.attack_speed": 0.2,
-            "generic.attack_damage": 0.6,
-            "forge:entity_reach": 0.7
+            "generic.attack_speed": 0.5,
+            "generic.attack_damage": 0.9,
+            "forge:entity_reach": 1.2
         },
         "durability": 3,
         "magicCapacity": 2

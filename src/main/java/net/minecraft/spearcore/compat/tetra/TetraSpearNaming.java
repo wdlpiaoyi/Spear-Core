@@ -12,12 +12,12 @@ import se.mickelus.tetra.module.data.VariantData;
  * 模块化长矛的显示名：按 Tetra 自己的命名规则拼「材料前缀 + 物品名」。
  *
  * <p>Tetra 的模块化物品名来自 {@code IModularItem#getItemName}，它把模块的
- * {@code tetra.module.<模块>.item_name}（剑刃模块是「剑」）与材料前缀拼在一起，于是本模组的矛会显示成
- * 「铁剑」——因为四个槽位借用的是 Tetra 剑的模块。所以本类只借它的材料前缀：
- * {@code tetra.material.<材料>.prefix}（铁 / 下界合金 / 木 …），再拼上本模组的「矛」，
- * 得到「铁矛」「下界合金矛」，与贴图长矛的 {@code item.spearcore.iron_spear} 叫法一致。</p>
+ * {@code tetra.module.<模块>.item_name} 与材料前缀拼在一起；本模组的矛头/矛杆是自有模块，
+ * 名字应该按「材料 + 矛 / 槊 / 刃」来。所以本类只借它的材料前缀：
+ * {@code tetra.material.<材料>.prefix}（铁 / 下界合金 / 木 …），再拼上本模组的名字 key，
+ * 与贴图长矛的 {@code item.spearcore.iron_spear} 叫法一致。</p>
  *
- * <p>材料取矛头槽位（{@code sword/blade}）：Tetra 给剑命名时同样只看 major 槽位（剑刃），
+ * <p>材料取矛头槽位（{@code spear/head}）：Tetra 给剑命名时同样只看 major 槽位（剑刃），
  * 手柄/护手/配重不参与物品名。铁砧改过名的栈由调用方判定，不进这里。</p>
  *
  * <p>为什么不用 {@code IModularItem#getItemName} 直接拿名字：它在 {@code ItemModule#getItemName} 里走
@@ -51,7 +51,7 @@ public final class TetraSpearNaming {
         Component material = Component.translatableWithFallback(
                 "tetra.material." + materialKey + ".prefix",
                 "tetra.material." + materialKey);
-        TetraSpearHead head = TetraSpearHead.of(TetraSpearColors.headVariantKey(stack));
+        TetraSpearHead head = TetraSpearProfile.headOf(stack);
         Component name = Component.translatable(head.nameKey(), material);
         // 通用兼容第三方的「会改物品名」的改进（例如 RevelationFix 的 longinus / aeglos）：
         // Tetra 的改进把显示前缀写在 tetra.improvement.<key>.prefix，这里不认具体 modid，
