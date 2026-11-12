@@ -44,6 +44,19 @@ minecraft {
     }
 }
 
+// Punchy 3.1b 在 Modrinth 上为 unlisted，Maven 仓库不提供该坐标。
+// 只把它的 jar 下载到 build/ 作为编译期校验用，不打包、不发布。
+def punchyJar = layout.buildDirectory.file('dependencies/punchy-3.1b-forge-1.20.1.jar')
+tasks.register('downloadPunchy') {
+    outputs.file(punchyJar)
+    doLast {
+        def target = punchyJar.get().asFile
+        target.parentFile.mkdirs()
+        new URL('https://cdn.modrinth.com/data/8aoMKplv/versions/DdPbuBDy/punchy-3.1b-forge-1.20.1.jar')
+                .withInputStream { input -> target.withOutputStream { output -> output << input } }
+    }
+}
+
 repositories {
     // KubeJS / Rhino 的发布仓库（仅用于编译与开发期联调）
     maven {
@@ -106,7 +119,9 @@ dependencies {
     // 旧的 OOYVGbHo（2.8d）在 Modrinth 上已被删除（maven 路径 404），干净 clone 会构建失败。
     // 3.1b 仍保留 punchy.client.state.SpearStateMachine#resolveChargeInfo(Minecraft, ItemStack)
     // 与 $ChargeInfo{stage, elapsedTicks, stage3Limit, hasLimit}，桥接逻辑无需改动。
-    compileOnly 'maven.modrinth:punchy-fpa:DdPbuBDy'
+    // 编译期需要 Punchy 的类来让 Mixin 注解处理器校验目标；任务已负责下载，
+    // 这个文件只在 build/ 下，不会进入发布 jar。
+    compileOnly files(punchyJar.get().asFile)
 
     // ===== Tetra 联动（可选依赖，仅编译期）=====
     // 8570756 = CurseForge 上 Tetra 1.20.1-6.17.0 的文件 id。
@@ -140,6 +155,8 @@ tasks.matching { it.name == 'runClient' }.configureEach {
 }
 
 // 把仓库里的测试结构拷进 run/，保证运行可复现
+tasks.named('compileJava') { dependsOn 'downloadPunchy' }
+
 tasks.register('stageGameTestStructures', Copy) {
     from 'gameteststructures'
     into 'run/gameteststructures'
