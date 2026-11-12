@@ -86,6 +86,9 @@ repositories {
     }
 }
 
+// CI 的 GameTest 不需要 KubeJS 运行期；干净环境无法解析 fg.deobf 的本地缓存坐标。
+def skipOptionalRuntime = project.hasProperty('skipOptionalRuntime')
+
 dependencies {
     minecraft 'net.minecraftforge:forge:1.20.1-47.3.0'
 
@@ -109,9 +112,11 @@ dependencies {
     //   fg.deobf 不带传递依赖，所以 rhino / architectury 要单独列（版本取自
     //   gradlew dependencies --configuration runtimeClasspath）。
     //   要验证"没装 KubeJS"的启动路径，把这三行注释掉即可（已实测：零 ClassNotFound）。
-    runtimeOnly fg.deobf('dev.latvian.mods:kubejs-forge:2001.6.5-build.26')
-    runtimeOnly fg.deobf('dev.latvian.mods:rhino-forge:2001.2.2-build.17')
-    runtimeOnly fg.deobf('dev.architectury:architectury-forge:9.1.12')
+    if (!skipOptionalRuntime) {
+        runtimeOnly fg.deobf('dev.latvian.mods:kubejs-forge:2001.6.5-build.26')
+        runtimeOnly fg.deobf('dev.latvian.mods:rhino-forge:2001.2.2-build.17')
+        runtimeOnly fg.deobf('dev.architectury:architectury-forge:9.1.12')
+    }
 
     // ===== Punchy 联动（可选依赖）=====
     // mixin 目标是用字符串写的，但 Mixin 注解处理器需要 Punchy 在 classpath 上才能校验目标类。

@@ -19,11 +19,11 @@ jobs:
       - name: Compile
         run: |
           chmod +x gradlew
-          ./gradlew compileJava --console=plain
+          ./gradlew compileJava --console=plain -PskipOptionalRuntime
       - name: GameTest
         run: |
           set -o pipefail
-          ./gradlew runGameTestServer --console=plain 2>&1 | tee gametest.log
+          ./gradlew runGameTestServer --console=plain -PskipOptionalRuntime 2>&1 | tee gametest.log
       - name: Verify GameTest log
         if: always()
         run: |
